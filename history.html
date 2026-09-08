@@ -1,0 +1,1663 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        ประวัติการยืม-คืน | ระบบยืม-คืนอุปกรณ์
+    </title>
+
+
+    <!-- CSS หลัก -->
+
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
+
+
+    <!-- Lucide Icons -->
+
+    <script
+        src="https://unpkg.com/lucide@latest"
+    ></script>
+
+
+</head>
+
+
+<body>
+
+
+<div class="app-container">
+
+
+    <!-- =========================
+         HEADER
+    ========================== -->
+
+    <header class="header">
+
+
+        <!-- โลโก้และชื่อระบบ -->
+
+        <div class="brand">
+
+
+            <div class="header-logo">
+
+                <img
+                    src="https://img2.pic.in.th/007-med-msu.md.webp"
+                    alt="โลโก้คณะ"
+                >
+
+            </div>
+
+
+            <div class="brand-text">
+
+                <h2>
+                    ระบบยืม-คืนอุปกรณ์
+                </h2>
+
+                <p>
+                    ระบบจัดการอุปกรณ์
+                </p>
+
+            </div>
+
+
+        </div>
+
+
+
+        <!-- เมนูด้านขวา -->
+
+        <div class="header-actions">
+
+
+            <!-- ค้นหา -->
+
+            <div class="header-search">
+
+                <i
+                    data-lucide="search"
+                ></i>
+
+
+                <input
+                    type="text"
+                    id="headerSearch"
+                    placeholder="ค้นหา..."
+                >
+
+
+            </div>
+
+
+
+            <!-- การแจ้งเตือน -->
+
+            <button
+                type="button"
+                class="icon-button notification-button"
+            >
+
+                <i
+                    data-lucide="bell"
+                ></i>
+
+
+                <span
+                    class="notification-badge"
+                >
+                    0
+                </span>
+
+
+            </button>
+
+
+
+            <!-- โปรไฟล์ -->
+
+            <button
+                type="button"
+                class="profile-button"
+            >
+
+                <i
+                    data-lucide="circle-user-round"
+                ></i>
+
+
+                <div class="profile-info">
+
+
+                    <span class="profile-label">
+                        ผู้ใช้งาน
+                    </span>
+
+
+                    <span class="profile-name">
+                        ผู้ใช้งาน
+                    </span>
+
+
+                </div>
+
+
+            </button>
+
+
+
+            <!-- ออกจากระบบ -->
+
+            <button
+                type="button"
+                class="logout-button"
+            >
+
+                <i
+                    data-lucide="log-out"
+                ></i>
+
+
+                <span>
+                    ออกจากระบบ
+                </span>
+
+
+            </button>
+
+
+        </div>
+
+
+    </header>
+
+
+
+    <!-- =========================
+         NAVIGATION
+    ========================== -->
+
+    <nav class="navbar">
+
+
+        <a href="dashboard.html">
+
+            <i
+                data-lucide="layout-dashboard"
+            ></i>
+
+            <span>
+                Dashboard
+            </span>
+
+        </a>
+
+
+
+        <a href="equipment.html">
+
+            <i
+                data-lucide="package-search"
+            ></i>
+
+            <span>
+                อุปกรณ์
+            </span>
+
+        </a>
+
+
+
+        <a href="borrow.html">
+
+            <i
+                data-lucide="clipboard-list"
+            ></i>
+
+            <span>
+                รายการยืม
+            </span>
+
+        </a>
+
+
+
+        <a href="return.html">
+
+            <i
+                data-lucide="undo-2"
+            ></i>
+
+            <span>
+                คืนอุปกรณ์
+            </span>
+
+        </a>
+
+
+
+        <a
+            href="history.html"
+            class="active"
+        >
+
+            <i
+                data-lucide="history"
+            ></i>
+
+            <span>
+                ประวัติ
+            </span>
+
+        </a>
+
+
+    </nav>
+
+
+
+    <!-- =========================
+         MAIN CONTENT
+    ========================== -->
+
+    <main class="main-content history-page">
+
+
+        <!-- =========================
+             PAGE HEADING
+        ========================== -->
+
+        <section class="dashboard-heading">
+
+
+            <div>
+
+
+                <h1>
+
+                    <i
+                        data-lucide="history"
+                    ></i>
+
+                    ประวัติการยืม-คืน
+
+                </h1>
+
+
+                <p>
+                    ตรวจสอบรายการยืมและคืนอุปกรณ์ทั้งหมด
+                </p>
+
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- =========================
+             STATISTICS
+        ========================== -->
+
+        <section class="history-stats">
+
+
+            <!-- รายการทั้งหมด -->
+
+            <div class="history-stat-card">
+
+
+                <div class="history-stat-icon">
+
+                    <i
+                        data-lucide="clipboard-list"
+                    ></i>
+
+                </div>
+
+
+                <div>
+
+                    <p>
+                        รายการทั้งหมด
+                    </p>
+
+
+                    <h2
+                        id="totalHistory"
+                    >
+                        0
+                    </h2>
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- กำลังยืม -->
+
+            <div class="history-stat-card borrowed-stat">
+
+
+                <div class="history-stat-icon">
+
+                    <i
+                        data-lucide="package-open"
+                    ></i>
+
+                </div>
+
+
+                <div>
+
+                    <p>
+                        กำลังยืม
+                    </p>
+
+
+                    <h2
+                        id="borrowingHistory"
+                    >
+                        0
+                    </h2>
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- คืนแล้ว -->
+
+            <div class="history-stat-card returned-stat">
+
+
+                <div class="history-stat-icon">
+
+                    <i
+                        data-lucide="circle-check"
+                    ></i>
+
+                </div>
+
+
+                <div>
+
+                    <p>
+                        คืนแล้ว
+                    </p>
+
+
+                    <h2
+                        id="returnedHistory"
+                    >
+                        0
+                    </h2>
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- เกินกำหนด -->
+
+            <div class="history-stat-card overdue-stat">
+
+
+                <div class="history-stat-icon">
+
+                    <i
+                        data-lucide="triangle-alert"
+                    ></i>
+
+                </div>
+
+
+                <div>
+
+                    <p>
+                        เกินกำหนด
+                    </p>
+
+
+                    <h2
+                        id="overdueHistory"
+                    >
+                        0
+                    </h2>
+
+                </div>
+
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- =========================
+             HISTORY TABLE
+        ========================== -->
+
+        <section class="history-container">
+
+
+            <!-- HEADER -->
+
+            <div class="history-top">
+
+
+                <div class="history-title">
+
+
+                    <div class="history-title-icon">
+
+                        <i
+                            data-lucide="list"
+                        ></i>
+
+                    </div>
+
+
+                    <div>
+
+                        <h2>
+                            รายการประวัติ
+                        </h2>
+
+
+                        <p>
+                            รายละเอียดการยืมและคืนอุปกรณ์
+                        </p>
+
+                    </div>
+
+
+                </div>
+
+
+
+                <!-- FILTER -->
+
+                <div class="history-actions">
+
+
+                    <div class="history-search">
+
+                        <i
+                            data-lucide="search"
+                        ></i>
+
+
+                        <input
+                            type="text"
+                            id="historySearch"
+                            placeholder="ค้นหารายการ..."
+                        >
+
+
+                    </div>
+
+
+
+                    <select
+                        id="statusFilter"
+                    >
+
+                        <option value="all">
+                            ทุกสถานะ
+                        </option>
+
+                        <option value="borrowing">
+                            กำลังยืม
+                        </option>
+
+                        <option value="returned">
+                            คืนแล้ว
+                        </option>
+
+                        <option value="overdue">
+                            เกินกำหนด
+                        </option>
+
+                    </select>
+
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- =========================
+                 TABLE
+            ========================== -->
+
+            <div class="table-responsive">
+
+
+                <table class="history-table">
+
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                รหัสรายการ
+                            </th>
+
+
+                            <th>
+                                อุปกรณ์
+                            </th>
+
+
+                            <th>
+                                ผู้ยืม
+                            </th>
+
+
+                            <th>
+                                วันที่ยืม
+                            </th>
+
+
+                            <th>
+                                กำหนดคืน
+                            </th>
+
+
+                            <th>
+                                วันที่คืนจริง
+                            </th>
+
+
+                            <th>
+                                สถานะ
+                            </th>
+
+
+                            <th>
+                                รายละเอียด
+                            </th>
+
+
+                        </tr>
+
+                    </thead>
+
+
+
+                    <tbody
+                        id="historyTable"
+                    >
+
+
+                        <!-- JavaScript แสดงข้อมูล -->
+
+
+                    </tbody>
+
+
+                </table>
+
+
+            </div>
+
+
+
+            <!-- =========================
+                 EMPTY STATE
+            ========================== -->
+
+            <div
+                id="emptyHistory"
+                class="empty-history"
+                style="display: none;"
+            >
+
+
+                <i
+                    data-lucide="inbox"
+                ></i>
+
+
+                <h3>
+                    ไม่พบรายการ
+                </h3>
+
+
+                <p>
+                    ไม่พบข้อมูลตามเงื่อนไขที่ค้นหา
+                </p>
+
+
+            </div>
+
+
+        </section>
+
+
+    </main>
+
+
+</div>
+
+
+
+<!-- =========================
+     HISTORY DETAIL MODAL
+========================= -->
+
+<div
+    class="modal"
+    id="historyModal"
+>
+
+
+    <div class="modal-content history-modal">
+
+
+        <button
+            type="button"
+            class="modal-close"
+            id="closeHistoryModal"
+        >
+            ×
+        </button>
+
+
+
+        <div
+            id="historyModalContent"
+        >
+
+
+            <!-- JavaScript -->
+
+
+        </div>
+
+
+    </div>
+
+
+</div>
+
+
+
+<!-- =========================
+     JAVASCRIPT
+========================= -->
+
+<script>
+
+
+    /* =========================
+       LUCIDE ICONS
+    ========================= */
+
+    lucide.createIcons();
+
+
+
+    /* =========================
+       HISTORY DATA
+    ========================= */
+
+    const historyData = [
+
+        {
+
+            id: "BR001",
+
+            equipment: "Projector Epson EB-X05",
+
+            borrower: "สมชาย ใจดี",
+
+            borrowDate: "2026-09-01",
+
+            dueDate: "2026-09-05",
+
+            returnedDate: "",
+
+            status: "borrowing",
+
+            quantity: 1,
+
+            note: "ใช้สำหรับการนำเสนอรายงาน"
+
+        },
+
+
+        {
+
+            id: "BR002",
+
+            equipment: "Laptop Dell",
+
+            borrower: "สมหญิง รักเรียน",
+
+            borrowDate: "2026-08-25",
+
+            dueDate: "2026-08-30",
+
+            returnedDate: "2026-08-29",
+
+            status: "returned",
+
+            quantity: 1,
+
+            note: "ใช้สำหรับทำงานนอกสถานที่"
+
+        },
+
+
+        {
+
+            id: "BR003",
+
+            equipment: "Camera Sony",
+
+            borrower: "วิชัย บุญมี",
+
+            borrowDate: "2026-08-20",
+
+            dueDate: "2026-08-25",
+
+            returnedDate: "",
+
+            status: "overdue",
+
+            quantity: 1,
+
+            note: "ใช้สำหรับบันทึกกิจกรรม"
+
+        },
+
+
+        {
+
+            id: "BR004",
+
+            equipment: "Microphone",
+
+            borrower: "มานี มีสุข",
+
+            borrowDate: "2026-08-28",
+
+            dueDate: "2026-09-03",
+
+            returnedDate: "",
+
+            status: "borrowing",
+
+            quantity: 2,
+
+            note: "ใช้ในกิจกรรมสัมมนา"
+
+        },
+
+
+        {
+
+            id: "BR005",
+
+            equipment: "Laptop Dell",
+
+            borrower: "สมศรี รุ่งเรือง",
+
+            borrowDate: "2026-08-15",
+
+            dueDate: "2026-08-20",
+
+            returnedDate: "2026-08-20",
+
+            status: "returned",
+
+            quantity: 1,
+
+            note: "ใช้งานสำหรับโครงการพิเศษ"
+
+        }
+
+    ];
+
+
+
+    /* =========================
+       ELEMENTS
+    ========================= */
+
+    const historyTable =
+        document.getElementById(
+            "historyTable"
+        );
+
+
+    const historySearch =
+        document.getElementById(
+            "historySearch"
+        );
+
+
+    const statusFilter =
+        document.getElementById(
+            "statusFilter"
+        );
+
+
+    const emptyHistory =
+        document.getElementById(
+            "emptyHistory"
+        );
+
+
+    const totalHistory =
+        document.getElementById(
+            "totalHistory"
+        );
+
+
+    const borrowingHistory =
+        document.getElementById(
+            "borrowingHistory"
+        );
+
+
+    const returnedHistory =
+        document.getElementById(
+            "returnedHistory"
+        );
+
+
+    const overdueHistory =
+        document.getElementById(
+            "overdueHistory"
+        );
+
+
+
+    /* =========================
+       FORMAT DATE
+    ========================= */
+
+    function formatDate(date) {
+
+
+        if (!date) {
+
+            return "-";
+
+        }
+
+
+        const dateObject =
+            new Date(date);
+
+
+        return dateObject.toLocaleDateString(
+
+            "th-TH",
+
+            {
+
+                year: "numeric",
+
+                month: "short",
+
+                day: "numeric"
+
+            }
+
+        );
+
+    }
+
+
+
+    /* =========================
+       STATUS BADGE
+    ========================= */
+
+    function getStatus(status) {
+
+
+        if (status === "borrowing") {
+
+            return `
+                <span class="history-status borrowing">
+                    <i data-lucide="package-open"></i>
+                    กำลังยืม
+                </span>
+            `;
+
+        }
+
+
+        if (status === "returned") {
+
+            return `
+                <span class="history-status returned">
+                    <i data-lucide="circle-check"></i>
+                    คืนแล้ว
+                </span>
+            `;
+
+        }
+
+
+        if (status === "overdue") {
+
+            return `
+                <span class="history-status overdue">
+                    <i data-lucide="triangle-alert"></i>
+                    เกินกำหนด
+                </span>
+            `;
+
+        }
+
+    }
+
+
+
+    /* =========================
+       RENDER HISTORY
+    ========================= */
+
+    function renderHistory(data) {
+
+
+        historyTable.innerHTML = "";
+
+
+        if (data.length === 0) {
+
+
+            emptyHistory.style.display =
+                "flex";
+
+
+            lucide.createIcons();
+
+
+            return;
+
+        }
+
+
+        emptyHistory.style.display =
+            "none";
+
+
+        data.forEach(
+
+            function (item) {
+
+
+                const row =
+                    document.createElement("tr");
+
+
+                row.innerHTML = `
+
+                    <td>
+
+                        <strong>
+                            ${item.id}
+                        </strong>
+
+                    </td>
+
+
+                    <td>
+
+                        <div class="equipment-name">
+
+                            <i
+                                data-lucide="package"
+                            ></i>
+
+                            <span>
+                                ${item.equipment}
+                            </span>
+
+                        </div>
+
+                    </td>
+
+
+                    <td>
+
+                        <div class="borrower-name">
+
+                            <i
+                                data-lucide="user"
+                            ></i>
+
+                            ${item.borrower}
+
+                        </div>
+
+                    </td>
+
+
+                    <td>
+                        ${formatDate(item.borrowDate)}
+                    </td>
+
+
+                    <td>
+                        ${formatDate(item.dueDate)}
+                    </td>
+
+
+                    <td>
+                        ${formatDate(item.returnedDate)}
+                    </td>
+
+
+                    <td>
+
+                        ${getStatus(item.status)}
+
+                    </td>
+
+
+                    <td>
+
+                        <button
+                            type="button"
+                            class="history-detail-button"
+                            onclick="showHistoryDetail('${item.id}')"
+                        >
+
+                            <i
+                                data-lucide="eye"
+                            ></i>
+
+                            ดู
+
+                        </button>
+
+                    </td>
+
+                `;
+
+
+                historyTable.appendChild(
+                    row
+                );
+
+
+            }
+
+        );
+
+
+        lucide.createIcons();
+
+    }
+
+
+
+    /* =========================
+       UPDATE STATISTICS
+    ========================= */
+
+    function updateStatistics() {
+
+
+        const total =
+            historyData.length;
+
+
+        const borrowing =
+            historyData.filter(
+
+                item =>
+                item.status === "borrowing"
+
+            ).length;
+
+
+        const returned =
+            historyData.filter(
+
+                item =>
+                item.status === "returned"
+
+            ).length;
+
+
+        const overdue =
+            historyData.filter(
+
+                item =>
+                item.status === "overdue"
+
+            ).length;
+
+
+
+        totalHistory.textContent =
+            total;
+
+
+        borrowingHistory.textContent =
+            borrowing;
+
+
+        returnedHistory.textContent =
+            returned;
+
+
+        overdueHistory.textContent =
+            overdue;
+
+    }
+
+
+
+    /* =========================
+       FILTER HISTORY
+    ========================= */
+
+    function filterHistory() {
+
+
+        const searchValue =
+            historySearch.value
+            .toLowerCase()
+            .trim();
+
+
+        const selectedStatus =
+            statusFilter.value;
+
+
+
+        const filteredData =
+            historyData.filter(
+
+                function (item) {
+
+
+                    const matchSearch =
+
+                        item.id
+                        .toLowerCase()
+                        .includes(searchValue)
+
+                        ||
+
+                        item.equipment
+                        .toLowerCase()
+                        .includes(searchValue)
+
+                        ||
+
+                        item.borrower
+                        .toLowerCase()
+                        .includes(searchValue);
+
+
+
+                    const matchStatus =
+
+                        selectedStatus === "all"
+
+                        ||
+
+                        item.status ===
+                        selectedStatus;
+
+
+
+                    return (
+
+                        matchSearch
+
+                        &&
+
+                        matchStatus
+
+                    );
+
+
+                }
+
+            );
+
+
+        renderHistory(
+            filteredData
+        );
+
+    }
+
+
+
+    /* =========================
+       SEARCH EVENT
+    ========================= */
+
+    historySearch.addEventListener(
+
+        "input",
+
+        filterHistory
+
+    );
+
+
+
+    /* =========================
+       FILTER EVENT
+    ========================= */
+
+    statusFilter.addEventListener(
+
+        "change",
+
+        filterHistory
+
+    );
+
+
+
+    /* =========================
+       HISTORY MODAL
+    ========================= */
+
+    const historyModal =
+        document.getElementById(
+            "historyModal"
+        );
+
+
+    const historyModalContent =
+        document.getElementById(
+            "historyModalContent"
+        );
+
+
+    const closeHistoryModal =
+        document.getElementById(
+            "closeHistoryModal"
+        );
+
+
+
+    function showHistoryDetail(id) {
+
+
+        const item =
+            historyData.find(
+
+                item =>
+                item.id === id
+
+            );
+
+
+        if (!item) {
+
+            return;
+
+        }
+
+
+        historyModalContent.innerHTML = `
+
+
+            <div class="history-modal-header">
+
+
+                <div class="history-modal-icon">
+
+                    <i
+                        data-lucide="clipboard-list"
+                    ></i>
+
+                </div>
+
+
+                <div>
+
+
+                    <h2>
+                        รายละเอียดรายการ
+                    </h2>
+
+
+                    <p>
+                        รหัสรายการ ${item.id}
+                    </p>
+
+
+                </div>
+
+
+            </div>
+
+
+
+            <div class="history-detail-list">
+
+
+                <div class="history-detail-item">
+
+
+                    <span>
+                        <i
+                            data-lucide="package"
+                        ></i>
+
+                        อุปกรณ์
+                    </span>
+
+
+                    <strong>
+                        ${item.equipment}
+                    </strong>
+
+
+                </div>
+
+
+
+                <div class="history-detail-item">
+
+
+                    <span>
+
+                        <i
+                            data-lucide="boxes"
+                        ></i>
+
+                        จำนวน
+
+                    </span>
+
+
+                    <strong>
+                        ${item.quantity} รายการ
+                    </strong>
+
+
+                </div>
+
+
+
+                <div class="history-detail-item">
+
+
+                    <span>
+
+                        <i
+                            data-lucide="user"
+                        ></i>
+
+                        ผู้ยืม
+
+                    </span>
+
+
+                    <strong>
+                        ${item.borrower}
+                    </strong>
+
+
+                </div>
+
+
+
+                <div class="history-detail-item">
+
+
+                    <span>
+
+                        <i
+                            data-lucide="calendar"
+                        ></i>
+
+                        วันที่ยืม
+
+                    </span>
+
+
+                    <strong>
+                        ${formatDate(item.borrowDate)}
+                    </strong>
+
+
+                </div>
+
+
+
+                <div class="history-detail-item">
+
+
+                    <span>
+
+                        <i
+                            data-lucide="calendar-clock"
+                        ></i>
+
+                        กำหนดคืน
+
+                    </span>
+
+
+                    <strong>
+                        ${formatDate(item.dueDate)}
+                    </strong>
+
+
+                </div>
+
+
+
+                <div class="history-detail-item">
+
+
+                    <span>
+
+                        <i
+                            data-lucide="calendar-check"
+                        ></i>
+
+                        วันที่คืนจริง
+
+                    </span>
+
+
+                    <strong>
+                        ${formatDate(item.returnedDate)}
+                    </strong>
+
+
+                </div>
+
+
+
+                <div class="history-detail-item">
+
+
+                    <span>
+
+                        <i
+                            data-lucide="circle-check"
+                        ></i>
+
+                        สถานะ
+
+                    </span>
+
+
+                    ${getStatus(item.status)}
+
+
+                </div>
+
+
+
+                <div
+                    class="history-note"
+                >
+
+
+                    <h3>
+
+                        <i
+                            data-lucide="message-square"
+                        ></i>
+
+                        หมายเหตุ
+
+                    </h3>
+
+
+                    <p>
+
+                        ${item.note || "-"}
+
+                    </p>
+
+
+                </div>
+
+
+            </div>
+
+        `;
+
+
+        historyModal.style.display =
+            "flex";
+
+
+        lucide.createIcons();
+
+    }
+
+
+
+    /* =========================
+       CLOSE MODAL
+    ========================= */
+
+    closeHistoryModal.addEventListener(
+
+        "click",
+
+        function () {
+
+            historyModal.style.display =
+                "none";
+
+        }
+
+    );
+
+
+
+    /* =========================
+       CLICK OUTSIDE MODAL
+    ========================= */
+
+    window.addEventListener(
+
+        "click",
+
+        function (event) {
+
+
+            if (
+
+                event.target ===
+                historyModal
+
+            ) {
+
+                historyModal.style.display =
+                    "none";
+
+            }
+
+        }
+
+    );
+
+
+
+    /* =========================
+       HEADER SEARCH
+    ========================= */
+
+    const headerSearch =
+        document.getElementById(
+            "headerSearch"
+        );
+
+
+    headerSearch.addEventListener(
+
+        "input",
+
+        function () {
+
+
+            historySearch.value =
+                headerSearch.value;
+
+
+            filterHistory();
+
+        }
+
+    );
+
+
+
+    /* =========================
+       INITIALIZE
+    ========================= */
+
+    updateStatistics();
+
+
+    renderHistory(
+        historyData
+    );
+
+
+</script>
+
+
+</body>
+
+</html>

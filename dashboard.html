@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Dashboard | ระบบยืม-คืนอุปกรณ์
+    </title>
+
+
+    <!-- CSS -->
+
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
+
+
+    <!-- Lucide Icons -->
+
+    <script
+        src="https://unpkg.com/lucide@latest"
+    ></script>
+
+
+</head>
+
+
+<body>
+
+
+    <div class="app-container">
+
+
+        <!-- =========================
+             HEADER
+        ========================== -->
+
+        <header class="header">
+
+
+            <!-- โลโก้และชื่อระบบ -->
+
+            <div class="brand">
+
+
+                <div class="header-logo">
+
+                    <img
+                        src="https://img2.pic.in.th/007-med-msu.md.webp"
+                        alt="โลโก้คณะ"
+                    >
+
+                </div>
+
+
+                <div class="brand-text">
+
+
+                    <!-- เอาไอคอนกล่องออกแล้ว -->
+
+                    <h2>
+                        ระบบยืม-คืนอุปกรณ์
+                    </h2>
+
+
+                    <p>
+                        ระบบจัดการอุปกรณ์
+                    </p>
+
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- เมนูด้านขวา -->
+
+            <div class="header-actions">
+
+
+                <!-- ค้นหา -->
+
+                <div class="header-search">
+
+
+                    <i
+                        data-lucide="search"
+                    ></i>
+
+
+                    <input
+                        type="text"
+                        id="headerSearch"
+                        placeholder="ค้นหาอุปกรณ์..."
+                    >
+
+
+                </div>
+
+
+
+                <!-- การแจ้งเตือน -->
+
+                <button
+                    type="button"
+                    id="notificationButton"
+                    class="icon-button notification-button"
+                >
+
+
+                    <i
+                        data-lucide="bell"
+                    ></i>
+
+
+                    <span
+                        id="notificationCount"
+                        class="notification-badge"
+                    >
+                        0
+                    </span>
+
+
+                </button>
+
+
+
+                <!-- โปรไฟล์ -->
+
+                <button
+                    type="button"
+                    id="profileButton"
+                    class="profile-button"
+                >
+
+
+                    <i
+                        data-lucide="circle-user-round"
+                    ></i>
+
+
+                    <div class="profile-info">
+
+
+                        <span class="profile-label">
+                            ผู้ใช้งาน
+                        </span>
+
+
+                        <span
+                            id="userName"
+                            class="profile-name"
+                        >
+                            ผู้ใช้งาน
+                        </span>
+
+
+                    </div>
+
+
+                </button>
+
+
+
+                <!-- ออกจากระบบ -->
+
+                <button
+                    type="button"
+                    id="logoutButton"
+                    class="logout-button"
+                >
+
+
+                    <i
+                        data-lucide="log-out"
+                    ></i>
+
+
+                    <span>
+                        ออกจากระบบ
+                    </span>
+
+
+                </button>
+
+
+            </div>
+
+
+        </header>
+
+
+
+        <!-- =========================
+             NAVIGATION
+        ========================== -->
+
+        <nav class="navbar">
+
+
+            <a
+                href="dashboard.html"
+                class="active"
+            >
+
+                <i
+                    data-lucide="layout-dashboard"
+                ></i>
+
+                <span>
+                    Dashboard
+                </span>
+
+            </a>
+
+
+
+            <a href="equipment.html">
+
+                <i
+                    data-lucide="package-search"
+                ></i>
+
+                <span>
+                    อุปกรณ์
+                </span>
+
+            </a>
+
+
+
+            <a href="borrow.html">
+
+                <i
+                    data-lucide="clipboard-list"
+                ></i>
+
+                <span>
+                    รายการยืม
+                </span>
+
+            </a>
+
+
+
+            <a href="return.html">
+
+                <i
+                    data-lucide="undo-2"
+                ></i>
+
+                <span>
+                    คืนอุปกรณ์
+                </span>
+
+            </a>
+
+
+
+            <a href="history.html">
+
+                <i
+                    data-lucide="history"
+                ></i>
+
+                <span>
+                    ประวัติ
+                </span>
+
+            </a>
+
+
+        </nav>
+
+
+
+        <!-- =========================
+             MAIN CONTENT
+        ========================== -->
+
+        <main class="main-content">
+
+
+            <!-- หัวข้อ -->
+
+            <section class="dashboard-heading">
+
+
+                <h1>
+                    Dashboard
+                </h1>
+
+
+                <p>
+                    ภาพรวมข้อมูลอุปกรณ์ภายในระบบ
+                </p>
+
+
+            </section>
+
+
+
+            <!-- =========================
+                 STATISTICS
+            ========================== -->
+
+            <section class="stats-container">
+
+
+                <!-- อุปกรณ์ทั้งหมด -->
+
+                <div class="stat-card">
+
+
+                    <div class="stat-icon">
+
+                        <i
+                            data-lucide="package"
+                        ></i>
+
+                    </div>
+
+
+                    <h3>
+                        อุปกรณ์ทั้งหมด
+                    </h3>
+
+
+                    <p
+                        id="totalEquipment"
+                        class="stat-number"
+                    >
+                        0
+                    </p>
+
+
+                    <span>
+                        รายการ
+                    </span>
+
+
+                </div>
+
+
+
+                <!-- พร้อมใช้งาน -->
+
+                <div class="stat-card">
+
+
+                    <div class="stat-icon">
+
+                        <i
+                            data-lucide="circle-check"
+                        ></i>
+
+                    </div>
+
+
+                    <h3>
+                        พร้อมใช้งาน
+                    </h3>
+
+
+                    <p
+                        id="availableEquipment"
+                        class="stat-number"
+                    >
+                        0
+                    </p>
+
+
+                    <span>
+                        รายการ
+                    </span>
+
+
+                </div>
+
+
+
+                <!-- กำลังถูกยืม -->
+
+                <div class="stat-card borrowed-card">
+
+
+                    <div class="stat-icon">
+
+                        <i
+                            data-lucide="clipboard-list"
+                        ></i>
+
+                    </div>
+
+
+                    <h3>
+                        กำลังถูกยืม
+                    </h3>
+
+
+                    <p
+                        id="borrowedEquipment"
+                        class="stat-number"
+                    >
+                        0
+                    </p>
+
+
+                    <span>
+                        รายการ
+                    </span>
+
+
+                </div>
+
+
+
+                <!-- ไม่พร้อมใช้งาน -->
+
+                <div class="stat-card unavailable-card">
+
+
+                    <div class="stat-icon">
+
+                        <i
+                            data-lucide="circle-x"
+                        ></i>
+
+                    </div>
+
+
+                    <h3>
+                        ไม่พร้อมใช้งาน
+                    </h3>
+
+
+                    <p
+                        id="unavailableEquipment"
+                        class="stat-number"
+                    >
+                        0
+                    </p>
+
+
+                    <span>
+                        รายการ
+                    </span>
+
+
+                </div>
+
+
+            </section>
+
+
+
+            <!-- =========================
+                 ตารางอุปกรณ์
+            ========================== -->
+
+            <section class="table-container">
+
+
+                <!-- หัวตาราง -->
+
+                <div class="table-top">
+
+
+                    <div class="table-title">
+
+
+                        <div class="table-title-icon">
+
+                            <i
+                                data-lucide="list"
+                            ></i>
+
+                        </div>
+
+
+                        <div>
+
+
+                            <h2>
+                                รายการอุปกรณ์
+                            </h2>
+
+
+                            <p>
+                                รายการอุปกรณ์ทั้งหมดภายในระบบ
+                            </p>
+
+
+                        </div>
+
+
+                    </div>
+
+
+
+                    <a
+                        href="equipment.html"
+                        class="view-all-button"
+                    >
+
+                        ดูทั้งหมด
+
+                        <i
+                            data-lucide="arrow-right"
+                        ></i>
+
+                    </a>
+
+
+                </div>
+
+
+
+                <!-- ช่องค้นหาในตาราง -->
+
+                <div class="table-search">
+
+
+                    <i
+                        data-lucide="search"
+                    ></i>
+
+
+                    <input
+                        type="text"
+                        id="tableSearch"
+                        placeholder="ค้นหาด้วยรหัสอุปกรณ์ ชื่ออุปกรณ์ หรือประเภท..."
+                    >
+
+
+                </div>
+
+
+
+                <!-- ตาราง -->
+
+                <div class="table-responsive">
+
+
+                    <table>
+
+
+                        <thead>
+
+
+                            <tr>
+
+
+                                <th>
+                                    รหัสอุปกรณ์
+                                </th>
+
+
+                                <th>
+                                    ชื่ออุปกรณ์
+                                </th>
+
+
+                                <th>
+                                    ประเภท
+                                </th>
+
+
+                                <th>
+                                    สถานะ
+                                </th>
+
+
+                                <th>
+                                    ผู้ยืม
+                                </th>
+
+
+                                <th>
+                                    จัดการ
+                                </th>
+
+
+                            </tr>
+
+
+                        </thead>
+
+
+
+                        <tbody
+                            id="equipmentTable"
+                        >
+
+
+                            <!-- JavaScript แสดงข้อมูล -->
+
+
+                        </tbody>
+
+
+                    </table>
+
+
+                </div>
+
+
+            </section>
+
+
+        </main>
+
+
+    </div>
+
+
+
+    <!-- =========================
+         MODAL ดูข้อมูล
+    ========================== -->
+
+    <div
+        id="equipmentModal"
+        class="modal"
+    >
+
+
+        <div class="modal-content">
+
+
+            <button
+                class="modal-close"
+                id="closeModal"
+            >
+
+                ×
+
+            </button>
+
+
+            <div id="modalContent">
+
+
+                <!-- JavaScript -->
+
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+
+    <!-- =========================
+         MODAL โปรไฟล์
+    ========================== -->
+
+    <div
+        id="profileModal"
+        class="modal"
+    >
+
+
+        <div class="modal-content profile-modal">
+
+
+            <button
+                class="modal-close"
+                id="closeProfileModal"
+            >
+
+                ×
+
+            </button>
+
+
+            <h2>
+                ข้อมูลผู้ใช้งาน
+            </h2>
+
+
+            <div class="profile-modal-icon">
+
+
+                <i
+                    data-lucide="circle-user-round"
+                ></i>
+
+
+            </div>
+
+
+
+            <label>
+                ชื่อผู้ใช้งาน
+            </label>
+
+
+            <input
+                type="text"
+                id="editUserName"
+            >
+
+
+
+            <button
+                type="button"
+                id="saveProfileButton"
+                class="save-profile-button"
+            >
+
+                <i
+                    data-lucide="save"
+                ></i>
+
+                บันทึกข้อมูล
+
+
+            </button>
+
+
+        </div>
+
+
+    </div>
+
+
+
+    <!-- JavaScript -->
+
+    <script
+        src="css/js/app.js"
+    ></script>
+
+
+    <script>
+
+        lucide.createIcons();
+
+    </script>
+
+
+</body>
+
+</html>

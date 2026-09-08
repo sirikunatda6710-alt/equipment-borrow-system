@@ -1,0 +1,1980 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        ยืมอุปกรณ์ | ระบบยืม-คืนอุปกรณ์
+    </title>
+
+
+    <!-- CSS หลัก -->
+
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
+
+
+    <!-- Lucide Icons -->
+
+    <script
+        src="https://unpkg.com/lucide@latest"
+    ></script>
+
+
+</head>
+
+
+<body>
+
+
+<div class="app-container">
+
+
+    <!-- =========================
+         HEADER
+    ========================== -->
+
+    <header class="header">
+
+
+        <div class="brand">
+
+
+            <div class="header-logo">
+
+                <img
+                    src="https://img2.pic.in.th/007-med-msu.md.webp"
+                    alt="โลโก้คณะ"
+                >
+
+            </div>
+
+
+            <div class="brand-text">
+
+                <h2>
+                    ระบบยืม-คืนอุปกรณ์
+                </h2>
+
+                <p>
+                    ระบบจัดการอุปกรณ์
+                </p>
+
+            </div>
+
+
+        </div>
+
+
+
+        <div class="header-actions">
+
+
+            <div class="header-search">
+
+                <i data-lucide="search"></i>
+
+                <input
+                    type="text"
+                    id="headerSearch"
+                    placeholder="ค้นหาอุปกรณ์..."
+                >
+
+            </div>
+
+
+
+            <button
+                type="button"
+                class="icon-button notification-button"
+            >
+
+                <i data-lucide="bell"></i>
+
+                <span class="notification-badge">
+                    0
+                </span>
+
+            </button>
+
+
+
+            <button
+                type="button"
+                class="profile-button"
+            >
+
+                <i
+                    data-lucide="circle-user-round"
+                ></i>
+
+
+                <div class="profile-info">
+
+                    <span class="profile-label">
+                        ผู้ใช้งาน
+                    </span>
+
+                    <span class="profile-name">
+                        ผู้ใช้งาน
+                    </span>
+
+                </div>
+
+            </button>
+
+
+
+            <button
+                type="button"
+                class="logout-button"
+            >
+
+                <i data-lucide="log-out"></i>
+
+                <span>
+                    ออกจากระบบ
+                </span>
+
+            </button>
+
+
+        </div>
+
+
+    </header>
+
+
+
+    <!-- =========================
+         NAVIGATION
+    ========================== -->
+
+    <nav class="navbar">
+
+
+        <a href="dashboard.html">
+
+            <i data-lucide="layout-dashboard"></i>
+
+            <span>
+                Dashboard
+            </span>
+
+        </a>
+
+
+
+        <a href="equipment.html">
+
+            <i data-lucide="package-search"></i>
+
+            <span>
+                อุปกรณ์
+            </span>
+
+        </a>
+
+
+
+        <a
+            href="borrow.html"
+            class="active"
+        >
+
+            <i data-lucide="clipboard-list"></i>
+
+            <span>
+                รายการยืม
+            </span>
+
+        </a>
+
+
+
+        <a href="return.html">
+
+            <i data-lucide="undo-2"></i>
+
+            <span>
+                คืนอุปกรณ์
+            </span>
+
+        </a>
+
+
+
+        <a href="history.html">
+
+            <i data-lucide="history"></i>
+
+            <span>
+                ประวัติ
+            </span>
+
+        </a>
+
+
+    </nav>
+
+
+
+    <!-- =========================
+         MAIN CONTENT
+    ========================== -->
+
+    <main class="main-content borrow-page">
+
+
+        <!-- หัวข้อ -->
+
+        <section class="dashboard-heading">
+
+
+            <div>
+
+                <h1>
+
+                    <i data-lucide="clipboard-list"></i>
+
+                    ยืมอุปกรณ์
+
+                </h1>
+
+
+                <p>
+                    กรอกข้อมูลเพื่อทำรายการยืมอุปกรณ์
+                </p>
+
+            </div>
+
+
+        </section>
+
+
+
+        <div class="borrow-layout">
+
+
+
+            <!-- =========================
+                 FORM
+            ========================== -->
+
+            <section class="borrow-form-container">
+
+
+                <div class="form-step-title">
+
+
+                    <div class="step-number">
+                        1
+                    </div>
+
+
+                    <div>
+
+                        <h2>
+                            ข้อมูลการยืมอุปกรณ์
+                        </h2>
+
+                        <p>
+                            กรุณากรอกข้อมูลให้ครบถ้วน
+                        </p>
+
+                    </div>
+
+
+                </div>
+
+
+
+                <!-- เลือกอุปกรณ์ -->
+
+                <div class="form-group">
+
+
+                    <label>
+
+                        <i data-lucide="package"></i>
+
+                        เลือกอุปกรณ์
+
+                        <span class="required">*</span>
+
+                    </label>
+
+
+                    <select id="equipmentSelect">
+
+                        <option value="">
+                            -- กรุณาเลือกอุปกรณ์ --
+                        </option>
+
+                        <option value="Projector Epson EB-X05">
+                            Projector Epson EB-X05
+                        </option>
+
+                        <option value="Laptop Dell">
+                            Laptop Dell
+                        </option>
+
+                        <option value="Camera Sony">
+                            Camera Sony
+                        </option>
+
+                        <option value="Microphone">
+                            Microphone
+                        </option>
+
+                    </select>
+
+
+                </div>
+
+
+
+                <!-- จำนวน + ชื่อ -->
+
+                <div class="form-row">
+
+
+                    <div class="form-group">
+
+
+                        <label>
+
+                            <i data-lucide="boxes"></i>
+
+                            จำนวนที่ยืม
+
+                            <span class="required">*</span>
+
+                        </label>
+
+
+                        <div class="quantity-control">
+
+
+                            <button
+                                type="button"
+                                id="decreaseButton"
+                            >
+
+                                <i data-lucide="minus"></i>
+
+                            </button>
+
+
+                            <input
+                                type="number"
+                                id="quantity"
+                                value="1"
+                                min="1"
+                            >
+
+
+                            <button
+                                type="button"
+                                id="increaseButton"
+                            >
+
+                                <i data-lucide="plus"></i>
+
+                            </button>
+
+
+                        </div>
+
+
+                    </div>
+
+
+
+                    <div class="form-group">
+
+
+                        <label>
+
+                            <i data-lucide="user"></i>
+
+                            ชื่อผู้ยืม
+
+                            <span class="required">*</span>
+
+                        </label>
+
+
+                        <input
+                            type="text"
+                            id="borrowerName"
+                            placeholder="กรอกชื่อผู้ยืม"
+                        >
+
+
+                    </div>
+
+
+                </div>
+
+
+
+                <!-- วันที่ -->
+
+                <div class="form-row">
+
+
+                    <div class="form-group">
+
+
+                        <label>
+
+                            <i data-lucide="calendar-days"></i>
+
+                            วันที่ยืม
+
+                            <span class="required">*</span>
+
+                        </label>
+
+
+                        <div class="date-input-wrapper">
+
+                            <input
+                                type="date"
+                                id="borrowDate"
+                            >
+
+                            <i data-lucide="calendar"></i>
+
+                        </div>
+
+
+                    </div>
+
+
+
+                    <div class="form-group">
+
+
+                        <label>
+
+                            <i data-lucide="calendar-check"></i>
+
+                            วันที่คืน
+
+                            <span class="required">*</span>
+
+                        </label>
+
+
+                        <div class="date-input-wrapper">
+
+                            <input
+                                type="date"
+                                id="returnDate"
+                            >
+
+                            <i data-lucide="calendar"></i>
+
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+
+
+
+                <!-- หมายเหตุ -->
+
+                <div class="form-group">
+
+
+                    <label>
+
+                        <i data-lucide="message-square"></i>
+
+                        หมายเหตุ (ถ้ามี)
+
+                    </label>
+
+
+                    <div class="textarea-wrapper">
+
+
+                        <textarea
+                            id="borrowNote"
+                            maxlength="500"
+                            placeholder="ระบุรายละเอียดเพิ่มเติม (ถ้ามี)"
+                        ></textarea>
+
+
+                        <span id="characterCount">
+                            0/500
+                        </span>
+
+
+                    </div>
+
+
+                </div>
+
+
+
+                <!-- =========================
+                     OTP
+                ========================== -->
+
+                <section
+                    class="otp-container"
+                    id="otpContainer"
+                >
+
+
+                    <div class="otp-header">
+
+
+                        <div class="otp-title">
+
+
+                            <div class="otp-icon">
+
+                                <i data-lucide="shield-check"></i>
+
+                            </div>
+
+
+                            <div>
+
+                                <h3>
+                                    ยืนยันตัวตนด้วย OTP
+                                </h3>
+
+                                <p>
+                                    กรอกรหัส OTP จำนวน 6 หลัก
+                                </p>
+
+                            </div>
+
+
+                        </div>
+
+
+                    </div>
+
+
+
+                    <!-- ช่อง OTP -->
+
+                    <div class="otp-content">
+
+
+                        <div class="otp-inputs">
+
+
+                            <input
+                                type="text"
+                                maxlength="1"
+                                class="otp-input"
+                                inputmode="numeric"
+                            >
+
+                            <input
+                                type="text"
+                                maxlength="1"
+                                class="otp-input"
+                                inputmode="numeric"
+                            >
+
+                            <input
+                                type="text"
+                                maxlength="1"
+                                class="otp-input"
+                                inputmode="numeric"
+                            >
+
+                            <input
+                                type="text"
+                                maxlength="1"
+                                class="otp-input"
+                                inputmode="numeric"
+                            >
+
+                            <input
+                                type="text"
+                                maxlength="1"
+                                class="otp-input"
+                                inputmode="numeric"
+                            >
+
+                            <input
+                                type="text"
+                                maxlength="1"
+                                class="otp-input"
+                                inputmode="numeric"
+                            >
+
+
+                        </div>
+
+
+
+                        <!-- ปุ่มส่ง OTP อยู่ด้านล่าง -->
+
+                        <button
+                            type="button"
+                            id="sendOtpButton"
+                            class="send-otp-button"
+                        >
+
+                            <i data-lucide="send"></i>
+
+                            ส่งรหัส OTP
+
+                        </button>
+
+
+
+                        <div class="otp-timer">
+
+
+                            <i data-lucide="clock"></i>
+
+
+                            <span>
+                                รหัสหมดอายุใน
+                            </span>
+
+
+                            <strong id="otpTimer">
+                                01:00
+                            </strong>
+
+
+                        </div>
+
+
+
+                        <p
+                            id="otpMessage"
+                            class="otp-message"
+                        ></p>
+
+
+                    </div>
+
+
+                </section>
+
+
+
+                <!-- =========================
+                     TERMS
+                ========================== -->
+
+                <div class="terms-container">
+
+
+                    <label class="terms-checkbox">
+
+
+                        <input
+                            type="checkbox"
+                            id="termsCheckbox"
+                        >
+
+
+                        <span class="custom-checkbox"></span>
+
+
+                        <span>
+
+                            ฉันยอมรับและยินยอมตาม
+
+                            <a
+                                href="#"
+                                id="termsLink"
+                            >
+
+                                เงื่อนไขการยืมอุปกรณ์
+
+                            </a>
+
+
+                        </span>
+
+
+                    </label>
+
+
+                </div>
+
+
+
+                <!-- BUTTON -->
+
+                <div class="form-actions">
+
+
+                    <button
+                        type="button"
+                        id="resetButton"
+                        class="reset-button"
+                    >
+
+                        <i data-lucide="rotate-ccw"></i>
+
+                        ล้างข้อมูล
+
+                    </button>
+
+
+
+                    <button
+                        type="button"
+                        id="confirmBorrowButton"
+                        class="confirm-borrow-button"
+                        disabled
+                    >
+
+                        <i data-lucide="clipboard-check"></i>
+
+                        ยืนยันการยืม
+
+                    </button>
+
+
+                </div>
+
+
+            </section>
+
+
+
+            <!-- =========================
+                 SIDEBAR
+            ========================== -->
+
+            <aside class="borrow-sidebar">
+
+
+                <section class="progress-container">
+
+
+                    <h2>
+
+                        <i data-lucide="clipboard-check"></i>
+
+                        ขั้นตอนการยืมอุปกรณ์
+
+                    </h2>
+
+
+                    <div class="progress-list">
+
+
+                        <div class="progress-item completed">
+
+                            <div class="progress-number">
+                                1
+                            </div>
+
+                            <div class="progress-info">
+
+                                <h3>
+                                    เลือกอุปกรณ์
+                                </h3>
+
+                                <p>
+                                    เลือกอุปกรณ์ที่ต้องการยืม
+                                </p>
+
+                            </div>
+
+                            <i data-lucide="check-circle"></i>
+
+                        </div>
+
+
+
+                        <div class="progress-item completed">
+
+                            <div class="progress-number">
+                                2
+                            </div>
+
+                            <div class="progress-info">
+
+                                <h3>
+                                    กรอกข้อมูล
+                                </h3>
+
+                                <p>
+                                    ระบุข้อมูลและวันที่ยืม-คืน
+                                </p>
+
+                            </div>
+
+                            <i data-lucide="check-circle"></i>
+
+                        </div>
+
+
+
+                        <div class="progress-item active">
+
+                            <div class="progress-number">
+                                3
+                            </div>
+
+                            <div class="progress-info">
+
+                                <h3>
+                                    ยืนยัน OTP
+                                </h3>
+
+                                <p>
+                                    กรอกรหัส OTP ที่ได้รับ
+                                </p>
+
+                            </div>
+
+                            <i data-lucide="circle"></i>
+
+                        </div>
+
+
+
+                        <div class="progress-item">
+
+                            <div class="progress-number">
+                                4
+                            </div>
+
+                            <div class="progress-info">
+
+                                <h3>
+                                    ยืนยันการยืม
+                                </h3>
+
+                                <p>
+                                    ระบบจะบันทึกรายการ
+                                </p>
+
+                            </div>
+
+                            <i data-lucide="circle"></i>
+
+                        </div>
+
+
+                    </div>
+
+
+                </section>
+
+
+
+                <section class="borrow-info-box">
+
+
+                    <h2>
+
+                        <i data-lucide="lightbulb"></i>
+
+                        หมายเหตุ
+
+                    </h2>
+
+
+                    <ul>
+
+                        <li>
+                            วันที่คืนต้องไม่ก่อนวันที่ยืม
+                        </li>
+
+                        <li>
+                            กรุณาตรวจสอบข้อมูลก่อนยืนยัน
+                        </li>
+
+                        <li>
+                            รหัส OTP มีอายุ 1 นาที
+                        </li>
+
+                        <li>
+                            กรุณาคืนอุปกรณ์ตามกำหนด
+                        </li>
+
+                    </ul>
+
+
+                </section>
+
+
+            </aside>
+
+
+        </div>
+
+
+    </main>
+
+
+</div>
+
+
+
+<!-- =========================
+     TERMS MODAL
+========================= -->
+
+<div
+    class="modal"
+    id="termsModal"
+>
+
+
+    <div class="modal-content terms-modal">
+
+
+        <button
+            type="button"
+            class="modal-close"
+            id="closeTermsModal"
+        >
+            ×
+        </button>
+
+
+        <h2>
+            เงื่อนไขการยืมอุปกรณ์
+        </h2>
+
+
+        <div class="terms-content">
+
+
+            <ol>
+
+                <li>
+                    ผู้ยืมต้องใช้อุปกรณ์ตามวัตถุประสงค์
+                </li>
+
+                <li>
+                    ผู้ยืมต้องดูแลรักษาอุปกรณ์
+                </li>
+
+                <li>
+                    ต้องคืนอุปกรณ์ภายในวันที่กำหนด
+                </li>
+
+                <li>
+                    หากอุปกรณ์เสียหายต้องแจ้งผู้ดูแล
+                </li>
+
+                <li>
+                    ผู้ยืมยอมรับเงื่อนไขของระบบ
+                </li>
+
+            </ol>
+
+
+        </div>
+
+
+        <button
+            type="button"
+            id="acceptTermsButton"
+            class="confirm-borrow-button"
+        >
+
+            ยอมรับเงื่อนไข
+
+        </button>
+
+
+    </div>
+
+
+</div>
+
+
+
+<!-- =========================
+     JAVASCRIPT
+========================= -->
+
+<script>
+
+
+/* =========================
+   INITIALIZE ICONS
+========================= */
+
+lucide.createIcons();
+
+
+
+/* =========================
+   ELEMENTS
+========================= */
+
+const equipmentSelect =
+    document.getElementById("equipmentSelect");
+
+const quantityInput =
+    document.getElementById("quantity");
+
+const decreaseButton =
+    document.getElementById("decreaseButton");
+
+const increaseButton =
+    document.getElementById("increaseButton");
+
+const borrowerName =
+    document.getElementById("borrowerName");
+
+const borrowDate =
+    document.getElementById("borrowDate");
+
+const returnDate =
+    document.getElementById("returnDate");
+
+const borrowNote =
+    document.getElementById("borrowNote");
+
+const characterCount =
+    document.getElementById("characterCount");
+
+const sendOtpButton =
+    document.getElementById("sendOtpButton");
+
+const otpInputs =
+    document.querySelectorAll(".otp-input");
+
+const otpTimer =
+    document.getElementById("otpTimer");
+
+const otpMessage =
+    document.getElementById("otpMessage");
+
+const termsCheckbox =
+    document.getElementById("termsCheckbox");
+
+const confirmBorrowButton =
+    document.getElementById("confirmBorrowButton");
+
+const resetButton =
+    document.getElementById("resetButton");
+
+
+/* =========================
+   QUANTITY CONTROL
+========================= */
+
+increaseButton.addEventListener(
+
+    "click",
+
+    function () {
+
+        quantityInput.value =
+            Number(quantityInput.value) + 1;
+
+    }
+
+);
+
+
+decreaseButton.addEventListener(
+
+    "click",
+
+    function () {
+
+        if (
+            Number(quantityInput.value) > 1
+        ) {
+
+            quantityInput.value =
+                Number(quantityInput.value) - 1;
+
+        }
+
+    }
+
+);
+
+
+/* =========================
+   DATE SETTINGS
+========================= */
+
+const today =
+    new Date()
+        .toISOString()
+        .split("T")[0];
+
+
+borrowDate.min =
+    today;
+
+returnDate.min =
+    today;
+
+
+/* เมื่อเลือกวันที่ยืม */
+
+borrowDate.addEventListener(
+
+    "change",
+
+    function () {
+
+        returnDate.min =
+            borrowDate.value;
+
+
+        if (
+
+            returnDate.value
+
+            &&
+
+            returnDate.value <
+            borrowDate.value
+
+        ) {
+
+            returnDate.value =
+                borrowDate.value;
+
+        }
+
+    }
+
+);
+
+
+/* =========================
+   CHARACTER COUNT
+========================= */
+
+borrowNote.addEventListener(
+
+    "input",
+
+    function () {
+
+        characterCount.textContent =
+            borrowNote.value.length +
+            "/500";
+
+    }
+
+);
+
+
+/* =========================
+   OTP SYSTEM
+========================= */
+
+let generatedOtp = "";
+
+let otpVerified = false;
+
+let otpTime = 60;
+
+let otpInterval = null;
+
+let otpExpired = false;
+
+
+/* ส่ง OTP */
+
+sendOtpButton.addEventListener(
+
+    "click",
+
+    function () {
+
+
+        /* สร้าง OTP 6 หลัก */
+
+        generatedOtp =
+            Math.floor(
+
+                100000 +
+
+                Math.random() *
+                900000
+
+            ).toString();
+
+
+        /*
+            ตัวอย่างระบบจำลอง
+
+            ในระบบจริงควรส่ง OTP
+            ผ่าน Email หรือ SMS
+        */
+
+        alert(
+
+            "รหัส OTP ของคุณคือ: " +
+            generatedOtp
+
+        );
+
+
+        otpVerified =
+            false;
+
+
+        otpExpired =
+            false;
+
+
+        otpTime =
+            60;
+
+
+        clearInterval(
+            otpInterval
+        );
+
+
+        otpInputs.forEach(
+
+            function (input) {
+
+                input.value = "";
+
+            }
+
+        );
+
+
+        otpMessage.textContent =
+            "ส่งรหัส OTP เรียบร้อยแล้ว";
+
+
+        otpMessage.className =
+            "otp-message success";
+
+
+        sendOtpButton.disabled =
+            true;
+
+
+        sendOtpButton.innerHTML =
+            `
+            <i data-lucide="check"></i>
+            ส่ง OTP แล้ว
+            `;
+
+
+        lucide.createIcons();
+
+
+        otpInputs[0].focus();
+
+
+        startOtpTimer();
+
+
+        updateConfirmButton();
+
+    }
+
+);
+
+
+/* เริ่มจับเวลา */
+
+function startOtpTimer() {
+
+
+    otpTimer.textContent =
+        "01:00";
+
+
+    otpInterval =
+        setInterval(
+
+            function () {
+
+
+                otpTime--;
+
+
+                const minutes =
+                    Math.floor(
+                        otpTime / 60
+                    );
+
+
+                const seconds =
+                    otpTime % 60;
+
+
+                otpTimer.textContent =
+
+                    String(minutes)
+                        .padStart(2, "0")
+
+                    +
+
+                    ":"
+
+                    +
+
+                    String(seconds)
+                        .padStart(2, "0");
+
+
+                if (
+                    otpTime <= 0
+                ) {
+
+                    clearInterval(
+                        otpInterval
+                    );
+
+
+                    otpExpired =
+                        true;
+
+
+                    otpVerified =
+                        false;
+
+
+                    generatedOtp =
+                        "";
+
+
+                    otpTimer.textContent =
+                        "หมดเวลา";
+
+
+                    otpMessage.textContent =
+                        "รหัส OTP หมดอายุ กรุณาส่งรหัสใหม่";
+
+
+                    otpMessage.className =
+                        "otp-message error";
+
+
+                    sendOtpButton.disabled =
+                        false;
+
+
+                    sendOtpButton.innerHTML =
+                        `
+                        <i data-lucide="refresh-cw"></i>
+                        ส่งรหัสใหม่
+                        `;
+
+
+                    lucide.createIcons();
+
+
+                    updateConfirmButton();
+
+                }
+
+
+            },
+
+            1000
+
+        );
+
+}
+
+
+/* =========================
+   OTP INPUT
+========================= */
+
+otpInputs.forEach(
+
+    function (
+        input,
+        index
+    ) {
+
+
+        input.addEventListener(
+
+            "input",
+
+            function () {
+
+
+                input.value =
+                    input.value.replace(
+                        /[^0-9]/g,
+                        ""
+                    );
+
+
+                if (
+
+                    input.value.length === 1
+
+                    &&
+
+                    index <
+                    otpInputs.length - 1
+
+                ) {
+
+                    otpInputs[
+                        index + 1
+                    ].focus();
+
+                }
+
+
+                checkOtp();
+
+            }
+
+        );
+
+
+        input.addEventListener(
+
+            "keydown",
+
+            function (event) {
+
+
+                if (
+
+                    event.key === "Backspace"
+
+                    &&
+
+                    input.value === ""
+
+                    &&
+
+                    index > 0
+
+                ) {
+
+                    otpInputs[
+                        index - 1
+                    ].focus();
+
+                }
+
+            }
+
+        );
+
+    }
+
+);
+
+
+/* =========================
+   CHECK OTP
+========================= */
+
+function checkOtp() {
+
+
+    let enteredOtp = "";
+
+
+    otpInputs.forEach(
+
+        function (input) {
+
+            enteredOtp +=
+                input.value;
+
+        }
+
+    );
+
+
+    if (
+        enteredOtp.length !== 6
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        otpExpired
+    ) {
+
+        otpMessage.textContent =
+            "รหัส OTP หมดอายุแล้ว";
+
+
+        otpMessage.className =
+            "otp-message error";
+
+
+        return;
+
+    }
+
+
+    if (
+        enteredOtp === generatedOtp
+    ) {
+
+        otpVerified =
+            true;
+
+
+        clearInterval(
+            otpInterval
+        );
+
+
+        otpMessage.textContent =
+            "✓ ยืนยัน OTP สำเร็จ";
+
+
+        otpMessage.className =
+            "otp-message success";
+
+
+        otpInputs.forEach(
+
+            function (input) {
+
+                input.disabled =
+                    true;
+
+            }
+
+        );
+
+
+        updateConfirmButton();
+
+    }
+
+    else {
+
+        otpVerified =
+            false;
+
+
+        otpMessage.textContent =
+            "✕ รหัส OTP ไม่ถูกต้อง";
+
+
+        otpMessage.className =
+            "otp-message error";
+
+
+        updateConfirmButton();
+
+    }
+
+}
+
+
+/* =========================
+   TERMS
+========================= */
+
+termsCheckbox.addEventListener(
+
+    "change",
+
+    updateConfirmButton
+
+);
+
+
+/* =========================
+   CONFIRM BUTTON
+========================= */
+
+function updateConfirmButton() {
+
+
+    if (
+
+        otpVerified === true
+
+        &&
+
+        termsCheckbox.checked === true
+
+    ) {
+
+        confirmBorrowButton.disabled =
+            false;
+
+    }
+
+    else {
+
+        confirmBorrowButton.disabled =
+            true;
+
+    }
+
+}
+
+
+/* =========================
+   TERMS MODAL
+========================= */
+
+const termsLink =
+    document.getElementById("termsLink");
+
+const termsModal =
+    document.getElementById("termsModal");
+
+const closeTermsModal =
+    document.getElementById("closeTermsModal");
+
+const acceptTermsButton =
+    document.getElementById("acceptTermsButton");
+
+
+termsLink.addEventListener(
+
+    "click",
+
+    function (event) {
+
+        event.preventDefault();
+
+        termsModal.style.display =
+            "flex";
+
+    }
+
+);
+
+
+closeTermsModal.addEventListener(
+
+    "click",
+
+    function () {
+
+        termsModal.style.display =
+            "none";
+
+    }
+
+);
+
+
+acceptTermsButton.addEventListener(
+
+    "click",
+
+    function () {
+
+        termsCheckbox.checked =
+            true;
+
+
+        termsModal.style.display =
+            "none";
+
+
+        updateConfirmButton();
+
+    }
+
+);
+
+
+/* =========================
+   RESET FORM
+========================= */
+
+resetButton.addEventListener(
+
+    "click",
+
+    function () {
+
+
+        equipmentSelect.value =
+            "";
+
+
+        quantityInput.value =
+            1;
+
+
+        borrowerName.value =
+            "";
+
+
+        borrowDate.value =
+            "";
+
+
+        returnDate.value =
+            "";
+
+
+        borrowNote.value =
+            "";
+
+
+        characterCount.textContent =
+            "0/500";
+
+
+        termsCheckbox.checked =
+            false;
+
+
+        generatedOtp =
+            "";
+
+
+        otpVerified =
+            false;
+
+
+        otpExpired =
+            false;
+
+
+        otpTime =
+            60;
+
+
+        clearInterval(
+            otpInterval
+        );
+
+
+        otpInputs.forEach(
+
+            function (input) {
+
+                input.value =
+                    "";
+
+                input.disabled =
+                    false;
+
+            }
+
+        );
+
+
+        otpTimer.textContent =
+            "01:00";
+
+
+        otpMessage.textContent =
+            "";
+
+
+        sendOtpButton.disabled =
+            false;
+
+
+        sendOtpButton.innerHTML =
+            `
+            <i data-lucide="send"></i>
+            ส่งรหัส OTP
+            `;
+
+
+        confirmBorrowButton.disabled =
+            true;
+
+
+        lucide.createIcons();
+
+    }
+
+);
+
+
+/* =========================
+   CONFIRM BORROW
+========================= */
+
+confirmBorrowButton.addEventListener(
+
+    "click",
+
+    function () {
+
+
+        if (
+            equipmentSelect.value === ""
+        ) {
+
+            alert(
+                "กรุณาเลือกอุปกรณ์"
+            );
+
+            return;
+
+        }
+
+
+        if (
+            borrowerName.value.trim() === ""
+        ) {
+
+            alert(
+                "กรุณากรอกชื่อผู้ยืม"
+            );
+
+            return;
+
+        }
+
+
+        if (
+            borrowDate.value === ""
+        ) {
+
+            alert(
+                "กรุณาเลือกวันที่ยืม"
+            );
+
+            return;
+
+        }
+
+
+        if (
+            returnDate.value === ""
+        ) {
+
+            alert(
+                "กรุณาเลือกวันที่คืน"
+            );
+
+            return;
+
+        }
+
+
+        if (
+
+            returnDate.value <
+            borrowDate.value
+
+        ) {
+
+            alert(
+                "วันที่คืนต้องไม่ก่อนวันที่ยืม"
+            );
+
+            return;
+
+        }
+
+
+        if (
+            !otpVerified
+        ) {
+
+            alert(
+                "กรุณายืนยัน OTP"
+            );
+
+            return;
+
+        }
+
+
+        if (
+            !termsCheckbox.checked
+        ) {
+
+            alert(
+                "กรุณายอมรับเงื่อนไขการยืม"
+            );
+
+            return;
+
+        }
+
+
+        alert(
+
+            "✓ ยืนยันการยืมอุปกรณ์สำเร็จ!"
+
+        );
+
+
+        /*
+        ==================================
+        ในอนาคตสามารถเชื่อมต่อ Database
+        ได้ในส่วนนี้
+        ==================================
+        */
+
+
+        window.location.href =
+            "history.html";
+
+    }
+
+);
+
+
+/* =========================
+   CLOSE MODAL WHEN CLICK OUTSIDE
+========================= */
+
+window.addEventListener(
+
+    "click",
+
+    function (event) {
+
+        if (
+            event.target === termsModal
+        ) {
+
+            termsModal.style.display =
+                "none";
+
+        }
+
+    }
+
+);
+
+
+</script>
+
+
+</body>
+
+</html>
