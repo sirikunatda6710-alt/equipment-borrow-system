@@ -4561,7 +4561,6 @@ document.addEventListener(
 
         updateStatistics();
 
-<script src="app.js"></script>
     }
 );
 });
