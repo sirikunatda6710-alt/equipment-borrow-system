@@ -69,20 +69,34 @@
                 <input
                     type="password"
                     id="password"
-                    placeholder="กรอกรหัสผ่าน"
-                    required
+                    name="password"
                 >
 
                 <button
                     type="button"
                     class="toggle-password"
-                    id="togglePassword"
+                    data-target="password"
                 >
                     แสดง
                 </button>
 
             </div>
-            
+            <div class="password-wrapper">
+            <input
+                type="password"
+                id="confirmPassword"
+                name="confirmPassword"
+            >
+
+            <button
+                type="button"
+                class="toggle-password"
+                data-target="confirmPassword"
+            >
+                แสดง
+            </button>
+            </div>
+                        
 
 
             <!-- ลืมรหัสผ่าน -->
