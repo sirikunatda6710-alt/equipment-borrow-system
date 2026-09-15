@@ -1,22 +1,37 @@
 (function () {
   'use strict';
 
+  // ============================================================
+  // Firebase configuration
+  // ============================================================
+  const FIREBASE_CONFIG = {
+    apiKey: 'AIzaSyC3JRPuC-2LCs8nqiLy_LKvi72NyLLd7_U',
+    authDomain: 'equipment-borrow-1303c.firebaseapp.com',
+    projectId: 'equipment-borrow-1303c',
+    storageBucket: 'equipment-borrow-1303c.firebasestorage.app',
+    messagingSenderId: '433020378004',
+    appId: '1:433020378004:web:d574cf9e4c7fafa4034d81',
+    measurementId: 'G-MFWPB1GBKZ'
+  };
+
+  const FIREBASE_VERSION = '12.19.0';
+
   const KEYS = {
     equipment: 'equipment',
     equipmentData: 'equipment_data',
     history: 'borrow_history',
-    users: 'equipment_users',
     currentUser: 'equipment_current_user',
     loggedIn: 'isLoggedIn',
     userEmail: 'userEmail',
-    userName: 'userName'
+    userName: 'userName',
+    firebaseUid: 'firebaseUid'
   };
 
   const DEFAULT_EQUIPMENT = [
-    { id: 'EQ001', name: 'Projector Epson EB-X05', category: 'เครื่องฉาย', icon: 'projector', total: 10, available: 10, status: 'available', borrower: '', createdAt: new Date().toISOString() },
-    { id: 'EQ002', name: 'กล้อง Nikon D5600', category: 'กล้องถ่ายภาพ', icon: 'camera', total: 5, available: 5, status: 'available', borrower: '', createdAt: new Date().toISOString() },
-    { id: 'EQ003', name: 'ไมโครโฟนไร้สาย', category: 'เครื่องเสียง', icon: 'mic', total: 8, available: 8, status: 'available', borrower: '', createdAt: new Date().toISOString() },
-    { id: 'EQ004', name: 'ลำโพง JBL', category: 'เครื่องเสียง', icon: 'speaker', total: 3, available: 3, status: 'available', borrower: '', createdAt: new Date().toISOString() }
+    { id: 'EQ001', name: 'Projector Epson EB-X05', category: 'เครื่องฉาย', icon: 'projector', total: 10, available: 10, status: 'available', borrower: '' },
+    { id: 'EQ002', name: 'กล้อง Nikon D5600', category: 'กล้องถ่ายภาพ', icon: 'camera', total: 5, available: 5, status: 'available', borrower: '' },
+    { id: 'EQ003', name: 'ไมโครโฟนไร้สาย', category: 'เครื่องเสียง', icon: 'mic', total: 8, available: 8, status: 'available', borrower: '' },
+    { id: 'EQ004', name: 'ลำโพง JBL', category: 'เครื่องเสียง', icon: 'speaker', total: 3, available: 3, status: 'available', borrower: '' }
   ];
 
   const STATUS_MAP = {
@@ -28,44 +43,68 @@
     unavailable: 'unavailable'
   };
 
+  let db = null;
+  let auth = null;
+  let firebaseReadyPromise = null;
+
   function qs(selector, root = document) { return root.querySelector(selector); }
   function qsa(selector, root = document) { return Array.from(root.querySelectorAll(selector)); }
+
   function escapeHtml(value) {
-    return String(value ?? '').replace(/[&<>'"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[c]));
+    return String(value ?? '').replace(/[&<>'"]/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+    }[c]));
   }
+
   function parseJSON(key, fallback) {
     try {
       const value = localStorage.getItem(key);
       return value ? JSON.parse(value) : fallback;
-    } catch (_) { return fallback; }
+    } catch (_) {
+      return fallback;
+    }
   }
-  function saveJSON(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
-  function todayISO() { return new Date().toISOString().slice(0, 10); }
+
+  function saveJSON(key, value) {
+    localStorage.setItem(key, JSON.stringify(value));
+  }
+
+  function todayISO() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
   function formatDate(value) {
     if (!value) return '-';
     const d = new Date(value);
     if (Number.isNaN(d.getTime())) return value;
     return d.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
   }
+
   function formatDateTime(value) {
     if (!value) return '-';
     const d = new Date(value);
     if (Number.isNaN(d.getTime())) return value;
     return d.toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
   }
+
   function makeId(prefix) {
     return prefix + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 5).toUpperCase();
   }
+
   function statusToThai(status) {
-    return ({ available:'พร้อมใช้งาน', borrowed:'กำลังถูกยืม', unavailable:'ไม่พร้อมใช้งาน' }[STATUS_MAP[status] || status]) || status || '-';
+    return ({ available: 'พร้อมใช้งาน', borrowed: 'กำลังถูกยืม', unavailable: 'ไม่พร้อมใช้งาน' }[STATUS_MAP[status] || status]) || status || '-';
   }
-  function normalizeStatus(status) { return STATUS_MAP[status] || 'available'; }
+
+  function normalizeStatus(status) {
+    return STATUS_MAP[status] || 'available';
+  }
 
   function normalizeEquipment(item) {
     const total = Math.max(1, Number(item.total ?? item.quantity ?? 1));
     let available = Number(item.available);
     if (!Number.isFinite(available)) available = total;
     available = Math.max(0, Math.min(total, available));
+
     return {
       id: String(item.id ?? item.equipmentId ?? '').trim(),
       name: String(item.name ?? item.equipmentName ?? '').trim(),
@@ -75,11 +114,12 @@
       available,
       status: normalizeStatus(item.status || (available < total ? 'borrowed' : 'available')),
       borrower: String(item.borrower ?? '').trim(),
-      createdAt: item.createdAt || new Date().toISOString()
+      createdAt: item.createdAt || new Date().toISOString(),
+      updatedAt: item.updatedAt || new Date().toISOString()
     };
   }
 
-  function getEquipment() {
+  function getEquipmentLocal() {
     let data = parseJSON(KEYS.equipment, null);
     if (!Array.isArray(data)) data = parseJSON(KEYS.equipmentData, null);
     if (!Array.isArray(data)) data = DEFAULT_EQUIPMENT.map(x => ({ ...x }));
@@ -88,19 +128,19 @@
     return data;
   }
 
-  function saveEquipment(data) {
+  function saveEquipmentLocal(data) {
     const normalized = data.map(normalizeEquipment);
     saveJSON(KEYS.equipment, normalized);
-    // Keep the old key in sync for compatibility with earlier pages/scripts.
     saveJSON(KEYS.equipmentData, normalized);
     window.dispatchEvent(new CustomEvent('equipmentDataChanged'));
   }
 
-  function getHistory() {
+  function getHistoryLocal() {
     const data = parseJSON(KEYS.history, []);
     return Array.isArray(data) ? data : [];
   }
-  function saveHistory(data) {
+
+  function saveHistoryLocal(data) {
     saveJSON(KEYS.history, data);
     window.dispatchEvent(new CustomEvent('historyDataChanged'));
   }
@@ -110,8 +150,210 @@
     return localStorage.getItem(KEYS.userName) || current?.name || current?.email || localStorage.getItem(KEYS.userEmail) || 'ผู้ใช้งาน';
   }
 
+  function isLoggedIn() {
+    return !!(auth && auth.currentUser);
+  }
+
+  function firebaseErrorMessage(error) {
+    const code = error?.code || '';
+    const map = {
+      'auth/email-already-in-use': 'อีเมลนี้มีบัญชีอยู่แล้ว กรุณาเข้าสู่ระบบ',
+      'auth/invalid-email': 'รูปแบบอีเมลไม่ถูกต้อง',
+      'auth/weak-password': 'รหัสผ่านไม่ปลอดภัยเพียงพอ',
+      'auth/user-not-found': 'ไม่พบบัญชีผู้ใช้นี้',
+      'auth/wrong-password': 'อีเมลหรือรหัสผ่านไม่ถูกต้อง',
+      'auth/invalid-credential': 'อีเมลหรือรหัสผ่านไม่ถูกต้อง',
+      'auth/too-many-requests': 'มีการลองเข้าสู่ระบบหลายครั้งเกินไป กรุณาลองใหม่ภายหลัง',
+      'auth/network-request-failed': 'ไม่สามารถเชื่อมต่อ Firebase ได้ กรุณาตรวจสอบอินเทอร์เน็ต',
+      'auth/missing-password': 'กรุณากรอกรหัสผ่าน',
+      'auth/expired-action-code': 'ลิงก์รีเซ็ตรหัสผ่านหมดอายุแล้ว',
+      'auth/invalid-action-code': 'ลิงก์รีเซ็ตรหัสผ่านไม่ถูกต้องหรือถูกใช้ไปแล้ว'
+    };
+    return map[code] || error?.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่';
+  }
+
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const existing = document.querySelector(`script[src="${src}"]`);
+      if (existing) {
+        if (existing.dataset.loaded === 'true') return resolve();
+        existing.addEventListener('load', resolve, { once: true });
+        existing.addEventListener('error', reject, { once: true });
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = src;
+      script.async = false;
+      script.addEventListener('load', () => {
+        script.dataset.loaded = 'true';
+        resolve();
+      }, { once: true });
+      script.addEventListener('error', () => reject(new Error('โหลด Firebase SDK ไม่สำเร็จ')), { once: true });
+      document.head.appendChild(script);
+    });
+  }
+
+  async function initFirebase() {
+    if (firebaseReadyPromise) return firebaseReadyPromise;
+
+    firebaseReadyPromise = (async () => {
+      if (window.firebase?.apps?.length) {
+        db = window.firebase.firestore();
+        auth = window.firebase.auth();
+        return true;
+      }
+
+      const base = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}`;
+      await loadScript(`${base}/firebase-app-compat.js`);
+      await loadScript(`${base}/firebase-auth-compat.js`);
+      await loadScript(`${base}/firebase-firestore-compat.js`);
+
+      window.firebase.initializeApp(FIREBASE_CONFIG);
+      db = window.firebase.firestore();
+      auth = window.firebase.auth();
+      return true;
+    })().catch(error => {
+      console.error(error);
+      return false;
+    });
+
+    return firebaseReadyPromise;
+  }
+
+  async function getUserProfile(user) {
+    if (!user || !db) return null;
+    try {
+      const snap = await db.collection('users').doc(user.uid).get();
+      return snap.exists ? snap.data() : null;
+    } catch (error) {
+      console.warn('อ่าน profile จาก Firestore ไม่สำเร็จ:', error);
+      return null;
+    }
+  }
+
+  async function ensureEquipmentSeed() {
+    if (!db || !auth?.currentUser) return;
+    try {
+      const snapshot = await db.collection('equipment').limit(1).get();
+      if (!snapshot.empty) return;
+
+      const batch = db.batch();
+      DEFAULT_EQUIPMENT.forEach(item => {
+        const doc = db.collection('equipment').doc(item.id);
+        batch.set(doc, {
+          ...item,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+      });
+      await batch.commit();
+    } catch (error) {
+      console.warn('Seed equipment ไม่สำเร็จ:', error);
+    }
+  }
+
+  async function loadEquipmentFromFirebase() {
+    if (!db || !auth?.currentUser) return getEquipmentLocal();
+    try {
+      const snap = await db.collection('equipment').get();
+      const data = snap.docs.map(doc => normalizeEquipment({ id: doc.id, ...doc.data() }));
+      if (data.length) {
+        saveEquipmentLocal(data);
+        return data;
+      }
+    } catch (error) {
+      console.warn('อ่านอุปกรณ์จาก Firebase ไม่สำเร็จ:', error);
+    }
+    return getEquipmentLocal();
+  }
+
+  async function saveEquipmentFirebase(item) {
+    if (!db || !auth?.currentUser) return;
+    const normalized = normalizeEquipment(item);
+    await db.collection('equipment').doc(normalized.id).set({
+      ...normalized,
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+  }
+
+  async function deleteEquipmentFirebase(id) {
+    if (!db || !auth?.currentUser) return;
+    await db.collection('equipment').doc(id).delete();
+  }
+
+  async function loadHistoryFromFirebase() {
+    if (!db || !auth?.currentUser) return getHistoryLocal();
+    try {
+      const snap = await db.collection('history').orderBy('createdAt', 'desc').get();
+      const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      saveHistoryLocal(data);
+      return data;
+    } catch (error) {
+      // หากยังไม่มี index ให้ fallback โดยไม่เรียง
+      try {
+        const snap = await db.collection('history').get();
+        const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        data.sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+        saveHistoryLocal(data);
+        return data;
+      } catch (fallbackError) {
+        console.warn('อ่านประวัติจาก Firebase ไม่สำเร็จ:', fallbackError);
+      }
+    }
+    return getHistoryLocal();
+  }
+
+  async function saveHistoryFirebase(record) {
+    if (!db || !auth?.currentUser) return;
+    await db.collection('history').doc(record.id).set({ ...record, updatedAt: new Date().toISOString() }, { merge: true });
+  }
+
+  async function saveBorrowFirebase(record) {
+    if (!db || !auth?.currentUser) return;
+    await db.collection('borrow').doc(record.id).set({ ...record, updatedAt: new Date().toISOString() }, { merge: true });
+  }
+
+  async function updateBorrowFirebase(record) {
+    if (!db || !auth?.currentUser) return;
+    await db.collection('borrow').doc(record.id).set({ ...record, updatedAt: new Date().toISOString() }, { merge: true });
+  }
+
   function initIcons() {
     if (window.lucide?.createIcons) window.lucide.createIcons();
+  }
+
+  // ============================================================
+  // PASSWORD SHOW / HIDE
+  // ============================================================
+  function setupPasswordToggle() {
+    qsa('.toggle-password').forEach(button => {
+      if (button.dataset.passwordToggleReady === 'true') return;
+
+      const wrapper = button.closest('.password-wrapper');
+      const targetId = button.getAttribute('data-target') || button.getAttribute('aria-controls');
+      const input =
+        (wrapper && wrapper.querySelector('input')) ||
+        (targetId ? document.getElementById(targetId) : null);
+
+      if (!input) return;
+
+      button.dataset.passwordToggleReady = 'true';
+      button.type = 'button';
+      button.textContent = input.type === 'text' ? 'ซ่อน' : 'แสดง';
+
+      button.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        input.type = input.type === 'password' ? 'text' : 'password';
+        button.textContent = input.type === 'password' ? 'แสดง' : 'ซ่อน';
+        input.focus();
+        try {
+          const pos = input.value.length;
+          input.setSelectionRange(pos, pos);
+        } catch (_) {}
+      });
+    });
   }
 
   function setupCommonUI() {
@@ -123,92 +365,304 @@
     const closeProfile = qs('#closeProfileModal');
     const editName = qs('#editUserName');
     const saveProfile = qs('#saveProfileButton');
-    if (profileButton && profileModal) {
-      profileButton.addEventListener('click', () => {
-        if (editName) editName.value = getCurrentUserName();
-        profileModal.classList.add('show');
-      });
-    }
-    if (closeProfile && profileModal) closeProfile.addEventListener('click', () => profileModal.classList.remove('show'));
-    if (saveProfile) saveProfile.addEventListener('click', () => {
-      const value = (editName?.value || '').trim();
-      if (!value) return alert('กรุณากรอกชื่อผู้ใช้งาน');
-      localStorage.setItem(KEYS.userName, value);
-      qsa('#userName, .profile-name, #welcomeUserName').forEach(el => { el.textContent = value; });
-      if (profileModal) profileModal.classList.remove('show');
+
+    profileButton?.addEventListener('click', () => {
+      if (editName) editName.value = getCurrentUserName();
+      profileModal?.classList.add('show');
     });
 
-    const logout = qs('#logoutButton');
-    if (logout) logout.addEventListener('click', () => {
+    closeProfile?.addEventListener('click', () => profileModal?.classList.remove('show'));
+
+    saveProfile?.addEventListener('click', async () => {
+      const value = (editName?.value || '').trim();
+      if (!value) return alert('กรุณากรอกชื่อผู้ใช้งาน');
+
+      localStorage.setItem(KEYS.userName, value);
+      const current = parseJSON(KEYS.currentUser, {});
+      saveJSON(KEYS.currentUser, { ...current, name: value });
+      qsa('#userName, .profile-name, #welcomeUserName').forEach(el => { el.textContent = value; });
+
+      try {
+        if (db && auth?.currentUser) {
+          await db.collection('users').doc(auth.currentUser.uid).set({ name: value, updatedAt: new Date().toISOString() }, { merge: true });
+        }
+      } catch (error) {
+        console.warn(error);
+      }
+
+      profileModal?.classList.remove('show');
+    });
+
+    qs('#logoutButton')?.addEventListener('click', async () => {
+      try { await auth?.signOut(); } catch (_) {}
       localStorage.removeItem(KEYS.loggedIn);
       localStorage.removeItem(KEYS.currentUser);
       localStorage.removeItem(KEYS.userEmail);
+      localStorage.removeItem(KEYS.userName);
+      localStorage.removeItem(KEYS.firebaseUid);
       window.location.href = 'index.html';
     });
 
     const notificationCount = qs('#notificationCount');
     if (notificationCount) {
-      const active = getHistory().filter(h => h.status === 'borrowing' && !h.actualReturnDate).length;
+      const active = getHistoryLocal().filter(h => h.status === 'borrowing' && !h.actualReturnDate).length;
       notificationCount.textContent = active;
       notificationCount.style.display = active ? '' : 'none';
     }
 
     const headerSearch = qs('#headerSearch');
-    if (headerSearch) {
-      headerSearch.addEventListener('keydown', e => {
-        if (e.key === 'Enter') {
-          const term = headerSearch.value.trim();
-          if (term && location.pathname.endsWith('equipment.html')) {
-            const s = qs('#equipmentSearch'); if (s) { s.value = term; s.dispatchEvent(new Event('input')); }
-          } else if (term && location.pathname.endsWith('history.html')) {
-            const s = qs('#historySearch'); if (s) { s.value = term; s.dispatchEvent(new Event('input')); }
-          }
-        }
-      });
-    }
-  }
-
-  function setupLogin() {
-    const form = qs('#loginForm');
-    if (!form) return;
-    form.addEventListener('submit', e => {
-      e.preventDefault();
-      const email = (qs('#email')?.value || '').trim();
-      const password = qs('#password')?.value || '';
-      if (!email || !password) return alert('กรุณากรอกอีเมลและรหัสผ่าน');
-      const users = parseJSON(KEYS.users, []);
-      const found = Array.isArray(users) ? users.find(u => u.email === email && u.password === password) : null;
-      // Preserve the original demo behaviour when no registered-user database exists.
-      if (Array.isArray(users) && users.length && !found) return alert('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
-      localStorage.setItem(KEYS.loggedIn, 'true');
-      localStorage.setItem(KEYS.userEmail, email);
-      localStorage.setItem(KEYS.currentUser, JSON.stringify(found || { email }));
-      if (found?.name) localStorage.setItem(KEYS.userName, found.name);
-      window.location.href = 'dashboard.html';
+    headerSearch?.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      const term = headerSearch.value.trim();
+      if (!term) return;
+      if (location.pathname.endsWith('equipment.html')) {
+        const s = qs('#equipmentSearch');
+        if (s) { s.value = term; s.dispatchEvent(new Event('input')); }
+      } else if (location.pathname.endsWith('history.html')) {
+        const s = qs('#historySearch');
+        if (s) { s.value = term; s.dispatchEvent(new Event('input')); }
+      }
     });
   }
 
-  function setupDashboard() {
+  async function setupLogin() {
+    const form = qs('#loginForm');
+    if (!form || !auth) return;
+
+    const remember = qs('#rememberMe');
+    const savedEmail = localStorage.getItem('rememberedEmail');
+    if (savedEmail && qs('#email')) {
+      qs('#email').value = savedEmail;
+      if (remember) remember.checked = true;
+    }
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+
+      const email = (qs('#email')?.value || '').trim().toLowerCase();
+      const password = qs('#password')?.value || '';
+      if (!email || !password) return alert('กรุณากรอกอีเมลและรหัสผ่าน');
+
+      const submitButton = form.querySelector('[type="submit"]');
+      if (submitButton) submitButton.disabled = true;
+
+      try {
+        const credential = await auth.signInWithEmailAndPassword(email, password);
+        const user = credential.user;
+        const profile = await getUserProfile(user);
+        const name = profile?.name || user.displayName || email;
+
+        localStorage.setItem(KEYS.loggedIn, 'true');
+        localStorage.setItem(KEYS.userEmail, email);
+        localStorage.setItem(KEYS.firebaseUid, user.uid);
+        localStorage.setItem(KEYS.userName, name);
+        saveJSON(KEYS.currentUser, { id: user.uid, name, email });
+
+        if (remember?.checked) localStorage.setItem('rememberedEmail', email);
+        else localStorage.removeItem('rememberedEmail');
+
+        await ensureEquipmentSeed();
+        await loadEquipmentFromFirebase();
+        await loadHistoryFromFirebase();
+        window.location.href = 'dashboard.html';
+      } catch (error) {
+        alert(firebaseErrorMessage(error));
+      } finally {
+        if (submitButton) submitButton.disabled = false;
+      }
+    });
+  }
+
+  function passwordValid(password) {
+    return password.length >= 8 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /[0-9]/.test(password);
+  }
+
+  function updatePasswordRules(prefix, password) {
+    const tests = {
+      Length: password.length >= 8,
+      Uppercase: /[A-Z]/.test(password),
+      Lowercase: /[a-z]/.test(password),
+      Number: /[0-9]/.test(password)
+    };
+
+    Object.entries(tests).forEach(([key, ok]) => {
+      const element = qs(`#${prefix}${key}`);
+      if (!element) return;
+      element.classList.toggle('rule-valid', ok);
+      element.classList.toggle('rule-invalid', !ok);
+    });
+  }
+
+  async function setupRegister() {
+    const form = qs('#registerForm');
+    if (!form || !auth) return;
+
+    const password = qs('#password');
+    const confirm = qs('#confirmPassword');
+    password?.addEventListener('input', () => updatePasswordRules('rule', password.value));
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+
+      const name = (qs('#name')?.value || '').trim();
+      const email = (qs('#email')?.value || '').trim().toLowerCase();
+      const pass = password?.value || '';
+      const confirmPass = confirm?.value || '';
+
+      if (!name || !email || !pass || !confirmPass) return alert('กรุณากรอกข้อมูลให้ครบ');
+      if (!passwordValid(pass)) return alert('รหัสผ่านต้องมีอย่างน้อย 8 ตัว มีตัวพิมพ์ใหญ่ ตัวพิมพ์เล็ก และตัวเลข');
+      if (pass !== confirmPass) return alert('รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน');
+
+      const submitButton = form.querySelector('[type="submit"]');
+      if (submitButton) submitButton.disabled = true;
+
+      try {
+        const credential = await auth.createUserWithEmailAndPassword(email, pass);
+        const user = credential.user;
+
+        try {
+          await user.updateProfile({ displayName: name });
+        } catch (_) {}
+
+        await db.collection('users').doc(user.uid).set({
+          uid: user.uid,
+          name,
+          email,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          status: 'active'
+        }, { merge: true });
+
+        await auth.signOut();
+        localStorage.setItem('registerEmail', email);
+        alert('สมัครสมาชิกสำเร็จ กรุณาเข้าสู่ระบบ');
+        window.location.href = 'index.html';
+      } catch (error) {
+        alert(firebaseErrorMessage(error));
+      } finally {
+        if (submitButton) submitButton.disabled = false;
+      }
+    });
+  }
+
+  async function setupForgotPassword() {
+    const form = qs('#forgotPasswordForm');
+    if (!form || !auth) return;
+
+    // รองรับทั้งหน้า Forgot แบบส่งอีเมล และหน้าเดิมที่มีช่อง password ซ้ำอยู่
+    const passwordField = qs('#newPassword');
+    const confirmField = qs('#confirmNewPassword');
+
+    // หากมี password fields อยู่ในหน้า forgot ให้ซ่อนไว้ เพราะการรีเซ็ตที่ถูกต้อง
+    // คือส่งอีเมลจาก Firebase แล้วตั้งรหัสผ่านบนหน้า reset-password
+    if (passwordField) {
+      const pWrap = passwordField.closest('.password-wrapper');
+      const pLabel = qs('label[for="newPassword"]');
+      const cWrap = confirmField?.closest('.password-wrapper');
+      const cLabel = confirmField ? qs('label[for="confirmNewPassword"]') : null;
+      const rules = qs('.password-rules');
+      [passwordField, confirmField, pWrap, cWrap, pLabel, cLabel, rules].filter(Boolean).forEach(el => { el.style.display = 'none'; });
+    }
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const email = (qs('#forgotEmail')?.value || qs('#email')?.value || '').trim().toLowerCase();
+      if (!email) return alert('กรุณากรอกอีเมล');
+
+      const button = form.querySelector('[type="submit"]');
+      if (button) button.disabled = true;
+
+      try {
+        await auth.sendPasswordResetEmail(email, {
+          url: `${window.location.origin}${window.location.pathname.replace('forgot-password.html', 'reset-password.html')}`,
+          handleCodeInApp: true
+        });
+        alert('ส่งลิงก์รีเซ็ตรหัสผ่านไปที่อีเมลแล้ว กรุณาตรวจสอบกล่องจดหมายและ Spam/Junk');
+      } catch (error) {
+        alert(firebaseErrorMessage(error));
+      } finally {
+        if (button) button.disabled = false;
+      }
+    });
+  }
+
+  function getActionCode() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('oobCode');
+  }
+
+  async function setupResetPassword() {
+    const form = qs('#resetPasswordForm');
+    if (!form || !auth) return;
+
+    const newPassword = qs('#newPassword');
+    const confirm = qs('#confirmNewPassword');
+    const code = getActionCode();
+
+    if (newPassword) newPassword.addEventListener('input', () => updatePasswordRules('resetRule', newPassword.value));
+
+    if (!code) {
+      const submit = form.querySelector('[type="submit"]');
+      if (submit) submit.disabled = true;
+      const warning = document.createElement('p');
+      warning.className = 'login-error';
+      warning.textContent = 'ลิงก์รีเซ็ตรหัสผ่านไม่ถูกต้อง กรุณากดลิงก์จากอีเมลอีกครั้ง';
+      form.prepend(warning);
+      return;
+    }
+
+    try {
+      const email = await auth.verifyPasswordResetCode(code);
+      const emailField = qs('#resetEmail');
+      if (emailField) emailField.value = email;
+    } catch (error) {
+      const submit = form.querySelector('[type="submit"]');
+      if (submit) submit.disabled = true;
+      alert(firebaseErrorMessage(error));
+      return;
+    }
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const pass = newPassword?.value || '';
+      const confirmPass = confirm?.value || '';
+      if (!passwordValid(pass)) return alert('รหัสผ่านต้องมีอย่างน้อย 8 ตัว มีตัวพิมพ์ใหญ่ ตัวพิมพ์เล็ก และตัวเลข');
+      if (pass !== confirmPass) return alert('รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน');
+
+      const submit = form.querySelector('[type="submit"]');
+      if (submit) submit.disabled = true;
+
+      try {
+        await auth.confirmPasswordReset(code, pass);
+        alert('เปลี่ยนรหัสผ่านสำเร็จ กรุณาเข้าสู่ระบบ');
+        window.location.href = 'index.html';
+      } catch (error) {
+        alert(firebaseErrorMessage(error));
+      } finally {
+        if (submit) submit.disabled = false;
+      }
+    });
+  }
+
+  async function setupDashboard() {
     const totalEl = qs('#totalEquipment');
     const availableEl = qs('#availableEquipment');
     const borrowedEl = qs('#borrowedEquipment');
     const unavailableEl = qs('#unavailableEquipment');
     const welcome = qs('#welcomeText');
     if (!totalEl && !availableEl && !borrowedEl && !unavailableEl && !welcome) return;
-    const render = () => {
-      const data = getEquipment();
-      const total = data.reduce((s, x) => s + x.total, 0);
-      const available = data.reduce((s, x) => s + x.available, 0);
-      const unavailable = data.filter(x => x.status === 'unavailable').reduce((s, x) => s + x.total, 0);
-      const borrowed = Math.max(0, total - available - unavailable);
-      if (totalEl) totalEl.textContent = total;
-      if (availableEl) availableEl.textContent = available;
-      if (borrowedEl) borrowedEl.textContent = borrowed;
-      if (unavailableEl) unavailableEl.textContent = unavailable;
-      if (welcome) welcome.textContent = `ยินดีต้อนรับ ${getCurrentUserName()}`;
-    };
-    render();
-    window.addEventListener('equipmentDataChanged', render);
+
+    const data = await loadEquipmentFromFirebase();
+    const total = data.reduce((s, x) => s + x.total, 0);
+    const available = data.reduce((s, x) => s + x.available, 0);
+    const unavailable = data.filter(x => x.status === 'unavailable').reduce((s, x) => s + x.total, 0);
+    const borrowed = Math.max(0, total - available - unavailable);
+
+    if (totalEl) totalEl.textContent = total;
+    if (availableEl) availableEl.textContent = available;
+    if (borrowedEl) borrowedEl.textContent = borrowed;
+    if (unavailableEl) unavailableEl.textContent = unavailable;
+    if (welcome) welcome.textContent = `ยินดีต้อนรับ ${getCurrentUserName()}`;
   }
 
   function equipmentIcon(category) {
@@ -220,9 +674,10 @@
     return 'package';
   }
 
-  function setupEquipmentPage() {
+  async function setupEquipmentPage() {
     const table = qs('#equipmentTable');
     if (!table) return;
+
     const search = qs('#equipmentSearch');
     const modal = qs('#equipmentFormModal');
     const form = qs('#equipmentForm');
@@ -236,7 +691,7 @@
     const quantityInput = qs('#equipmentQuantity');
     let editingId = null;
 
-    if (quantityInput) quantityInput.min = '1';
+    let allData = await loadEquipmentFromFirebase();
 
     function openForm(item = null) {
       editingId = item?.id || null;
@@ -248,17 +703,27 @@
       if (statusInput) statusInput.value = statusToThai(item?.status || 'available');
       if (borrowerInput) borrowerInput.value = item?.borrower || '';
       if (quantityInput) quantityInput.value = item?.total || 1;
-      if (modal) modal.classList.add('show');
+      modal?.classList.add('show');
     }
-    function closeForm() { if (modal) modal.classList.remove('show'); editingId = null; }
+
+    function closeForm() {
+      modal?.classList.remove('show');
+      editingId = null;
+      form?.reset();
+      if (idInput) idInput.readOnly = false;
+    }
+
     function render() {
       const term = (search?.value || '').trim().toLowerCase();
-      const data = getEquipment().filter(x => !term || [x.id,x.name,x.category,x.borrower,statusToThai(x.status)].join(' ').toLowerCase().includes(term));
+      const data = allData.filter(x => !term || [x.id, x.name, x.category, x.borrower, statusToThai(x.status)].join(' ').toLowerCase().includes(term));
+
       if (!data.length) {
-        table.innerHTML = `<tr><td colspan="6" class="empty-state">ไม่พบข้อมูลอุปกรณ์</td></tr>`;
-        initIcons(); return;
+        table.innerHTML = '<tr><td colspan="6" class="empty-state">ไม่พบข้อมูลอุปกรณ์</td></tr>';
+        initIcons();
+        return;
       }
-      table.innerHTML = data.map((x, i) => {
+
+      table.innerHTML = data.map(x => {
         const state = x.status === 'unavailable' ? 'ไม่พร้อมใช้งาน' : (x.available < x.total ? 'กำลังถูกยืม' : 'พร้อมใช้งาน');
         const cls = x.status === 'unavailable' ? 'unavailable' : (x.available < x.total ? 'borrowed' : 'available');
         return `<tr>
@@ -280,7 +745,8 @@
     addBtn?.addEventListener('click', () => openForm());
     closeBtn?.addEventListener('click', closeForm);
     search?.addEventListener('input', render);
-    form?.addEventListener('submit', e => {
+
+    form?.addEventListener('submit', async e => {
       e.preventDefault();
       const id = (idInput?.value || '').trim();
       const name = (nameInput?.value || '').trim();
@@ -288,29 +754,58 @@
       const quantity = Math.max(1, Number(quantityInput?.value || 1));
       const status = normalizeStatus(statusInput?.value || 'available');
       const borrower = (borrowerInput?.value || '').trim();
+
       if (!id || !name) return alert('กรุณากรอกรหัสและชื่ออุปกรณ์');
       if (!Number.isFinite(quantity) || quantity < 1) return alert('จำนวนอุปกรณ์ต้องมากกว่า 0');
-      const data = getEquipment();
-      const existing = data.find(x => x.id.toLowerCase() === id.toLowerCase());
+
+      const existing = allData.find(x => x.id.toLowerCase() === id.toLowerCase());
       if (existing && !editingId) return alert('รหัสอุปกรณ์นี้มีอยู่แล้ว');
       if (editingId && !existing) return alert('ไม่พบอุปกรณ์ที่ต้องการแก้ไข');
+
+      let item;
       if (editingId) {
         const borrowedCount = existing.total - existing.available;
         if (quantity < borrowedCount) return alert(`จำนวนใหม่ต้องไม่น้อยกว่าจำนวนที่กำลังถูกยืม (${borrowedCount} ชิ้น)`);
-        existing.total = quantity;
-        existing.available = quantity - borrowedCount;
-        existing.name = name; existing.category = category; existing.borrower = borrower;
-        existing.status = status === 'unavailable' ? 'unavailable' : (borrowedCount > 0 ? 'borrowed' : 'available');
+        item = {
+          ...existing,
+          name,
+          category,
+          icon: equipmentIcon(category),
+          total: quantity,
+          available: status === 'unavailable' ? 0 : quantity - borrowedCount,
+          status: status === 'unavailable' ? 'unavailable' : (borrowedCount > 0 ? 'borrowed' : 'available'),
+          borrower
+        };
       } else {
-        data.push({ id, name, category, icon: equipmentIcon(category), total: quantity, available: status === 'unavailable' ? 0 : quantity, status, borrower, createdAt: new Date().toISOString() });
+        item = {
+          id,
+          name,
+          category,
+          icon: equipmentIcon(category),
+          total: quantity,
+          available: status === 'unavailable' ? 0 : quantity,
+          status,
+          borrower,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
       }
-      saveEquipment(data);
-      closeForm(); render();
+
+      try {
+        await saveEquipmentFirebase(item);
+        allData = [...allData.filter(x => x.id !== item.id), normalizeEquipment(item)];
+        allData.sort((a, b) => a.id.localeCompare(b.id));
+        saveEquipmentLocal(allData);
+        closeForm();
+        render();
+      } catch (error) {
+        alert('บันทึกอุปกรณ์ไม่สำเร็จ: ' + firebaseErrorMessage(error));
+      }
     });
 
     window.viewEquipment = encodedId => {
       const id = decodeURIComponent(encodedId);
-      const item = getEquipment().find(x => x.id === id);
+      const item = allData.find(x => x.id === id);
       const detailModal = qs('#equipmentModal');
       const content = qs('#modalContent');
       if (!item || !detailModal || !content) return;
@@ -326,38 +821,48 @@
       detailModal.classList.add('show');
       initIcons();
     };
+
     window.editEquipment = encodedId => {
       const id = decodeURIComponent(encodedId);
-      const item = getEquipment().find(x => x.id === id);
+      const item = allData.find(x => x.id === id);
       if (item) openForm(item);
     };
-    window.deleteEquipment = encodedId => {
+
+    window.deleteEquipment = async encodedId => {
       const id = decodeURIComponent(encodedId);
-      const data = getEquipment();
-      const item = data.find(x => x.id === id);
+      const item = allData.find(x => x.id === id);
       if (!item) return;
       if (item.total - item.available > 0) return alert('ไม่สามารถลบอุปกรณ์ที่กำลังถูกยืมได้');
       if (!confirm(`ต้องการลบ “${item.name}” ใช่หรือไม่?`)) return;
-      saveEquipment(data.filter(x => x.id !== id));
-      render();
+
+      try {
+        await deleteEquipmentFirebase(id);
+        allData = allData.filter(x => x.id !== id);
+        saveEquipmentLocal(allData);
+        render();
+      } catch (error) {
+        alert('ลบอุปกรณ์ไม่สำเร็จ: ' + firebaseErrorMessage(error));
+      }
     };
 
-    const detailModal = qs('#equipmentModal');
-    qs('#closeModal')?.addEventListener('click', () => detailModal?.classList.remove('show'));
+    qs('#closeModal')?.addEventListener('click', () => qs('#equipmentModal')?.classList.remove('show'));
     render();
   }
 
-  function populateEquipmentSelect(select) {
+  function populateEquipmentSelectLocal(select, data) {
     if (!select) return;
-    const data = getEquipment();
     const previous = select.value;
-    select.innerHTML = '<option value="">-- เลือกอุปกรณ์ --</option>' + data.filter(x => x.status !== 'unavailable' && x.available > 0).map(x => `<option value="${escapeHtml(x.id)}">${escapeHtml(x.name)} (${escapeHtml(x.id)}) — เหลือ ${x.available}</option>`).join('');
+    select.innerHTML = '<option value="">-- เลือกอุปกรณ์ --</option>' + data
+      .filter(x => x.status !== 'unavailable' && x.available > 0)
+      .map(x => `<option value="${escapeHtml(x.id)}">${escapeHtml(x.name)} (${escapeHtml(x.id)}) — เหลือ ${x.available}</option>`)
+      .join('');
     if (previous && data.some(x => x.id === previous && x.available > 0)) select.value = previous;
   }
 
-  function setupBorrowPage() {
+  async function setupBorrowPage() {
     const select = qs('#equipmentSelect');
     if (!select) return;
+
     const form = qs('#borrowForm');
     const quantity = qs('#borrowQuantity') || qs('#quantity');
     const borrower = qs('#borrowerName');
@@ -369,150 +874,217 @@
     const sendOtp = qs('#sendOtpButton');
     const otpInputs = qsa('.otp-input');
 
-    populateEquipmentSelect(select);
+    let data = await loadEquipmentFromFirebase();
+    populateEquipmentSelectLocal(select, data);
     if (borrowDate && !borrowDate.value) borrowDate.value = todayISO();
     if (borrower && !borrower.value) borrower.value = getCurrentUserName();
 
     const updateSelected = () => {
-      const item = getEquipment().find(x => x.id === select.value);
+      const item = data.find(x => x.id === select.value);
       const name = qs('#selectedEquipmentName');
       const code = qs('#selectedEquipmentCode');
       if (name) name.textContent = item?.name || '-';
       if (code) code.textContent = item?.id || '-';
-      if (quantity && item) { quantity.max = String(item.available); if (Number(quantity.value || 1) > item.available) quantity.value = item.available; }
+      if (quantity && item) {
+        quantity.max = String(item.available);
+        if (Number(quantity.value || 1) > item.available) quantity.value = item.available;
+      }
     };
-    select.addEventListener('change', updateSelected); updateSelected();
+
+    select.addEventListener('change', updateSelected);
+    updateSelected();
+
     qsa('#decreaseButton, #increaseButton').forEach(btn => btn.addEventListener('click', () => {
-      const item = getEquipment().find(x => x.id === select.value);
+      const item = data.find(x => x.id === select.value);
       if (!quantity || !item) return;
       const delta = btn.id === 'increaseButton' ? 1 : -1;
-      const next = Math.max(1, Math.min(item.available, Number(quantity.value || 1) + delta));
-      quantity.value = next;
+      quantity.value = Math.max(1, Math.min(item.available, Number(quantity.value || 1) + delta));
     }));
 
     sendOtp?.addEventListener('click', () => {
-      alert('ส่งรหัส OTP แบบจำลองแล้ว (โหมดเว็บไซต์ตัวอย่าง)');
+      alert('ระบบ OTP สำหรับการยืมยังเป็นโหมดตัวอย่าง ไม่ใช่ OTP จริง');
       otpInputs[0]?.focus();
     });
     otpInputs.forEach((input, i) => input.addEventListener('input', () => { if (input.value && otpInputs[i + 1]) otpInputs[i + 1].focus(); }));
 
-    function doBorrow(e) {
+    async function doBorrow(e) {
       e?.preventDefault();
-      const item = getEquipment().find(x => x.id === select.value);
+      if (!auth?.currentUser) return alert('กรุณาเข้าสู่ระบบก่อนยืมอุปกรณ์');
+
+      const item = data.find(x => x.id === select.value);
       const qty = Math.max(1, Number(quantity?.value || 1));
       const who = (borrower?.value || getCurrentUserName()).trim();
       if (!item) return alert('กรุณาเลือกอุปกรณ์');
       if (qty > item.available) return alert('จำนวนที่ยืมมากกว่าจำนวนที่มีอยู่');
       if (!who) return alert('กรุณาระบุชื่อผู้ยืม');
       if (terms && !terms.checked) return alert('กรุณายอมรับเงื่อนไขการยืม');
-      const data = getEquipment();
-      const target = data.find(x => x.id === item.id);
-      target.available -= qty;
-      target.status = target.available === 0 ? 'borrowed' : 'available';
-      target.borrower = who;
-      saveEquipment(data);
-      const history = getHistory();
-      history.unshift({
-        id: makeId('BR'), equipmentId: item.id, equipmentName: item.name, borrower: who,
-        borrowDate: borrowDate?.value || todayISO(), returnDate: returnDate?.value || '', actualReturnDate: '',
-        quantity: qty, note: note?.value?.trim() || '', status: 'borrowing', createdAt: new Date().toISOString()
-      });
-      saveHistory(history);
-      alert('บันทึกการยืมอุปกรณ์เรียบร้อยแล้ว');
-      form?.reset();
-      if (borrowDate) borrowDate.value = todayISO();
-      if (borrower) borrower.value = getCurrentUserName();
-      populateEquipmentSelect(select); updateSelected();
+
+      const updatedItem = {
+        ...item,
+        available: item.available - qty,
+        status: item.available - qty === 0 ? 'borrowed' : 'available',
+        borrower: who,
+        updatedAt: new Date().toISOString()
+      };
+
+      const record = {
+        id: makeId('BR'),
+        equipmentId: item.id,
+        equipmentName: item.name,
+        borrower: who,
+        borrowerUid: auth.currentUser.uid,
+        borrowDate: borrowDate?.value || todayISO(),
+        returnDate: returnDate?.value || '',
+        actualReturnDate: '',
+        quantity: qty,
+        note: note?.value?.trim() || '',
+        status: 'borrowing',
+        createdAt: new Date().toISOString()
+      };
+
+      try {
+        await saveEquipmentFirebase(updatedItem);
+        await saveBorrowFirebase(record);
+        await saveHistoryFirebase(record);
+
+        data = data.map(x => x.id === updatedItem.id ? normalizeEquipment(updatedItem) : x);
+        saveEquipmentLocal(data);
+        const history = getHistoryLocal();
+        history.unshift(record);
+        saveHistoryLocal(history);
+
+        alert('บันทึกการยืมอุปกรณ์เรียบร้อยแล้ว');
+        form?.reset();
+        if (borrowDate) borrowDate.value = todayISO();
+        if (borrower) borrower.value = getCurrentUserName();
+        populateEquipmentSelectLocal(select, data);
+        updateSelected();
+      } catch (error) {
+        alert('บันทึกการยืมไม่สำเร็จ: ' + firebaseErrorMessage(error));
+      }
     }
+
     if (form) form.addEventListener('submit', doBorrow);
     else confirmBtn?.addEventListener('click', doBorrow);
   }
 
-  function setupReturnPage() {
+  async function setupReturnPage() {
     const select = qs('#returnEquipmentSelect') || qs('#equipmentSelect');
     const form = qs('#returnForm');
     const table = qs('#returnTable');
     if (!select && !form && !table) return;
 
-    const active = () => getHistory().filter(h => h.status === 'borrowing' && !h.actualReturnDate);
+    let records = await loadHistoryFromFirebase();
+    let data = await loadEquipmentFromFirebase();
+
+    const active = () => records.filter(h => h.status === 'borrowing' && !h.actualReturnDate);
+
     function renderReturnOptions() {
       if (!select) return;
-      const records = active();
-      select.innerHTML = '<option value="">-- เลือกรายการยืม --</option>' + records.map(h => `<option value="${escapeHtml(h.id)}">${escapeHtml(h.equipmentName)} — ${escapeHtml(h.borrower)}</option>`).join('');
+      select.innerHTML = '<option value="">-- เลือกรายการยืม --</option>' + active().map(h => `<option value="${escapeHtml(h.id)}">${escapeHtml(h.equipmentName)} — ${escapeHtml(h.borrower)}</option>`).join('');
     }
+
     function renderTable() {
       if (!table) return;
-      const records = active();
-      table.innerHTML = records.length ? records.map(h => `<tr><td>${escapeHtml(h.id)}</td><td>${escapeHtml(h.equipmentName)}</td><td>${escapeHtml(h.borrower)}</td><td>${formatDate(h.borrowDate)}</td><td>${formatDate(h.returnDate)}</td><td><button type="button" class="return-action-button" onclick="returnEquipment('${encodeURIComponent(h.id)}')">คืนอุปกรณ์</button></td></tr>`).join('') : '<tr><td colspan="6" class="empty-state">ไม่มีรายการที่กำลังยืม</td></tr>';
+      const list = active();
+      table.innerHTML = list.length
+        ? list.map(h => `<tr><td>${escapeHtml(h.id)}</td><td>${escapeHtml(h.equipmentName)}</td><td>${escapeHtml(h.borrower)}</td><td>${formatDate(h.borrowDate)}</td><td>${formatDate(h.returnDate)}</td><td><button type="button" class="return-action-button" onclick="returnEquipment('${encodeURIComponent(h.id)}')">คืนอุปกรณ์</button></td></tr>`).join('')
+        : '<tr><td colspan="6" class="empty-state">ไม่มีรายการที่กำลังยืม</td></tr>';
       initIcons();
     }
-    window.returnEquipment = encodedId => {
+
+    window.returnEquipment = async encodedId => {
       const id = decodeURIComponent(encodedId);
-      completeReturn(id);
+      await completeReturn(id);
     };
-    function completeReturn(id) {
-      const history = getHistory();
-      const record = history.find(h => h.id === id && h.status === 'borrowing');
+
+    async function completeReturn(id) {
+      const record = records.find(h => h.id === id && h.status === 'borrowing');
       if (!record) return alert('ไม่พบรายการยืม');
-      const data = getEquipment();
       const item = data.find(x => x.id === record.equipmentId);
-      if (item) {
-        item.available = Math.min(item.total, item.available + Number(record.quantity || 1));
-        item.status = item.available === item.total ? 'available' : 'borrowed';
-        if (item.available === item.total) item.borrower = '';
+      if (!item) return alert('ไม่พบอุปกรณ์รายการนี้');
+
+      const updatedItem = {
+        ...item,
+        available: Math.min(item.total, item.available + Number(record.quantity || 1)),
+        status: Math.min(item.total, item.available + Number(record.quantity || 1)) === item.total ? 'available' : 'borrowed',
+        borrower: Math.min(item.total, item.available + Number(record.quantity || 1)) === item.total ? '' : item.borrower,
+        updatedAt: new Date().toISOString()
+      };
+
+      const updatedRecord = {
+        ...record,
+        actualReturnDate: new Date().toISOString(),
+        status: 'returned',
+        updatedAt: new Date().toISOString()
+      };
+
+      try {
+        await saveEquipmentFirebase(updatedItem);
+        await updateBorrowFirebase(updatedRecord);
+        await saveHistoryFirebase(updatedRecord);
+
+        data = data.map(x => x.id === updatedItem.id ? normalizeEquipment(updatedItem) : x);
+        records = records.map(x => x.id === updatedRecord.id ? updatedRecord : x);
+        saveEquipmentLocal(data);
+        saveHistoryLocal(records);
+
+        alert('บันทึกการคืนอุปกรณ์เรียบร้อยแล้ว');
+        renderReturnOptions();
+        renderTable();
+      } catch (error) {
+        alert('บันทึกการคืนไม่สำเร็จ: ' + firebaseErrorMessage(error));
       }
-      record.actualReturnDate = new Date().toISOString();
-      record.status = 'returned';
-      saveEquipment(data); saveHistory(history);
-      alert('บันทึกการคืนอุปกรณ์เรียบร้อยแล้ว');
-      renderReturnOptions(); renderTable();
     }
-    if (form) form.addEventListener('submit', e => {
+
+    if (form) form.addEventListener('submit', async e => {
       e.preventDefault();
       const id = select?.value;
       if (!id) return alert('กรุณาเลือกรายการยืม');
-      completeReturn(id);
+      await completeReturn(id);
     });
-    renderReturnOptions(); renderTable();
+
+    renderReturnOptions();
+    renderTable();
   }
 
-  function setupHistoryPage() {
+  async function setupHistoryPage() {
     const table = qs('#historyTable');
     if (!table) return;
+
     const search = qs('#historySearch');
     const filter = qs('#statusFilter');
     const empty = qs('#emptyHistory');
     const modal = qs('#historyModal');
     const modalContent = qs('#historyModalContent');
+    let all = await loadHistoryFromFirebase();
 
     function effectiveStatus(h) {
       if (h.status === 'returned') return 'returned';
       if (h.returnDate && new Date(h.returnDate) < new Date() && !h.actualReturnDate) return 'overdue';
       return 'borrowing';
     }
+
     function renderStats(data) {
-      const total = data.length;
-      const borrowing = data.filter(h => effectiveStatus(h) === 'borrowing').length;
-      const returned = data.filter(h => effectiveStatus(h) === 'returned').length;
-      const overdue = data.filter(h => effectiveStatus(h) === 'overdue').length;
-      if (qs('#totalHistory')) qs('#totalHistory').textContent = total;
-      if (qs('#borrowingHistory')) qs('#borrowingHistory').textContent = borrowing;
-      if (qs('#returnedHistory')) qs('#returnedHistory').textContent = returned;
-      if (qs('#overdueHistory')) qs('#overdueHistory').textContent = overdue;
+      if (qs('#totalHistory')) qs('#totalHistory').textContent = data.length;
+      if (qs('#borrowingHistory')) qs('#borrowingHistory').textContent = data.filter(h => effectiveStatus(h) === 'borrowing').length;
+      if (qs('#returnedHistory')) qs('#returnedHistory').textContent = data.filter(h => effectiveStatus(h) === 'returned').length;
+      if (qs('#overdueHistory')) qs('#overdueHistory').textContent = data.filter(h => effectiveStatus(h) === 'overdue').length;
     }
+
     function render() {
-      const all = getHistory();
       renderStats(all);
       const term = (search?.value || '').trim().toLowerCase();
       const selected = filter?.value || 'all';
       const rows = all.filter(h => {
         const status = effectiveStatus(h);
-        const text = [h.id,h.equipmentId,h.equipmentName,h.borrower,h.note].join(' ').toLowerCase();
+        const text = [h.id, h.equipmentId, h.equipmentName, h.borrower, h.note].join(' ').toLowerCase();
         return (!term || text.includes(term)) && (selected === 'all' || selected === status);
       });
-      table.innerHTML = rows.map((h, i) => {
+
+      table.innerHTML = rows.map(h => {
         const status = effectiveStatus(h);
-        const label = { borrowing:'กำลังยืม', returned:'คืนแล้ว', overdue:'เกินกำหนด' }[status];
+        const label = { borrowing: 'กำลังยืม', returned: 'คืนแล้ว', overdue: 'เกินกำหนด' }[status];
         return `<tr>
           <td>${escapeHtml(h.id)}</td>
           <td><div class="equipment-name"><i data-lucide="package"></i><div><strong>${escapeHtml(h.equipmentName || h.equipmentId)}</strong><small>${escapeHtml(h.equipmentId || '')}</small></div></div></td>
@@ -524,15 +1096,17 @@
           <td><button type="button" class="history-detail-button" onclick="viewHistory('${encodeURIComponent(h.id)}')"><i data-lucide="eye"></i> รายละเอียด</button></td>
         </tr>`;
       }).join('');
+
       if (empty) empty.style.display = rows.length ? 'none' : '';
       initIcons();
     }
+
     window.viewHistory = encodedId => {
       const id = decodeURIComponent(encodedId);
-      const h = getHistory().find(x => x.id === id);
+      const h = all.find(x => x.id === id);
       if (!h || !modal || !modalContent) return;
       const status = effectiveStatus(h);
-      const label = { borrowing:'กำลังยืม', returned:'คืนแล้ว', overdue:'เกินกำหนด' }[status];
+      const label = { borrowing: 'กำลังยืม', returned: 'คืนแล้ว', overdue: 'เกินกำหนด' }[status];
       modalContent.innerHTML = `<div class="history-detail-list">
         <div class="history-detail-item"><strong>เลขที่รายการ</strong><span>${escapeHtml(h.id)}</span></div>
         <div class="history-detail-item"><strong>อุปกรณ์</strong><span>${escapeHtml(h.equipmentName || h.equipmentId)}</span></div>
@@ -544,37 +1118,102 @@
         <div class="history-detail-item"><strong>สถานะ</strong><span>${label}</span></div>
         <div class="history-note"><strong>หมายเหตุ</strong><p>${escapeHtml(h.note || '-')}</p></div>
       </div>`;
-      modal.classList.add('show'); initIcons();
+      modal.classList.add('show');
+      initIcons();
     };
+
     qs('#closeHistoryModal')?.addEventListener('click', () => modal?.classList.remove('show'));
     search?.addEventListener('input', render);
     filter?.addEventListener('change', render);
     render();
-    window.addEventListener('historyDataChanged', render);
-    window.addEventListener('equipmentDataChanged', render);
   }
 
   function setupMiscModals() {
     qsa('.modal').forEach(modal => {
-      modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('show'); });
+      modal.addEventListener('click', e => {
+        if (e.target === modal) modal.classList.remove('show');
+      });
     });
+
     qs('#notificationButton')?.addEventListener('click', () => {
       if (location.pathname.endsWith('history.html')) return;
       window.location.href = 'history.html';
     });
   }
 
-  document.addEventListener('DOMContentLoaded', () => {
-    // Initialize only if the storage is empty; never overwrite user data.
-    if (!localStorage.getItem(KEYS.equipment) && !localStorage.getItem(KEYS.equipmentData)) saveEquipment(DEFAULT_EQUIPMENT);
+  async function guardProtectedPage() {
+    const page = location.pathname.split('/').pop() || 'index.html';
+    const publicPages = ['index.html', 'register.html', 'forgot-password.html', 'reset-password.html', ''];
+    if (publicPages.includes(page)) return true;
+    if (!auth) return false;
+
+    if (auth.currentUser) return true;
+
+    window.location.href = 'index.html';
+    return false;
+  }
+
+  async function initializeApp() {
+    const ready = await initFirebase();
+
+    if (!ready || !auth || !db) {
+      console.error('Firebase ไม่พร้อมใช้งาน');
+      // ยังให้หน้า Login/Register แสดงอยู่ เพื่อไม่ทำหน้าเว็บพังทั้งหมด
+      setupPasswordToggle();
+      setupCommonUI();
+      return;
+    }
+
+    auth.onAuthStateChanged(async user => {
+      if (user) {
+        const profile = await getUserProfile(user);
+        const name = profile?.name || user.displayName || user.email || 'ผู้ใช้งาน';
+        localStorage.setItem(KEYS.loggedIn, 'true');
+        localStorage.setItem(KEYS.firebaseUid, user.uid);
+        localStorage.setItem(KEYS.userEmail, user.email || '');
+        localStorage.setItem(KEYS.userName, name);
+        saveJSON(KEYS.currentUser, { id: user.uid, name, email: user.email || '' });
+        qsa('#userName, .profile-name, #welcomeUserName').forEach(el => { el.textContent = name; });
+      }
+    });
+
+    setupPasswordToggle();
     setupCommonUI();
-    setupLogin();
-    setupDashboard();
-    setupEquipmentPage();
-    setupBorrowPage();
-    setupReturnPage();
-    setupHistoryPage();
+
+    const protectedPageAllowed = await guardProtectedPage();
+    if (!protectedPageAllowed) return;
+
+    await setupLogin();
+    await setupRegister();
+    await setupForgotPassword();
+    await setupResetPassword();
+    await setupDashboard();
+    await setupEquipmentPage();
+    await setupBorrowPage();
+    await setupReturnPage();
+    await setupHistoryPage();
     setupMiscModals();
     initIcons();
-  });
+
+    // เติม email ที่สมัครล่าสุดกลับไปหน้า login
+    const registerEmail = localStorage.getItem('registerEmail');
+    const page = location.pathname.split('/').pop() || 'index.html';
+    if (page === 'index.html' && registerEmail && qs('#email')) {
+      qs('#email').value = registerEmail;
+      localStorage.removeItem('registerEmail');
+    }
+
+    // preload Firestore เมื่อเข้าสู่ระบบ
+    if (auth.currentUser) {
+      await ensureEquipmentSeed();
+      await loadEquipmentFromFirebase();
+      await loadHistoryFromFirebase();
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeApp, { once: true });
+  } else {
+    initializeApp();
+  }
 })();
