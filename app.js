@@ -1167,18 +1167,18 @@
     });
   }
 
-  async function guardProtectedPage() {
-    const page = location.pathname.split('/').pop() || 'index.html';
-    const publicPages = ['index.html', 'register.html', 'forgot-password.html', 'reset-password.html', ''];
-    if (publicPages.includes(page)) return true;
-    if (!auth) return false;
+ async function guardProtectedPage() {
+  const page = location.pathname.split('/').pop() || 'index.html';
+  const publicPages = ['index.html', 'register.html', 'forgot-password.html', 'reset-password.html', ''];
 
-    if (auth.currentUser) return true;
+  if (publicPages.includes(page)) return true;
+  if (!auth) return false;
 
-    window.location.href = 'index.html';
-    return false;
-  }
+  if (auth.currentUser) return true;
 
+  window.location.href = 'index.html';
+  return false;
+}
   async function initializeApp() {
     const ready = await initFirebase();
 
