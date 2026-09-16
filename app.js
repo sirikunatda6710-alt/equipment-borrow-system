@@ -1178,34 +1178,24 @@ async function guardProtectedPage() {
     ''
   ];
 
-  // หน้า Login/Register เข้าได้โดยไม่ต้อง Login
+  // หน้า Login / Register / Forgot / Reset เข้าได้เลย
   if (publicPages.includes(page)) return true;
 
-  if (!auth) {
-    window.location.href = 'index.html';
-    return false;
-  }
+  // Firebase ยังไม่พร้อม
+  if (!auth) return false;
 
-  // ถ้า Firebase รู้ผู้ใช้แล้ว
+  // Firebase มี user อยู่แล้ว
   if (auth.currentUser) return true;
 
-  // รอให้ Firebase ตรวจสอบสถานะ Login ก่อน
-  const user = await new Promise(resolve => {
-    let finished = false;
+  // ⭐ ถ้าเพิ่ง Login และมีสถานะใน localStorage
+  // ให้ผ่านเข้าหน้า Dashboard ไปก่อน
+  const loggedIn = localStorage.getItem('isLoggedIn');
 
-    const unsubscribe = auth.onAuthStateChanged(currentUser => {
-      if (finished) return;
+  if (loggedIn === 'true') {
+    return true;
+  }
 
-      finished = true;
-      unsubscribe();
-      resolve(currentUser);
-    });
-  });
-
-  // มีผู้ใช้ Login อยู่
-  if (user) return true;
-
-  // ไม่มีผู้ใช้ Login
+  // ไม่มี Firebase user และไม่มีสถานะ Login
   window.location.href = 'index.html';
   return false;
 }
