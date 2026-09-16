@@ -1167,15 +1167,45 @@
     });
   }
 
- async function guardProtectedPage() {
+async function guardProtectedPage() {
   const page = location.pathname.split('/').pop() || 'index.html';
-  const publicPages = ['index.html', 'register.html', 'forgot-password.html', 'reset-password.html', ''];
 
+  const publicPages = [
+    'index.html',
+    'register.html',
+    'forgot-password.html',
+    'reset-password.html',
+    ''
+  ];
+
+  // หน้า Login/Register เข้าได้โดยไม่ต้อง Login
   if (publicPages.includes(page)) return true;
-  if (!auth) return false;
 
+  if (!auth) {
+    window.location.href = 'index.html';
+    return false;
+  }
+
+  // ถ้า Firebase รู้ผู้ใช้แล้ว
   if (auth.currentUser) return true;
 
+  // รอให้ Firebase ตรวจสอบสถานะ Login ก่อน
+  const user = await new Promise(resolve => {
+    let finished = false;
+
+    const unsubscribe = auth.onAuthStateChanged(currentUser => {
+      if (finished) return;
+
+      finished = true;
+      unsubscribe();
+      resolve(currentUser);
+    });
+  });
+
+  // มีผู้ใช้ Login อยู่
+  if (user) return true;
+
+  // ไม่มีผู้ใช้ Login
   window.location.href = 'index.html';
   return false;
 }
