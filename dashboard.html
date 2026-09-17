@@ -14,21 +14,16 @@
         Dashboard | ระบบยืม-คืนอุปกรณ์
     </title>
 
-
     <!-- CSS -->
-
     <link
         rel="stylesheet"
-        href="css/style.css"
+        href="style.css"
     >
 
-
     <!-- Lucide Icons -->
-
     <script
         src="https://unpkg.com/lucide@latest"
     ></script>
-
 
 </head>
 
@@ -39,17 +34,15 @@
     <div class="app-container">
 
 
-        <!-- =========================
+        <!-- =====================================
              HEADER
-        ========================== -->
+        ====================================== -->
 
         <header class="header">
 
 
-            <!-- โลโก้และชื่อระบบ -->
-
+            <!-- โลโก้ + ชื่อระบบ -->
             <div class="brand">
-
 
                 <div class="header-logo">
 
@@ -63,40 +56,29 @@
 
                 <div class="brand-text">
 
-
-                    <!-- เอาไอคอนกล่องออกแล้ว -->
-
                     <h2>
                         ระบบยืม-คืนอุปกรณ์
                     </h2>
-
 
                     <p>
                         ระบบจัดการอุปกรณ์
                     </p>
 
-
                 </div>
-
 
             </div>
 
 
-
             <!-- เมนูด้านขวา -->
-
             <div class="header-actions">
 
 
                 <!-- ค้นหา -->
-
                 <div class="header-search">
-
 
                     <i
                         data-lucide="search"
                     ></i>
-
 
                     <input
                         type="text"
@@ -104,24 +86,20 @@
                         placeholder="ค้นหาอุปกรณ์..."
                     >
 
-
                 </div>
 
 
-
                 <!-- การแจ้งเตือน -->
-
                 <button
                     type="button"
                     id="notificationButton"
                     class="icon-button notification-button"
+                    aria-label="การแจ้งเตือน"
                 >
-
 
                     <i
                         data-lucide="bell"
                     ></i>
-
 
                     <span
                         id="notificationCount"
@@ -130,32 +108,27 @@
                         0
                     </span>
 
-
                 </button>
 
 
-
                 <!-- โปรไฟล์ -->
-
                 <button
                     type="button"
                     id="profileButton"
                     class="profile-button"
                 >
 
-
                     <i
                         data-lucide="circle-user-round"
                     ></i>
 
-
                     <div class="profile-info">
 
-
-                        <span class="profile-label">
+                        <span
+                            class="profile-label"
+                        >
                             ผู้ใช้งาน
                         </span>
-
 
                         <span
                             id="userName"
@@ -164,50 +137,42 @@
                             ผู้ใช้งาน
                         </span>
 
-
                     </div>
-
 
                 </button>
 
 
-
                 <!-- ออกจากระบบ -->
-
                 <button
                     type="button"
                     id="logoutButton"
                     class="logout-button"
                 >
 
-
                     <i
                         data-lucide="log-out"
                     ></i>
 
-
                     <span>
                         ออกจากระบบ
                     </span>
-
 
                 </button>
 
 
             </div>
 
-
         </header>
 
 
-
-        <!-- =========================
+        <!-- =====================================
              NAVIGATION
-        ========================== -->
+        ====================================== -->
 
         <nav class="navbar">
 
 
+            <!-- Dashboard -->
             <a
                 href="dashboard.html"
                 class="active"
@@ -224,8 +189,10 @@
             </a>
 
 
-
-            <a href="equipment.html">
+            <!-- อุปกรณ์ -->
+            <a
+                href="equipment.html"
+            >
 
                 <i
                     data-lucide="package-search"
@@ -238,8 +205,10 @@
             </a>
 
 
-
-            <a href="borrow.html">
+            <!-- รายการยืม -->
+            <a
+                href="borrow.html"
+            >
 
                 <i
                     data-lucide="clipboard-list"
@@ -252,8 +221,10 @@
             </a>
 
 
-
-            <a href="return.html">
+            <!-- คืนอุปกรณ์ -->
+            <a
+                href="return.html"
+            >
 
                 <i
                     data-lucide="undo-2"
@@ -266,8 +237,10 @@
             </a>
 
 
-
-            <a href="history.html">
+            <!-- ประวัติ -->
+            <a
+                href="history.html"
+            >
 
                 <i
                     data-lucide="history"
@@ -283,44 +256,36 @@
         </nav>
 
 
-
-        <!-- =========================
+        <!-- =====================================
              MAIN CONTENT
-        ========================== -->
+        ====================================== -->
 
         <main class="main-content">
 
 
-            <!-- หัวข้อ -->
-
+            <!-- หัวข้อหน้า -->
             <section class="dashboard-heading">
-
 
                 <h1>
                     Dashboard
                 </h1>
 
-
                 <p>
                     ภาพรวมข้อมูลอุปกรณ์ภายในระบบ
                 </p>
 
-
             </section>
 
 
-
-            <!-- =========================
+            <!-- =====================================
                  STATISTICS
-            ========================== -->
+            ====================================== -->
 
             <section class="stats-container">
 
 
                 <!-- อุปกรณ์ทั้งหมด -->
-
                 <div class="stat-card">
-
 
                     <div class="stat-icon">
 
@@ -330,11 +295,9 @@
 
                     </div>
 
-
                     <h3>
                         อุปกรณ์ทั้งหมด
                     </h3>
-
 
                     <p
                         id="totalEquipment"
@@ -343,20 +306,15 @@
                         0
                     </p>
 
-
                     <span>
                         รายการ
                     </span>
 
-
                 </div>
 
 
-
                 <!-- พร้อมใช้งาน -->
-
                 <div class="stat-card">
-
 
                     <div class="stat-icon">
 
@@ -366,11 +324,9 @@
 
                     </div>
 
-
                     <h3>
                         พร้อมใช้งาน
                     </h3>
-
 
                     <p
                         id="availableEquipment"
@@ -379,20 +335,15 @@
                         0
                     </p>
 
-
                     <span>
                         รายการ
                     </span>
 
-
                 </div>
 
 
-
                 <!-- กำลังถูกยืม -->
-
                 <div class="stat-card borrowed-card">
-
 
                     <div class="stat-icon">
 
@@ -402,11 +353,9 @@
 
                     </div>
 
-
                     <h3>
                         กำลังถูกยืม
                     </h3>
-
 
                     <p
                         id="borrowedEquipment"
@@ -415,20 +364,15 @@
                         0
                     </p>
 
-
                     <span>
                         รายการ
                     </span>
 
-
                 </div>
 
 
-
                 <!-- ไม่พร้อมใช้งาน -->
-
                 <div class="stat-card unavailable-card">
-
 
                     <div class="stat-icon">
 
@@ -438,11 +382,9 @@
 
                     </div>
 
-
                     <h3>
                         ไม่พร้อมใช้งาน
                     </h3>
-
 
                     <p
                         id="unavailableEquipment"
@@ -451,11 +393,9 @@
                         0
                     </p>
 
-
                     <span>
                         รายการ
                     </span>
-
 
                 </div>
 
@@ -463,16 +403,14 @@
             </section>
 
 
-
-            <!-- =========================
+            <!-- =====================================
                  ตารางอุปกรณ์
-            ========================== -->
+            ====================================== -->
 
             <section class="table-container">
 
 
                 <!-- หัวตาราง -->
-
                 <div class="table-top">
 
 
@@ -490,16 +428,13 @@
 
                         <div>
 
-
                             <h2>
                                 รายการอุปกรณ์
                             </h2>
 
-
                             <p>
                                 รายการอุปกรณ์ทั้งหมดภายในระบบ
                             </p>
-
 
                         </div>
 
@@ -507,13 +442,15 @@
                     </div>
 
 
-
+                    <!-- ดูทั้งหมด -->
                     <a
                         href="equipment.html"
                         class="view-all-button"
                     >
 
-                        ดูทั้งหมด
+                        <span>
+                            ดูทั้งหมด
+                        </span>
 
                         <i
                             data-lucide="arrow-right"
@@ -525,9 +462,7 @@
                 </div>
 
 
-
-                <!-- ช่องค้นหาในตาราง -->
-
+                <!-- ช่องค้นหา -->
                 <div class="table-search">
 
 
@@ -539,16 +474,14 @@
                     <input
                         type="text"
                         id="tableSearch"
-                        placeholder="ค้นหาด้วยรหัสอุปกรณ์ ชื่ออุปกรณ์ หรือประเภท..."
+                        placeholder="ค้นหารหัส ชื่ออุปกรณ์ หรือประเภท..."
                     >
 
 
                 </div>
 
 
-
                 <!-- ตาราง -->
-
                 <div class="table-responsive">
 
 
@@ -560,36 +493,29 @@
 
                             <tr>
 
-
                                 <th>
                                     รหัสอุปกรณ์
                                 </th>
-
 
                                 <th>
                                     ชื่ออุปกรณ์
                                 </th>
 
-
                                 <th>
                                     ประเภท
                                 </th>
-
 
                                 <th>
                                     สถานะ
                                 </th>
 
-
                                 <th>
                                     ผู้ยืม
                                 </th>
 
-
                                 <th>
                                     จัดการ
                                 </th>
-
 
                             </tr>
 
@@ -597,14 +523,9 @@
                         </thead>
 
 
-
                         <tbody
                             id="equipmentTable"
                         >
-
-
-                            <!-- JavaScript แสดงข้อมูล -->
-
 
                         </tbody>
 
@@ -624,66 +545,61 @@
     </div>
 
 
-
-    <!-- =========================
-         MODAL ดูข้อมูล
-    ========================== -->
+    <!-- =====================================
+         MODAL ดูรายละเอียดอุปกรณ์
+    ====================================== -->
 
     <div
         id="equipmentModal"
         class="modal"
     >
 
-
         <div class="modal-content">
 
 
             <button
+                type="button"
                 class="modal-close"
                 id="closeModal"
+                aria-label="ปิด"
             >
-
                 ×
-
             </button>
 
 
-            <div id="modalContent">
-
-
-                <!-- JavaScript -->
-
+            <div
+                id="modalContent"
+            >
 
             </div>
 
 
         </div>
 
-
     </div>
 
 
-
-    <!-- =========================
+    <!-- =====================================
          MODAL โปรไฟล์
-    ========================== -->
+    ====================================== -->
 
     <div
         id="profileModal"
         class="modal"
     >
 
-
-        <div class="modal-content profile-modal">
+        <div
+            class="modal-content profile-modal"
+        >
 
 
             <button
+                type="button"
                 class="modal-close"
                 id="closeProfileModal"
+                aria-label="ปิด"
             >
-
                 ×
-
             </button>
 
 
@@ -694,17 +610,16 @@
 
             <div class="profile-modal-icon">
 
-
                 <i
                     data-lucide="circle-user-round"
                 ></i>
 
-
             </div>
 
 
-
-            <label>
+            <label
+                for="editUserName"
+            >
                 ชื่อผู้ใช้งาน
             </label>
 
@@ -713,7 +628,6 @@
                 type="text"
                 id="editUserName"
             >
-
 
 
             <button
@@ -726,30 +640,25 @@
                     data-lucide="save"
                 ></i>
 
-                บันทึกข้อมูล
-
+                <span>
+                    บันทึกข้อมูล
+                </span>
 
             </button>
 
 
         </div>
 
-
     </div>
 
 
-
-<head>
-
-    <link rel="stylesheet" href="style.css">
-
-</head>
-
-<body>
-
-    <!-- เนื้อหา Dashboard -->
+    <!-- =====================================
+         JavaScript
+    ====================================== -->
 
     <script src="app.js"></script>
 
+
 </body>
+
 </html>
