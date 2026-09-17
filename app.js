@@ -425,100 +425,74 @@
     });
   }
 
- async function setupLogin() {
-  const form = qs('#loginForm');
+  async function setupLogin() {
+    const form = qs('#loginForm');
+    if (!form || !auth) return;
 
-  if (!form || !auth) return;
-
-  const remember = qs('#rememberMe');
-  const emailInput = qs('#email');
-  const passwordInput = qs('#password');
-
-  // จำอีเมล
-  const savedEmail = localStorage.getItem('rememberedEmail');
-
-  if (savedEmail && emailInput) {
-    emailInput.value = savedEmail;
-    if (remember) remember.checked = true;
-  }
-
-   form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const email = (emailInput?.value || '').trim().toLowerCase();
-    const password = passwordInput?.value || '';
-
-    if (!email || !password) {
-      alert('กรุณากรอกอีเมลและรหัสผ่าน');
-      return;
+    const remember = qs('#rememberMe');
+    const savedEmail = localStorage.getItem('rememberedEmail');
+    if (savedEmail && qs('#email')) {
+      qs('#email').value = savedEmail;
+      if (remember) remember.checked = true;
     }
 
-    const submitButton = form.querySelector('[type="submit"]');
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
 
-    if (submitButton) {
-      submitButton.disabled = true;
-      submitButton.textContent = 'กำลังเข้าสู่ระบบ...';
-    }
+      const email = (qs('#email')?.value || '').trim().toLowerCase();
+      const password = qs('#password')?.value || '';
+      if (!email || !password) return alert('กรุณากรอกอีเมลและรหัสผ่าน');
 
-    try {
-      // Login ด้วย Firebase
-      const credential =
-        await auth.signInWithEmailAndPassword(email, password);
-
-      const user = credential.user;
-
-      // ดึงชื่อจาก Firestore ถ้ามี
-      let name = user.displayName || email;
+      const submitButton = form.querySelector('[type="submit"]');
+      if (submitButton) submitButton.disabled = true;
 
       try {
-        const profileSnap =
-          await db.collection('users').doc(user.uid).get();
+        const credential = await auth.signInWithEmailAndPassword(email, password);
+        const user = credential.user;
+        const profile = await getUserProfile(user);
+        const name = profile?.name || user.displayName || email;
 
-        if (profileSnap.exists && profileSnap.data().name) {
-          name = profileSnap.data().name;
-        }
-      } catch (profileError) {
-        console.warn('อ่านข้อมูลสมาชิกไม่ได้ แต่ Login สำเร็จ:', profileError);
+        localStorage.setItem(KEYS.loggedIn, 'true');
+        localStorage.setItem(KEYS.userEmail, email);
+        localStorage.setItem(KEYS.firebaseUid, user.uid);
+        localStorage.setItem(KEYS.userName, name);
+        saveJSON(KEYS.currentUser, { id: user.uid, name, email });
+
+        if (remember?.checked) localStorage.setItem('rememberedEmail', email);
+        else localStorage.removeItem('rememberedEmail');
+
+        await ensureEquipmentSeed();
+        await loadEquipmentFromFirebase();
+        await loadHistoryFromFirebase();
+        window.location.href = 'dashboard.html';
+      } catch (error) {
+        alert(firebaseErrorMessage(error));
+      } finally {
+        if (submitButton) submitButton.disabled = false;
       }
+    });
+  }
 
-      // เก็บสถานะผู้ใช้ไว้ในเครื่อง
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('userEmail', email);
-      localStorage.setItem('firebaseUid', user.uid);
-      localStorage.setItem('userName', name);
+  function passwordValid(password) {
+    return password.length >= 8 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /[0-9]/.test(password);
+  }
 
-      localStorage.setItem(
-        'equipment_current_user',
-        JSON.stringify({
-          id: user.uid,
-          name: name,
-          email: email
-        })
-      );
+  function updatePasswordRules(prefix, password) {
+    const tests = {
+      Length: password.length >= 8,
+      Uppercase: /[A-Z]/.test(password),
+      Lowercase: /[a-z]/.test(password),
+      Number: /[0-9]/.test(password)
+    };
 
-      // จำอีเมล
-      if (remember?.checked) {
-        localStorage.setItem('rememberedEmail', email);
-      } else {
-        localStorage.removeItem('rememberedEmail');
-      }
+    Object.entries(tests).forEach(([key, ok]) => {
+      const element = qs(`#${prefix}${key}`);
+      if (!element) return;
+      element.classList.toggle('rule-valid', ok);
+      element.classList.toggle('rule-invalid', !ok);
+    });
+  }
 
-      // สำคัญ: ไป Dashboard ทันที
-      window.location.replace('dashboard.html');
-
-    } catch (error) {
-      console.error('Login Error:', error);
-      alert(firebaseErrorMessage(error));
-
-    } finally {
-      if (submitButton) {
-        submitButton.disabled = false;
-        submitButton.textContent = 'เข้าสู่ระบบ';
-      }
-    }
-  });
-}
- 
   async function setupRegister() {
     const form = qs('#registerForm');
     if (!form || !auth) return;
@@ -1167,38 +1141,18 @@
     });
   }
 
-async function guardProtectedPage() {
-  const page = location.pathname.split('/').pop() || 'index.html';
+  async function guardProtectedPage() {
+    const page = location.pathname.split('/').pop() || 'index.html';
+    const publicPages = ['index.html', 'register.html', 'forgot-password.html', 'reset-password.html', ''];
+    if (publicPages.includes(page)) return true;
+    if (!auth) return false;
 
-  const publicPages = [
-    'index.html',
-    'register.html',
-    'forgot-password.html',
-    'reset-password.html',
-    ''
-  ];
+    if (auth.currentUser) return true;
 
-  // หน้า Login / Register / Forgot / Reset เข้าได้เลย
-  if (publicPages.includes(page)) return true;
-
-  // Firebase ยังไม่พร้อม
-  if (!auth) return false;
-
-  // Firebase มี user อยู่แล้ว
-  if (auth.currentUser) return true;
-
-  // ⭐ ถ้าเพิ่ง Login และมีสถานะใน localStorage
-  // ให้ผ่านเข้าหน้า Dashboard ไปก่อน
-  const loggedIn = localStorage.getItem('isLoggedIn');
-
-  if (loggedIn === 'true') {
-    return true;
+    window.location.href = 'index.html';
+    return false;
   }
 
-  // ไม่มี Firebase user และไม่มีสถานะ Login
-  window.location.href = 'index.html';
-  return false;
-}
   async function initializeApp() {
     const ready = await initFirebase();
 
