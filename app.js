@@ -582,7 +582,7 @@
     });
   }
 
-  async function setupLogin() {
+ async function setupLogin() {
 
     const form = qs('#loginForm');
 
@@ -1813,501 +1813,54 @@ function escapeHtml(value) {
     if (previous && data.some(x => x.id === previous && x.available > 0)) select.value = previous;
   }
 
-async function setupBorrowPage() {
-
+  async function setupBorrowPage() {
     const select = qs('#equipmentSelect');
-
-    if (!select) {
-        return;
-    }
+    if (!select) return;
 
     const form = qs('#borrowForm');
-
-    const quantity = qs('#borrowQuantity');
+    const quantity = qs('#borrowQuantity') || qs('#quantity');
     const borrower = qs('#borrowerName');
     const borrowDate = qs('#borrowDate');
     const returnDate = qs('#returnDate');
     const note = qs('#borrowNote');
     const terms = qs('#termsCheckbox');
     const confirmBtn = qs('#confirmBorrowButton');
+    const sendOtp = qs('#sendOtpButton');
+    const otpInputs = qsa('.otp-input');
+
+    let data = await loadEquipmentFromFirebase();
+    populateEquipmentSelectLocal(select, data);
+    if (borrowDate && !borrowDate.value) borrowDate.value = todayISO();
+    if (borrower && !borrower.value) borrower.value = getCurrentUserName();
+
+    const updateSelected = () => {
+      const item = data.find(x => x.id === select.value);
+      const name = qs('#selectedEquipmentName');
+      const code = qs('#selectedEquipmentCode');
+      if (name) name.textContent = item?.name || '-';
+      if (code) code.textContent = item?.id || '-';
+      if (quantity && item) {
+        quantity.max = String(item.available);
+        if (Number(quantity.value || 1) > item.available) quantity.value = item.available;
+      }
+    };
+
+    select.addEventListener('change', updateSelected);
+    updateSelected();
+
+    qsa('#decreaseButton, #increaseButton').forEach(btn => btn.addEventListener('click', () => {
+      const item = data.find(x => x.id === select.value);
+      if (!quantity || !item) return;
+      const delta = btn.id === 'increaseButton' ? 1 : -1;
+      quantity.value = Math.max(1, Math.min(item.available, Number(quantity.value || 1) + delta));
+    }));
+
+    sendOtp?.addEventListener('click', () => {
+      alert('ระบบ OTP สำหรับการยืมยังเป็นโหมดตัวอย่าง ไม่ใช่ OTP จริง');
+      otpInputs[0]?.focus();
+    });
+    otpInputs.forEach((input, i) => input.addEventListener('input', () => { if (input.value && otpInputs[i + 1]) otpInputs[i + 1].focus(); }));
 
-
-    // ========================================
-    // โหลดข้อมูลอุปกรณ์
-    // ========================================
-
-    try {
-        await loadEquipmentFromFirebase();
-    } catch (error) {
-        console.warn(
-            'โหลดอุปกรณ์จาก Firebase ไม่สำเร็จ:',
-            error
-        );
-    }
-
-
-    // ========================================
-    // อ่านข้อมูลอุปกรณ์จาก LocalStorage
-    // ========================================
-
-    let equipment = [];
-
-    try {
-
-        const saved =
-            localStorage.getItem(KEYS.equipment) ||
-            localStorage.getItem(KEYS.equipmentData);
-
-        if (saved) {
-
-            const parsed =
-                JSON.parse(saved);
-
-            if (Array.isArray(parsed)) {
-                equipment = parsed;
-            }
-
-        }
-
-    } catch (error) {
-
-        console.error(
-            'อ่านข้อมูลอุปกรณ์ไม่สำเร็จ:',
-            error
-        );
-
-    }
-
-
-    console.log(
-        'อุปกรณ์สำหรับรายการยืม:',
-        equipment
-    );
-
-
-    // ========================================
-    // สร้างรายการใน Select
-    // ========================================
-
-    function renderEquipmentOptions() {
-
-        select.innerHTML = `
-            <option value="">
-                -- กรุณาเลือกอุปกรณ์ --
-            </option>
-        `;
-
-
-        equipment.forEach(item => {
-
-            const available =
-                Number(
-                    item.available ??
-                    item.quantity ??
-                    0
-                );
-
-
-            const status =
-                String(
-                    item.status ||
-                    ''
-                )
-                .trim()
-                .toLowerCase();
-
-
-            // ไม่แสดงอุปกรณ์ที่ไม่พร้อมใช้งาน
-            if (
-                status === 'unavailable' ||
-                status === 'ไม่พร้อมใช้งาน' ||
-                status === 'เสีย' ||
-                status === 'ซ่อม'
-            ) {
-                return;
-            }
-
-
-            // ถ้าไม่มีของ ไม่ต้องให้เลือก
-            if (available <= 0) {
-                return;
-            }
-
-
-            const id =
-                item.equipmentId ||
-                item.code ||
-                item.id ||
-                '';
-
-
-            const name =
-                item.name ||
-                item.equipmentName ||
-                item.title ||
-                'ไม่ระบุชื่ออุปกรณ์';
-
-
-            const option =
-                document.createElement('option');
-
-
-            option.value = id;
-
-
-            option.textContent =
-                `${name} (${id}) — เหลือ ${available} ชิ้น`;
-
-
-            select.appendChild(option);
-
-        });
-
-    }
-
-
-    renderEquipmentOptions();
-
-
-    // ========================================
-    // วันที่เริ่มต้น
-    // ========================================
-
-    if (
-        borrowDate &&
-        !borrowDate.value
-    ) {
-
-        borrowDate.value =
-            todayISO();
-
-    }
-
-
-    // ========================================
-    // ชื่อผู้ยืม
-    // ========================================
-
-    if (
-        borrower &&
-        !borrower.value
-    ) {
-
-        borrower.value =
-            getCurrentUserName();
-
-    }
-
-
-    // ========================================
-    // เมื่อเลือกอุปกรณ์
-    // ========================================
-
-    function updateSelectedEquipment() {
-
-        const selectedId =
-            select.value;
-
-
-        const item =
-            equipment.find(
-                equipmentItem => {
-
-                    const id =
-                        equipmentItem.equipmentId ||
-                        equipmentItem.code ||
-                        equipmentItem.id ||
-                        '';
-
-                    return String(id) ===
-                        String(selectedId);
-
-                }
-            );
-
-
-        const nameInput =
-            qs('#selectedEquipmentName');
-
-
-        const codeInput =
-            qs('#selectedEquipmentCode');
-
-
-        if (nameInput) {
-
-            nameInput.value =
-                item?.name ||
-                item?.equipmentName ||
-                item?.title ||
-                '';
-
-        }
-
-
-        if (codeInput) {
-
-            codeInput.value =
-                item?.equipmentId ||
-                item?.code ||
-                item?.id ||
-                '';
-
-        }
-
-
-        if (
-            quantity &&
-            item
-        ) {
-
-            const available =
-                Number(
-                    item.available ??
-                    item.quantity ??
-                    0
-                );
-
-
-            quantity.max =
-                String(available);
-
-
-            if (
-                Number(quantity.value) >
-                available
-            ) {
-
-                quantity.value =
-                    available;
-
-            }
-
-        }
-
-    }
-
-
-    select.addEventListener(
-        'change',
-        updateSelectedEquipment
-    );
-
-
-    updateSelectedEquipment();
-
-
-    // ========================================
-    // ลดจำนวน
-    // ========================================
-
-    qs('#decreaseButton')?.addEventListener(
-        'click',
-        () => {
-
-            if (!quantity) {
-                return;
-            }
-
-
-            const current =
-                Number(
-                    quantity.value || 1
-                );
-
-
-            quantity.value =
-                Math.max(
-                    1,
-                    current - 1
-                );
-
-        }
-    );
-
-
-    // ========================================
-    // เพิ่มจำนวน
-    // ========================================
-
-    qs('#increaseButton')?.addEventListener(
-        'click',
-        () => {
-
-            if (!quantity) {
-                return;
-            }
-
-
-            const selectedId =
-                select.value;
-
-
-            const item =
-                equipment.find(
-                    equipmentItem => {
-
-                        const id =
-                            equipmentItem.equipmentId ||
-                            equipmentItem.code ||
-                            equipmentItem.id ||
-                            '';
-
-                        return String(id) ===
-                            String(selectedId);
-
-                    }
-                );
-
-
-            if (!item) {
-                return;
-            }
-
-
-            const available =
-                Number(
-                    item.available ??
-                    item.quantity ??
-                    0
-                );
-
-
-            const current =
-                Number(
-                    quantity.value || 1
-                );
-
-
-            quantity.value =
-                Math.min(
-                    available,
-                    current + 1
-                );
-
-        }
-    );
-
-
-    // ========================================
-    // ยืนยันการยืม
-    // ========================================
-
-    if (form) {
-
-        form.addEventListener(
-            'submit',
-            async event => {
-
-                event.preventDefault();
-
-
-                if (!auth?.currentUser) {
-
-                    alert(
-                        'กรุณาเข้าสู่ระบบก่อนยืมอุปกรณ์'
-                    );
-
-                    return;
-                }
-
-
-                const selectedId =
-                    select.value;
-
-
-                const item =
-                    equipment.find(
-                        equipmentItem => {
-
-                            const id =
-                                equipmentItem.equipmentId ||
-                                equipmentItem.code ||
-                                equipmentItem.id ||
-                                '';
-
-                            return String(id) ===
-                                String(selectedId);
-
-                        }
-                    );
-
-
-                if (!item) {
-
-                    alert(
-                        'กรุณาเลือกอุปกรณ์'
-                    );
-
-                    return;
-                }
-
-
-                const qty =
-                    Number(
-                        quantity?.value || 1
-                    );
-
-
-                const available =
-                    Number(
-                        item.available ??
-                        item.quantity ??
-                        0
-                    );
-
-
-                if (qty > available) {
-
-                    alert(
-                        `อุปกรณ์มีเหลือเพียง ${available} ชิ้น`
-                    );
-
-                    return;
-                }
-
-
-                if (
-                    terms &&
-                    !terms.checked
-                ) {
-
-                    alert(
-                        'กรุณายืนยันข้อมูลการยืม'
-                    );
-
-                    return;
-                }
-
-
-                console.log(
-                    'ข้อมูลการยืม:',
-                    {
-                        equipment: item,
-                        quantity: qty,
-                        borrower:
-                            borrower?.value,
-                        borrowDate:
-                            borrowDate?.value,
-                        returnDate:
-                            returnDate?.value
-                    }
-                );
-
-
-                // ตรงนี้ให้ใช้ระบบบันทึกการยืม
-                // เดิมของ app.js ต่อได้เลย
-
-            }
-        );
-
-    }
-
-
-    console.log(
-        'setupBorrowPage ทำงานแล้ว'
-    );
-}
     async function doBorrow(e) {
       e?.preventDefault();
       if (!auth?.currentUser) return alert('กรุณาเข้าสู่ระบบก่อนยืมอุปกรณ์');
@@ -2542,7 +2095,7 @@ async function setupBorrowPage() {
     });
   }
 
-async function guardProtectedPage() {
+  async function guardProtectedPage() {
 
     const page =
         location.pathname.split('/').pop() || 'index.html';
@@ -2669,110 +2222,160 @@ async function guardProtectedPage() {
 }
  async function initializeApp() {
 
+    // ==============================
+    // 1. เริ่ม Firebase
+    // ==============================
+
     const ready = await initFirebase();
 
     if (!ready || !auth || !db) {
-        console.error('Firebase ไม่พร้อมใช้งาน');
+
+        console.error(
+            'Firebase ไม่พร้อมใช้งาน'
+        );
+
+        setupPasswordToggle();
+        setupCommonUI();
+
         return;
     }
 
+
     // ==============================
-    // UI พื้นฐาน
+    // 2. UI พื้นฐาน
     // ==============================
 
     setupPasswordToggle();
     setupCommonUI();
 
+
     // ==============================
-    // Login / Register
+    // 3. Login / Register
+    // ต้องตั้งค่าก่อน Guard
     // ==============================
 
     await setupLogin();
+
     await setupRegister();
+
     await setupForgotPassword();
+
     await setupResetPassword();
 
+
     // ==============================
-    // รอ Firebase ตรวจสอบ Login
+    // 4. ตรวจสอบ Firebase Login
     // ==============================
 
     const protectedPageAllowed =
         await guardProtectedPage();
 
+
     if (!protectedPageAllowed) {
         return;
     }
 
-    // ==============================
-    // โหลดข้อมูล Firebase
-    // ==============================
-
-    await ensureEquipmentSeed();
-
-    await loadEquipmentFromFirebase();
-
-    await loadHistoryFromFirebase();
 
     // ==============================
-    // หน้า Dashboard
+    // 5. หน้า Dashboard
     // ==============================
 
     await setupDashboard();
 
+
     // ==============================
-    // หน้าอุปกรณ์
+    // 6. หน้าอุปกรณ์
     // ==============================
 
     await setupEquipmentPage();
 
+
     // ==============================
-    // หน้ายืม
+    // 7. หน้ายืม
     // ==============================
 
     await setupBorrowPage();
 
+
     // ==============================
-    // หน้าคืน
+    // 8. หน้าคืน
     // ==============================
 
     await setupReturnPage();
 
+
     // ==============================
-    // หน้าประวัติ
+    // 9. หน้าประวัติ
     // ==============================
 
     await setupHistoryPage();
 
+
     // ==============================
-    // Modal + Icons
+    // 10. Modal
     // ==============================
 
     setupMiscModals();
 
+
+    // ==============================
+    // 11. ไอคอน
+    // ==============================
+
     initIcons();
 
-    console.log('ระบบพร้อมใช้งาน');
-}
+
+    // ==============================
+    // 12. เติมชื่อผู้ใช้
+    // ==============================
+
+    const currentUser =
+        auth.currentUser;
+
+    if (currentUser) {
+
+        let name =
+            localStorage.getItem(
+                KEYS.userName
+            ) ||
+            currentUser.displayName ||
+            currentUser.email ||
+            'ผู้ใช้งาน';
+
+        qsa(
+            '#userName, .profile-name, #welcomeUserName'
+        ).forEach(element => {
+
+            element.textContent = name;
+
+        });
+    }
 
 
-// ==============================
-// เริ่มระบบ
-// ==============================
+    // ==============================
+    // 13. โหลดข้อมูล Firebase
+    // ==============================
 
-if (document.readyState === 'loading') {
+    if (auth.currentUser) {
 
-    document.addEventListener(
-        'DOMContentLoaded',
-        initializeApp,
-        { once: true }
+        await ensureEquipmentSeed();
+
+        await loadEquipmentFromFirebase();
+
+        await loadHistoryFromFirebase();
+
+    }
+
+
+    // ==============================
+    // เสร็จสมบูรณ์
+    // ==============================
+
+    console.log(
+        'ระบบพร้อมใช้งาน'
     );
-
-} else {
-
-    initializeApp();
-
 }
-  document.addEventListener(
+document.addEventListener(
     'DOMContentLoaded',
     initializeApp
 );})();
