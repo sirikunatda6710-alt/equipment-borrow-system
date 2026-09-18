@@ -1,1 +1,119 @@
-<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>เข้าสู่ระบบ | ระบบยืม-คืนอุปกรณ์</title><link rel="stylesheet" href="style.css"></head><body class="login-page"><div class="login-container"><div class="login-logo"><img src="https://img2.pic.in.th/007-med-msu.md.webp" alt="โลโก้คณะ"></div><h1>เข้าสู่ระบบ</h1><p class="login-subtitle">เข้าสู่ระบบเพื่อใช้งานระบบ</p><form id="loginForm" class="login-form"><label for="email">อีเมล</label><input id="email" type="email" placeholder="กรอกอีเมลของคุณ" required><label for="password">รหัสผ่าน</label><div class="password-wrapper"><input id="password" type="password" placeholder="กรอกรหัสผ่าน" required><button type="button" class="toggle-password">แสดง</button></div><div class="remember-row"><input id="rememberMe" type="checkbox"><label for="rememberMe" class="remember-label">จดจำอีเมล</label></div><button class="login-button">เข้าสู่ระบบ</button><p class="forgot-link"><a href="forgot-password.html">ลืมรหัสผ่าน?</a></p><p class="register-link">ยังไม่มีบัญชี? <a href="register.html">ลงทะเบียน</a></p></form></div><script src="app.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>เข้าสู่ระบบ | ระบบยืม-คืนอุปกรณ์</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="login-page">
+
+    <div class="login-container">
+
+        <!-- โลโก้ -->
+        <div class="login-logo">
+            <img
+                src="https://img2.pic.in.th/007-med-msu.md.webp"
+                alt="โลโก้คณะ"
+            >
+        </div>
+
+        <!-- หัวข้อ -->
+        <h1>เข้าสู่ระบบ</h1>
+
+        <p class="login-subtitle">
+            เข้าสู่ระบบเพื่อใช้งานระบบ
+        </p>
+
+        <!-- แบบฟอร์มเข้าสู่ระบบ -->
+        <form id="loginForm" class="login-form">
+
+            <!-- อีเมล -->
+            <label for="email">
+                อีเมล
+            </label>
+
+            <input
+                id="email"
+                type="email"
+                placeholder="กรอกอีเมลของคุณ"
+                required
+            >
+
+            <!-- รหัสผ่าน -->
+            <label for="password">
+                รหัสผ่าน
+            </label>
+
+            <div class="password-wrapper">
+
+                <input
+                    id="password"
+                    type="password"
+                    placeholder="กรอกรหัสผ่าน"
+                    required
+                >
+
+                <button
+                    type="button"
+                    class="toggle-password"
+                >
+                    แสดง
+                </button>
+
+            </div>
+
+            <!-- จดจำอีเมล -->
+            <div class="remember-row">
+
+                <input
+                    id="rememberMe"
+                    type="checkbox"
+                >
+
+                <label
+                    for="rememberMe"
+                    class="remember-label"
+                >
+                    จดจำอีเมล
+                </label>
+
+            </div>
+
+            <!-- ปุ่มเข้าสู่ระบบ -->
+            <button
+                type="submit"
+                class="login-button"
+            >
+                เข้าสู่ระบบ
+            </button>
+
+            <!-- ลืมรหัสผ่าน -->
+            <p class="forgot-link">
+                <a href="forgot-password.html">
+                    ลืมรหัสผ่าน?
+                </a>
+            </p>
+
+            <!-- ลงทะเบียน -->
+            <p class="register-link">
+                ยังไม่มีบัญชี?
+                <a href="register.html">
+                    ลงทะเบียน
+                </a>
+            </p>
+
+        </form>
+
+    </div>
+
+    <!-- JavaScript -->
+    <script src="app.js"></script>
+
+</body>
+
+</html>
