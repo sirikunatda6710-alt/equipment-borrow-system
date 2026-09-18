@@ -2040,48 +2040,162 @@ async function guardProtectedPage() {
 
     return true;
 }
-  async function initializeApp() {
+ async function initializeApp() {
 
-  const ready = await initFirebase();
+    // ==============================
+    // 1. เริ่ม Firebase
+    // ==============================
 
-  if (!ready || !auth || !db) {
-    console.error('Firebase ไม่พร้อมใช้งาน');
-    return;
-  }
+    const ready = await initFirebase();
 
-  setupPasswordToggle();
-  setupCommonUI();
+    if (!ready || !auth || !db) {
 
-  // Login / Register
-  await setupLogin();
-  await setupRegister();
-  await setupForgotPassword();
-  await setupResetPassword();
+        console.error(
+            'Firebase ไม่พร้อมใช้งาน'
+        );
 
-  // ตรวจสอบว่า Login แล้วหรือยัง
-  const protectedPageAllowed =
-    await guardProtectedPage();
+        setupPasswordToggle();
+        setupCommonUI();
 
-  if (!protectedPageAllowed) {
-    return;
-  }
+        return;
+    }
 
-  // หน้า Dashboard และระบบหลัก
-  await setupDashboard();
-  await setupEquipmentPage();
-  await setupBorrowPage();
-  await setupReturnPage();
-  await setupHistoryPage();
 
-  setupMiscModals();
-  initIcons();
+    // ==============================
+    // 2. UI พื้นฐาน
+    // ==============================
 
-  console.log('ระบบพร้อมใช้งาน');
+    setupPasswordToggle();
+    setupCommonUI();
+
+
+    // ==============================
+    // 3. Login / Register
+    // ต้องตั้งค่าก่อน Guard
+    // ==============================
+
+    await setupLogin();
+
+    await setupRegister();
+
+    await setupForgotPassword();
+
+    await setupResetPassword();
+
+
+    // ==============================
+    // 4. ตรวจสอบ Firebase Login
+    // ==============================
+
+    const protectedPageAllowed =
+        await guardProtectedPage();
+
+
+    if (!protectedPageAllowed) {
+        return;
+    }
+
+
+    // ==============================
+    // 5. หน้า Dashboard
+    // ==============================
+
+    await setupDashboard();
+
+
+    // ==============================
+    // 6. หน้าอุปกรณ์
+    // ==============================
+
+    await setupEquipmentPage();
+
+
+    // ==============================
+    // 7. หน้ายืม
+    // ==============================
+
+    await setupBorrowPage();
+
+
+    // ==============================
+    // 8. หน้าคืน
+    // ==============================
+
+    await setupReturnPage();
+
+
+    // ==============================
+    // 9. หน้าประวัติ
+    // ==============================
+
+    await setupHistoryPage();
+
+
+    // ==============================
+    // 10. Modal
+    // ==============================
+
+    setupMiscModals();
+
+
+    // ==============================
+    // 11. ไอคอน
+    // ==============================
+
+    initIcons();
+
+
+    // ==============================
+    // 12. เติมชื่อผู้ใช้
+    // ==============================
+
+    const currentUser =
+        auth.currentUser;
+
+    if (currentUser) {
+
+        let name =
+            localStorage.getItem(
+                KEYS.userName
+            ) ||
+            currentUser.displayName ||
+            currentUser.email ||
+            'ผู้ใช้งาน';
+
+        qsa(
+            '#userName, .profile-name, #welcomeUserName'
+        ).forEach(element => {
+
+            element.textContent = name;
+
+        });
+    }
+
+
+    // ==============================
+    // 13. โหลดข้อมูล Firebase
+    // ==============================
+
+    if (auth.currentUser) {
+
+        await ensureEquipmentSeed();
+
+        await loadEquipmentFromFirebase();
+
+        await loadHistoryFromFirebase();
+
+    }
+
+
+    // ==============================
+    // เสร็จสมบูรณ์
+    // ==============================
+
+    console.log(
+        'ระบบพร้อมใช้งาน'
+    );
 }
-
-document.addEventListener(
-  'DOMContentLoaded',
-  initializeApp
-);
-
-})();
+  document.addEventListener(
+    'DOMContentLoaded',
+    initializeApp
+);})();
