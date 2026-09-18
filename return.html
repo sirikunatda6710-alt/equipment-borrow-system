@@ -1,1 +1,287 @@
-<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>คืนอุปกรณ์ | ระบบยืม-คืนอุปกรณ์</title><link rel="stylesheet" href="style.css"></head><body><div class="app-container"><header class="header"><div class="brand"><div class="header-logo"><img src="https://img2.pic.in.th/007-med-msu.md.webp" alt="โลโก้คณะ"></div><div class="brand-text"><h2>ระบบยืม-คืนอุปกรณ์</h2><p>ระบบจัดการอุปกรณ์</p></div></div><div class="header-actions"><div class="header-search"><i data-lucide="search"></i><input id="headerSearch" placeholder="ค้นหาอุปกรณ์..."></div><button id="notificationButton" class="icon-button"><i data-lucide="bell"></i><span id="notificationCount" class="notification-badge">0</span></button><button id="profileButton" class="profile-button"><i data-lucide="circle-user-round"></i><div class="profile-info"><span class="profile-label">ผู้ใช้งาน</span><span id="userName" class="profile-name">ผู้ใช้งาน</span></div></button><button id="logoutButton" class="logout-button"><i data-lucide="log-out"></i><span>ออกจากระบบ</span></button></div></header><nav class="navbar"><a href="dashboard.html" class=""><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a><a href="equipment.html" class=""><i data-lucide="package-search"></i><span>อุปกรณ์</span></a><a href="borrow.html" class=""><i data-lucide="clipboard-list"></i><span>รายการยืม</span></a><a href="return.html" class="active"><i data-lucide="undo-2"></i><span>คืนอุปกรณ์</span></a><a href="history.html" class=""><i data-lucide="history"></i><span>ประวัติ</span></a></nav><main class="main-content"><section class="page-heading"><h1>คืนอุปกรณ์</h1><p>จัดการรายการอุปกรณ์ที่กำลังถูกยืม</p></section><section class="table-container"><div class="table-responsive"><table><thead><tr><th>เลขที่</th><th>อุปกรณ์</th><th>ผู้ยืม</th><th>วันที่ยืม</th><th>กำหนดคืน</th><th>จัดการ</th></tr></thead><tbody id="returnTable"></tbody></table></div></section><br><section class="form-card"><form id="returnForm"><div class="form-group"><label>เลือกรายการยืม</label><select id="returnEquipmentSelect" required></select></div><div class="form-actions"><button class="primary-button">ยืนยันการคืน</button></div></form></section></main></div><div id="profileModal" class="modal"><div class="modal-content profile-modal"><button class="modal-close" id="closeProfileModal">×</button><h2>ข้อมูลผู้ใช้งาน</h2><div class="profile-modal-icon"><i data-lucide="circle-user-round"></i></div><label>ชื่อผู้ใช้งาน</label><input id="editUserName"><button id="saveProfileButton" class="save-profile-button">บันทึกข้อมูล</button></div></div><script src="app.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>คืนอุปกรณ์ | ระบบยืม-คืนอุปกรณ์</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="app-container">
+
+        <!-- =========================
+             Header
+        ========================== -->
+        <header class="header">
+
+            <div class="brand">
+
+                <div class="header-logo">
+                    <img
+                        src="https://img2.pic.in.th/007-med-msu.md.webp"
+                        alt="โลโก้คณะ"
+                    >
+                </div>
+
+                <div class="brand-text">
+                    <h2>ระบบยืม-คืนอุปกรณ์</h2>
+                    <p>ระบบจัดการอุปกรณ์</p>
+                </div>
+
+            </div>
+
+            <div class="header-actions">
+
+                <!-- ค้นหา -->
+                <div class="header-search">
+                    <i data-lucide="search"></i>
+
+                    <input
+                        id="headerSearch"
+                        placeholder="ค้นหาอุปกรณ์..."
+                    >
+                </div>
+
+                <!-- การแจ้งเตือน -->
+                <button
+                    id="notificationButton"
+                    class="icon-button"
+                >
+                    <i data-lucide="bell"></i>
+
+                    <span
+                        id="notificationCount"
+                        class="notification-badge"
+                    >
+                        0
+                    </span>
+                </button>
+
+                <!-- โปรไฟล์ -->
+                <button
+                    id="profileButton"
+                    class="profile-button"
+                >
+                    <i data-lucide="circle-user-round"></i>
+
+                    <div class="profile-info">
+
+                        <span class="profile-label">
+                            ผู้ใช้งาน
+                        </span>
+
+                        <span
+                            id="userName"
+                            class="profile-name"
+                        >
+                            ผู้ใช้งาน
+                        </span>
+
+                    </div>
+                </button>
+
+                <!-- ออกจากระบบ -->
+                <button
+                    id="logoutButton"
+                    class="logout-button"
+                >
+                    <i data-lucide="log-out"></i>
+
+                    <span>
+                        ออกจากระบบ
+                    </span>
+                </button>
+
+            </div>
+
+        </header>
+
+
+        <!-- =========================
+             Navigation
+        ========================== -->
+        <nav class="navbar">
+
+            <a href="dashboard.html">
+                <i data-lucide="layout-dashboard"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="equipment.html">
+                <i data-lucide="package-search"></i>
+                <span>อุปกรณ์</span>
+            </a>
+
+            <a href="borrow.html">
+                <i data-lucide="clipboard-list"></i>
+                <span>รายการยืม</span>
+            </a>
+
+            <a
+                href="return.html"
+                class="active"
+            >
+                <i data-lucide="undo-2"></i>
+                <span>คืนอุปกรณ์</span>
+            </a>
+
+            <a href="history.html">
+                <i data-lucide="history"></i>
+                <span>ประวัติ</span>
+            </a>
+
+        </nav>
+
+
+        <!-- =========================
+             Main Content
+        ========================== -->
+        <main class="main-content">
+
+            <!-- หัวข้อหน้า -->
+            <section class="page-heading">
+
+                <h1>
+                    คืนอุปกรณ์
+                </h1>
+
+                <p>
+                    จัดการรายการอุปกรณ์ที่กำลังถูกยืม
+                </p>
+
+            </section>
+
+
+            <!-- =========================
+                 ตารางรายการยืม
+            ========================== -->
+            <section class="table-container">
+
+                <div class="table-responsive">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+                                <th>เลขที่</th>
+                                <th>อุปกรณ์</th>
+                                <th>ผู้ยืม</th>
+                                <th>วันที่ยืม</th>
+                                <th>กำหนดคืน</th>
+                                <th>จัดการ</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="returnTable">
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+
+            <br>
+
+
+            <!-- =========================
+                 ฟอร์มคืนอุปกรณ์
+            ========================== -->
+            <section class="form-card">
+
+                <form id="returnForm">
+
+                    <div class="form-group">
+
+                        <label for="returnEquipmentSelect">
+                            เลือกรายการยืม
+                        </label>
+
+                        <select
+                            id="returnEquipmentSelect"
+                            required
+                        >
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-actions">
+
+                        <button
+                            type="submit"
+                            class="primary-button"
+                        >
+                            ยืนยันการคืน
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </section>
+
+        </main>
+
+    </div>
+
+
+    <!-- =========================
+         Profile Modal
+    ========================== -->
+    <div
+        id="profileModal"
+        class="modal"
+    >
+
+        <div class="modal-content profile-modal">
+
+            <button
+                class="modal-close"
+                id="closeProfileModal"
+            >
+                ×
+            </button>
+
+            <h2>
+                ข้อมูลผู้ใช้งาน
+            </h2>
+
+            <div class="profile-modal-icon">
+                <i data-lucide="circle-user-round"></i>
+            </div>
+
+            <label for="editUserName">
+                ชื่อผู้ใช้งาน
+            </label>
+
+            <input
+                id="editUserName"
+            >
+
+            <button
+                id="saveProfileButton"
+                class="save-profile-button"
+            >
+                บันทึกข้อมูล
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- JavaScript -->
+    <script src="app.js"></script>
+
+</body>
+
+</html>
