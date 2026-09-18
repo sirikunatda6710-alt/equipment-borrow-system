@@ -1,1 +1,441 @@
-<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>รายการยืม | ระบบยืม-คืนอุปกรณ์</title><link rel="stylesheet" href="style.css"></head><body><div class="app-container"><header class="header"><div class="brand"><div class="header-logo"><img src="https://img2.pic.in.th/007-med-msu.md.webp" alt="โลโก้คณะ"></div><div class="brand-text"><h2>ระบบยืม-คืนอุปกรณ์</h2><p>ระบบจัดการอุปกรณ์</p></div></div><div class="header-actions"><div class="header-search"><i data-lucide="search"></i><input id="headerSearch" placeholder="ค้นหาอุปกรณ์..."></div><button id="notificationButton" class="icon-button"><i data-lucide="bell"></i><span id="notificationCount" class="notification-badge">0</span></button><button id="profileButton" class="profile-button"><i data-lucide="circle-user-round"></i><div class="profile-info"><span class="profile-label">ผู้ใช้งาน</span><span id="userName" class="profile-name">ผู้ใช้งาน</span></div></button><button id="logoutButton" class="logout-button"><i data-lucide="log-out"></i><span>ออกจากระบบ</span></button></div></header><nav class="navbar"><a href="dashboard.html" class=""><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a><a href="equipment.html" class=""><i data-lucide="package-search"></i><span>อุปกรณ์</span></a><a href="borrow.html" class="active"><i data-lucide="clipboard-list"></i><span>รายการยืม</span></a><a href="return.html" class=""><i data-lucide="undo-2"></i><span>คืนอุปกรณ์</span></a><a href="history.html" class=""><i data-lucide="history"></i><span>ประวัติ</span></a></nav><main class="main-content"><section class="page-heading"><h1>รายการยืม</h1><p>บันทึกการยืมอุปกรณ์</p></section><section class="form-card"><form id="borrowForm"><div class="form-grid"><div class="form-group full"><label>อุปกรณ์</label><select id="equipmentSelect" required></select></div><div class="form-group"><label>อุปกรณ์ที่เลือก</label><input id="selectedEquipmentName" readonly></div><div class="form-group"><label>รหัสอุปกรณ์</label><input id="selectedEquipmentCode" readonly></div><div class="form-group"><label>จำนวน</label><div class="quantity-control"><button type="button" id="decreaseButton">−</button><input id="borrowQuantity" type="number" min="1" value="1"><button type="button" id="increaseButton">+</button></div></div><div class="form-group"><label>ผู้ยืม</label><input id="borrowerName" required></div><div class="form-group"><label>วันที่ยืม</label><input id="borrowDate" type="date" required></div><div class="form-group"><label>กำหนดคืน</label><input id="returnDate" type="date" required></div><div class="form-group full"><label>หมายเหตุ</label><textarea id="borrowNote" rows="3"></textarea></div><div class="form-group full"><label><input type="checkbox" id="termsCheckbox"> ยืนยันข้อมูลการยืม</label></div></div><div class="form-actions"><button id="confirmBorrowButton" class="primary-button">ยืนยันการยืม</button></div></form></section></main></div><div id="profileModal" class="modal"><div class="modal-content profile-modal"><button class="modal-close" id="closeProfileModal">×</button><h2>ข้อมูลผู้ใช้งาน</h2><div class="profile-modal-icon"><i data-lucide="circle-user-round"></i></div><label>ชื่อผู้ใช้งาน</label><input id="editUserName"><button id="saveProfileButton" class="save-profile-button">บันทึกข้อมูล</button></div></div><script src="app.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>รายการยืม | ระบบยืม-คืนอุปกรณ์</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="app-container">
+
+        <!-- =====================================================
+             Header
+        ====================================================== -->
+
+        <header class="header">
+
+            <div class="brand">
+
+                <div class="header-logo">
+                    <img
+                        src="https://img2.pic.in.th/007-med-msu.md.webp"
+                        alt="โลโก้คณะ"
+                    >
+                </div>
+
+                <div class="brand-text">
+                    <h2>ระบบยืม-คืนอุปกรณ์</h2>
+                    <p>ระบบจัดการอุปกรณ์</p>
+                </div>
+
+            </div>
+
+
+            <div class="header-actions">
+
+                <!-- Search -->
+                <div class="header-search">
+
+                    <i data-lucide="search"></i>
+
+                    <input
+                        id="headerSearch"
+                        placeholder="ค้นหาอุปกรณ์..."
+                    >
+
+                </div>
+
+
+                <!-- Notification -->
+                <button
+                    type="button"
+                    id="notificationButton"
+                    class="icon-button"
+                >
+
+                    <i data-lucide="bell"></i>
+
+                    <span
+                        id="notificationCount"
+                        class="notification-badge"
+                    >
+                        0
+                    </span>
+
+                </button>
+
+
+                <!-- Profile -->
+                <button
+                    type="button"
+                    id="profileButton"
+                    class="profile-button"
+                >
+
+                    <i data-lucide="circle-user-round"></i>
+
+                    <div class="profile-info">
+
+                        <span class="profile-label">
+                            ผู้ใช้งาน
+                        </span>
+
+                        <span
+                            id="userName"
+                            class="profile-name"
+                        >
+                            ผู้ใช้งาน
+                        </span>
+
+                    </div>
+
+                </button>
+
+
+                <!-- Logout -->
+                <button
+                    type="button"
+                    id="logoutButton"
+                    class="logout-button"
+                >
+
+                    <i data-lucide="log-out"></i>
+
+                    <span>
+                        ออกจากระบบ
+                    </span>
+
+                </button>
+
+            </div>
+
+        </header>
+
+
+        <!-- =====================================================
+             Navigation
+        ====================================================== -->
+
+        <nav class="navbar">
+
+            <a href="dashboard.html">
+                <i data-lucide="layout-dashboard"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="equipment.html">
+                <i data-lucide="package-search"></i>
+                <span>อุปกรณ์</span>
+            </a>
+
+            <a
+                href="borrow.html"
+                class="active"
+            >
+                <i data-lucide="clipboard-list"></i>
+                <span>รายการยืม</span>
+            </a>
+
+            <a href="return.html">
+                <i data-lucide="undo-2"></i>
+                <span>คืนอุปกรณ์</span>
+            </a>
+
+            <a href="history.html">
+                <i data-lucide="history"></i>
+                <span>ประวัติ</span>
+            </a>
+
+        </nav>
+
+
+        <!-- =====================================================
+             Main Content
+        ====================================================== -->
+
+        <main class="main-content">
+
+
+            <!-- Page Heading -->
+
+            <section class="page-heading">
+
+                <h1>รายการยืม</h1>
+
+                <p>
+                    บันทึกการยืมอุปกรณ์
+                </p>
+
+            </section>
+
+
+            <!-- =================================================
+                 Borrow Form
+            ================================================== -->
+
+            <section class="form-card">
+
+                <form id="borrowForm">
+
+                    <div class="form-grid">
+
+
+                        <!-- Equipment -->
+
+                        <div class="form-group full">
+
+                            <label for="equipmentSelect">
+                                อุปกรณ์
+                            </label>
+
+                            <select
+                                id="equipmentSelect"
+                                required
+                            >
+                            </select>
+
+                        </div>
+
+
+                        <!-- Selected Equipment Name -->
+
+                        <div class="form-group">
+
+                            <label for="selectedEquipmentName">
+                                อุปกรณ์ที่เลือก
+                            </label>
+
+                            <input
+                                id="selectedEquipmentName"
+                                readonly
+                            >
+
+                        </div>
+
+
+                        <!-- Equipment Code -->
+
+                        <div class="form-group">
+
+                            <label for="selectedEquipmentCode">
+                                รหัสอุปกรณ์
+                            </label>
+
+                            <input
+                                id="selectedEquipmentCode"
+                                readonly
+                            >
+
+                        </div>
+
+
+                        <!-- Quantity -->
+
+                        <div class="form-group">
+
+                            <label for="borrowQuantity">
+                                จำนวน
+                            </label>
+
+                            <div class="quantity-control">
+
+                                <button
+                                    type="button"
+                                    id="decreaseButton"
+                                >
+                                    −
+                                </button>
+
+                                <input
+                                    id="borrowQuantity"
+                                    type="number"
+                                    min="1"
+                                    value="1"
+                                >
+
+                                <button
+                                    type="button"
+                                    id="increaseButton"
+                                >
+                                    +
+                                </button>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- Borrower -->
+
+                        <div class="form-group">
+
+                            <label for="borrowerName">
+                                ผู้ยืม
+                            </label>
+
+                            <input
+                                id="borrowerName"
+                                required
+                            >
+
+                        </div>
+
+
+                        <!-- Borrow Date -->
+
+                        <div class="form-group">
+
+                            <label for="borrowDate">
+                                วันที่ยืม
+                            </label>
+
+                            <input
+                                id="borrowDate"
+                                type="date"
+                                required
+                            >
+
+                        </div>
+
+
+                        <!-- Return Date -->
+
+                        <div class="form-group">
+
+                            <label for="returnDate">
+                                กำหนดคืน
+                            </label>
+
+                            <input
+                                id="returnDate"
+                                type="date"
+                                required
+                            >
+
+                        </div>
+
+
+                        <!-- Note -->
+
+                        <div class="form-group full">
+
+                            <label for="borrowNote">
+                                หมายเหตุ
+                            </label>
+
+                            <textarea
+                                id="borrowNote"
+                                rows="3"
+                            ></textarea>
+
+                        </div>
+
+
+                        <!-- Confirmation -->
+
+                        <div class="form-group full">
+
+                            <label>
+
+                                <input
+                                    type="checkbox"
+                                    id="termsCheckbox"
+                                >
+
+                                ยืนยันข้อมูลการยืม
+
+                            </label>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Form Actions -->
+
+                    <div class="form-actions">
+
+                        <button
+                            type="submit"
+                            id="confirmBorrowButton"
+                            class="primary-button"
+                        >
+                            ยืนยันการยืม
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </section>
+
+        </main>
+
+    </div>
+
+
+    <!-- =====================================================
+         Profile Modal
+    ====================================================== -->
+
+    <div
+        id="profileModal"
+        class="modal"
+    >
+
+        <div class="modal-content profile-modal">
+
+            <button
+                type="button"
+                class="modal-close"
+                id="closeProfileModal"
+            >
+                ×
+            </button>
+
+
+            <h2>
+                ข้อมูลผู้ใช้งาน
+            </h2>
+
+
+            <div class="profile-modal-icon">
+                <i data-lucide="circle-user-round"></i>
+            </div>
+
+
+            <label for="editUserName">
+                ชื่อผู้ใช้งาน
+            </label>
+
+            <input id="editUserName">
+
+
+            <button
+                type="button"
+                id="saveProfileButton"
+                class="save-profile-button"
+            >
+                บันทึกข้อมูล
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         JavaScript
+    ====================================================== -->
+
+    <script src="app.js"></script>
+
+</body>
+
+</html>
