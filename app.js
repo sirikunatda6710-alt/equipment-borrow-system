@@ -320,20 +320,165 @@
   }
 
   function initIcons() {
-    function renderIcons() {
-        if (
-            window.lucide &&
-            typeof window.lucide.createIcons === 'function'
-        ) {
-            window.lucide.createIcons();
-            console.log('Lucide Icons แสดงแล้ว');
-        } else {
-            console.warn('ยังไม่พบ Lucide กำลังรอโหลด...');
-            setTimeout(renderIcons, 300);
-        }
-    }
 
-    renderIcons();
+    const icons = {
+
+        package: `
+            <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+            <path d="M3 9h18"></path>
+            <path d="M9 3v6"></path>
+        `,
+
+        "circle-check": `
+            <circle cx="12" cy="12" r="9"></circle>
+            <path d="m9 12 2 2 4-4"></path>
+        `,
+
+        "clipboard-list": `
+            <rect x="5" y="4" width="14" height="17" rx="2"></rect>
+            <path d="M9 4V3h6v1"></path>
+            <path d="M9 9h6"></path>
+            <path d="M9 13h6"></path>
+            <path d="M9 17h4"></path>
+        `,
+
+        "circle-x": `
+            <circle cx="12" cy="12" r="9"></circle>
+            <path d="m9 9 6 6"></path>
+            <path d="m15 9-6 6"></path>
+        `,
+
+        list: `
+            <path d="M8 6h13"></path>
+            <path d="M8 12h13"></path>
+            <path d="M8 18h13"></path>
+            <path d="M3 6h.01"></path>
+            <path d="M3 12h.01"></path>
+            <path d="M3 18h.01"></path>
+        `,
+
+        search: `
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-4-4"></path>
+        `,
+
+        bell: `
+            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
+            <path d="M10 21h4"></path>
+        `,
+
+        "circle-user-round": `
+            <circle cx="12" cy="12" r="9"></circle>
+            <circle cx="12" cy="10" r="3"></circle>
+            <path d="M7 20c1-3 3-4 5-4s4 1 5 4"></path>
+        `,
+
+        "log-out": `
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <path d="m16 17 5-5-5-5"></path>
+            <path d="M21 12H9"></path>
+        `,
+
+        "layout-dashboard": `
+            <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+            <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+            <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+            <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+        `,
+
+        "package-search": `
+            <path d="M21 8 12 3 3 8v8l9 5 5-2.8"></path>
+            <path d="M3 8l9 5 9-5"></path>
+            <path d="M12 13v8"></path>
+            <circle cx="17.5" cy="17.5" r="3"></circle>
+            <path d="m20 20 2 2"></path>
+        `,
+
+        "undo-2": `
+            <path d="M9 14 4 9l5-5"></path>
+            <path d="M4 9h10a6 6 0 0 1 6 6v1"></path>
+        `,
+
+        history: `
+            <path d="M3 12a9 9 0 1 0 3-6.7"></path>
+            <path d="M3 4v5h5"></path>
+            <path d="M12 7v5l3 2"></path>
+        `
+    };
+
+
+    document
+        .querySelectorAll('[data-lucide]')
+        .forEach(element => {
+
+            const name =
+                element.getAttribute('data-lucide');
+
+            const icon =
+                icons[name];
+
+            if (!icon) return;
+
+
+            const svg =
+                document.createElementNS(
+                    'http://www.w3.org/2000/svg',
+                    'svg'
+                );
+
+
+            svg.setAttribute(
+                'xmlns',
+                'http://www.w3.org/2000/svg'
+            );
+
+            svg.setAttribute(
+                'viewBox',
+                '0 0 24 24'
+            );
+
+            svg.setAttribute(
+                'fill',
+                'none'
+            );
+
+            svg.setAttribute(
+                'stroke',
+                'currentColor'
+            );
+
+            svg.setAttribute(
+                'stroke-width',
+                '2'
+            );
+
+            svg.setAttribute(
+                'stroke-linecap',
+                'round'
+            );
+
+            svg.setAttribute(
+                'stroke-linejoin',
+                'round'
+            );
+
+
+            // เอา class เดิมของ i มาใช้
+            if (element.className) {
+                svg.setAttribute(
+                    'class',
+                    element.className
+                );
+            }
+
+
+            svg.innerHTML = icon;
+
+
+            element.replaceWith(svg);
+
+        });
+
 }
   // ============================================================
   // PASSWORD SHOW / HIDE
