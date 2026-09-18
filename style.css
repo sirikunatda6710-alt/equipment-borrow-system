@@ -1036,3 +1036,124 @@ tr:hover td {
 
     flex-shrink: 0;
 }
+/* =========================================
+   LUCIDE ICONS
+========================================= */
+
+[data-lucide] {
+    width: 24px;
+    height: 24px;
+    display: inline-block;
+    vertical-align: middle;
+    stroke-width: 2;
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 14px;
+}
+
+.stat-icon svg {
+    width: 26px;
+    height: 26px;
+}
+
+.table-title-icon {
+    width: 48px;
+    height: 48px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 14px;
+}
+
+.table-title-icon svg {
+    width: 26px;
+    height: 26px;
+}
+
+.header-search {
+    display: flex;
+    align-items: center;
+}
+
+.header-search svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.icon-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-button svg {
+    width: 22px;
+    height: 22px;
+}
+
+.profile-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.profile-button svg {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+}
+
+.logout-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.logout-button svg {
+    width: 18px;
+    height: 18px;
+}
+
+.navbar a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.navbar a svg {
+    width: 18px;
+    height: 18px;
+}
+
+.table-search {
+    display: flex;
+    align-items: center;
+}
+
+.table-search svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.profile-modal-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-modal-icon svg {
+    width: 48px;
+    height: 48px;
+}
