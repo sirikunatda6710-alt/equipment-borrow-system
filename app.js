@@ -582,7 +582,7 @@
     });
   }
 
- async function setupLogin() {
+async function setupLogin() {
 
     const form = qs('#loginForm');
 
@@ -829,7 +829,6 @@
         }
     );
 }
-
   async function setupRegister() {
     const form = qs('#registerForm');
     if (!form || !auth) return;
