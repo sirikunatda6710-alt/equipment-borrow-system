@@ -1915,95 +1915,131 @@ function escapeHtml(value) {
     });
   }
 
-  async function guardProtectedPage() {
-  const page =
-    location.pathname.split('/').pop() || 'index.html';
+async function guardProtectedPage() {
 
-  const publicPages = [
-    'index.html',
-    'register.html',
-    'forgot-password.html',
-    'reset-password.html',
-    ''
-  ];
+    const page =
+        location.pathname.split('/').pop() || 'index.html';
 
-  // หน้า Login/Register ไม่ต้องตรวจสิทธิ์
-  if (publicPages.includes(page)) {
-    return true;
-  }
+    const publicPages = [
+        'index.html',
+        'register.html',
+        'forgot-password.html',
+        'reset-password.html',
+        ''
+    ];
 
-  if (!auth) {
-    console.error('Firebase Auth ยังไม่พร้อม');
-    window.location.replace('index.html');
-    return false;
-  }
-
-  // ⭐ รอ Firebase คืนสถานะ Login ก่อน
-  const user = await new Promise((resolve) => {
-    let unsubscribe;
-
-    unsubscribe = auth.onAuthStateChanged((currentUser) => {
-      if (unsubscribe) {
-        unsubscribe();
-      }
-
-      resolve(currentUser);
-    });
-  });
-
-  // ไม่มี Login จริง ๆ
-  if (!user) {
-    console.log('ไม่พบผู้ใช้ที่ Login อยู่ → กลับหน้า Login');
-
-    localStorage.removeItem(KEYS.loggedIn);
-    localStorage.removeItem(KEYS.firebaseUid);
-    localStorage.removeItem(KEYS.userEmail);
-    localStorage.removeItem(KEYS.userName);
-    localStorage.removeItem(KEYS.currentUser);
-
-    window.location.replace('index.html');
-    return false;
-  }
-
-  // ⭐ Firebase ยืนยันแล้วว่า Login อยู่
-  console.log('Firebase Login ตรวจสอบสำเร็จ:', user.email);
-
-  let name =
-    localStorage.getItem(KEYS.userName) ||
-    user.displayName ||
-    user.email ||
-    'ผู้ใช้งาน';
-
-  try {
-    const profile = await getUserProfile(user);
-
-    if (profile?.name) {
-      name = profile.name;
+    // หน้า Login / Register ไม่ต้องตรวจสอบ Login
+    if (publicPages.includes(page)) {
+        return true;
     }
-  } catch (error) {
-    console.warn(
-      'อ่านข้อมูลผู้ใช้ไม่สำเร็จ:',
-      error
+
+    if (!auth) {
+        console.error('Firebase Auth ยังไม่พร้อม');
+        window.location.replace('index.html');
+        return false;
+    }
+
+    // ⭐ รอ Firebase ตรวจสอบ Session ก่อน
+    const user = await new Promise(resolve => {
+
+        if (auth.currentUser) {
+            resolve(auth.currentUser);
+            return;
+        }
+
+        let unsubscribe = null;
+
+        unsubscribe = auth.onAuthStateChanged(currentUser => {
+
+            if (unsubscribe) {
+                unsubscribe();
+            }
+
+            resolve(currentUser);
+
+        });
+
+    });
+
+    // ไม่มี Login
+    if (!user) {
+
+        console.log(
+            'ไม่พบผู้ใช้ที่ Login อยู่ → กลับหน้า Login'
+        );
+
+        localStorage.removeItem(KEYS.loggedIn);
+        localStorage.removeItem(KEYS.firebaseUid);
+        localStorage.removeItem(KEYS.userEmail);
+        localStorage.removeItem(KEYS.userName);
+        localStorage.removeItem(KEYS.currentUser);
+
+        window.location.replace('index.html');
+
+        return false;
+    }
+
+    // ⭐ มี Login แล้ว
+    console.log(
+        'Firebase Login ตรวจสอบสำเร็จ:',
+        user.email
     );
-  }
 
-  localStorage.setItem(KEYS.loggedIn, 'true');
-  localStorage.setItem(KEYS.firebaseUid, user.uid);
-  localStorage.setItem(
-    KEYS.userEmail,
-    user.email || ''
-  );
-  localStorage.setItem(KEYS.userName, name);
+    let name =
+        localStorage.getItem(KEYS.userName) ||
+        user.displayName ||
+        user.email ||
+        'ผู้ใช้งาน';
 
-  saveJSON(KEYS.currentUser, {
-    id: user.uid,
-    name: name,
-    email: user.email || ''
-  });
+    try {
 
-  return true;
+        const profile =
+            await getUserProfile(user);
+
+        if (profile?.name) {
+            name = profile.name;
+        }
+
+    } catch (error) {
+
+        console.warn(
+            'อ่านข้อมูลผู้ใช้ไม่สำเร็จ:',
+            error
+        );
+
+    }
+
+    localStorage.setItem(
+        KEYS.loggedIn,
+        'true'
+    );
+
+    localStorage.setItem(
+        KEYS.firebaseUid,
+        user.uid
+    );
+
+    localStorage.setItem(
+        KEYS.userEmail,
+        user.email || ''
+    );
+
+    localStorage.setItem(
+        KEYS.userName,
+        name
+    );
+
+    saveJSON(
+        KEYS.currentUser,
+        {
+            id: user.uid,
+            name: name,
+            email: user.email || ''
+        }
+    );
+
+    return true;
 }
-
   async function initializeApp() {
 
   const ready = await initFirebase();
