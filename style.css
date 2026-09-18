@@ -1157,3 +1157,128 @@ tr:hover td {
     width: 48px;
     height: 48px;
 }
+/* ================================
+   ICON FIX
+================================ */
+
+.stat-icon svg,
+.table-title-icon svg,
+.header-search svg,
+.icon-button svg,
+.profile-button svg,
+.logout-button svg,
+.navbar a svg {
+    width: 24px;
+    height: 24px;
+
+    display: block;
+
+    flex-shrink: 0;
+
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.stat-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.table-title-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.header-search {
+    display: flex;
+    align-items: center;
+}
+
+.icon-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-button {
+    display: flex;
+    align-items: center;
+}
+
+.logout-button {
+    display: flex;
+    align-items: center;
+}
+
+.navbar a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}/* ================================
+   ICON FIX
+================================ */
+
+.stat-icon svg,
+.table-title-icon svg,
+.header-search svg,
+.icon-button svg,
+.profile-button svg,
+.logout-button svg,
+.navbar a svg {
+    width: 24px;
+    height: 24px;
+
+    display: block;
+
+    flex-shrink: 0;
+
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.stat-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.table-title-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.header-search {
+    display: flex;
+    align-items: center;
+}
+
+.icon-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-button {
+    display: flex;
+    align-items: center;
+}
+
+.logout-button {
+    display: flex;
+    align-items: center;
+}
+
+.navbar a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
