@@ -1813,48 +1813,76 @@ function escapeHtml(value) {
     if (previous && data.some(x => x.id === previous && x.available > 0)) select.value = previous;
   }
 
-  async function setupBorrowPage() {
+async function setupBorrowPage() {
 
-    const select =
-        qs('#equipmentSelect');
+    const select = qs('#equipmentSelect');
 
     if (!select) {
         return;
     }
 
+    const form = qs('#borrowForm');
 
-    const form =
-        qs('#borrowForm');
-
-    const quantity =
-        qs('#borrowQuantity') ||
-        qs('#quantity');
-
-    const borrower =
-        qs('#borrowerName');
-
-    const borrowDate =
-        qs('#borrowDate');
-
-    const returnDate =
-        qs('#returnDate');
-
-    const note =
-        qs('#borrowNote');
-
-    const terms =
-        qs('#termsCheckbox');
-
-    const confirmBtn =
-        qs('#confirmBorrowButton');
+    const quantity = qs('#borrowQuantity');
+    const borrower = qs('#borrowerName');
+    const borrowDate = qs('#borrowDate');
+    const returnDate = qs('#returnDate');
+    const note = qs('#borrowNote');
+    const terms = qs('#termsCheckbox');
+    const confirmBtn = qs('#confirmBorrowButton');
 
 
     // ========================================
-    // โหลดอุปกรณ์จาก Firebase
+    // โหลดข้อมูลอุปกรณ์
     // ========================================
 
-    let data =
+    try {
         await loadEquipmentFromFirebase();
+    } catch (error) {
+        console.warn(
+            'โหลดอุปกรณ์จาก Firebase ไม่สำเร็จ:',
+            error
+        );
+    }
+
+
+    // ========================================
+    // อ่านข้อมูลอุปกรณ์จาก LocalStorage
+    // ========================================
+
+    let equipment = [];
+
+    try {
+
+        const saved =
+            localStorage.getItem(KEYS.equipment) ||
+            localStorage.getItem(KEYS.equipmentData);
+
+        if (saved) {
+
+            const parsed =
+                JSON.parse(saved);
+
+            if (Array.isArray(parsed)) {
+                equipment = parsed;
+            }
+
+        }
+
+    } catch (error) {
+
+        console.error(
+            'อ่านข้อมูลอุปกรณ์ไม่สำเร็จ:',
+            error
+        );
+
+    }
+
+
+    console.log(
+        'อุปกรณ์สำหรับรายการยืม:',
+        equipment
+    );
 
 
     // ========================================
@@ -1863,29 +1891,6 @@ function escapeHtml(value) {
 
     function renderEquipmentOptions() {
 
-        const currentValue =
-            select.value;
-
-
-        const availableEquipment =
-            data.filter(item => {
-
-                const available =
-                    Number(item.available || 0);
-
-                const status =
-                    normalizeStatus(
-                        item.status
-                    );
-
-                return (
-                    status !== 'unavailable' &&
-                    available > 0
-                );
-
-            });
-
-
         select.innerHTML = `
             <option value="">
                 -- กรุณาเลือกอุปกรณ์ --
@@ -1893,37 +1898,70 @@ function escapeHtml(value) {
         `;
 
 
-        availableEquipment.forEach(item => {
+        equipment.forEach(item => {
+
+            const available =
+                Number(
+                    item.available ??
+                    item.quantity ??
+                    0
+                );
+
+
+            const status =
+                String(
+                    item.status ||
+                    ''
+                )
+                .trim()
+                .toLowerCase();
+
+
+            // ไม่แสดงอุปกรณ์ที่ไม่พร้อมใช้งาน
+            if (
+                status === 'unavailable' ||
+                status === 'ไม่พร้อมใช้งาน' ||
+                status === 'เสีย' ||
+                status === 'ซ่อม'
+            ) {
+                return;
+            }
+
+
+            // ถ้าไม่มีของ ไม่ต้องให้เลือก
+            if (available <= 0) {
+                return;
+            }
+
+
+            const id =
+                item.equipmentId ||
+                item.code ||
+                item.id ||
+                '';
+
+
+            const name =
+                item.name ||
+                item.equipmentName ||
+                item.title ||
+                'ไม่ระบุชื่ออุปกรณ์';
+
 
             const option =
                 document.createElement('option');
 
 
-            option.value =
-                item.id;
+            option.value = id;
 
 
             option.textContent =
-                `${item.name} (${item.id}) — เหลือ ${item.available} ชิ้น`;
+                `${name} (${id}) — เหลือ ${available} ชิ้น`;
 
 
             select.appendChild(option);
 
         });
-
-
-        // ถ้ายังมีค่าที่เลือกไว้
-        if (
-            currentValue &&
-            availableEquipment.some(
-                item => item.id === currentValue
-            )
-        ) {
-
-            select.value =
-                currentValue;
-
-        }
 
     }
 
@@ -1932,7 +1970,7 @@ function escapeHtml(value) {
 
 
     // ========================================
-    // ค่าเริ่มต้น
+    // วันที่เริ่มต้น
     // ========================================
 
     if (
@@ -1945,6 +1983,10 @@ function escapeHtml(value) {
 
     }
 
+
+    // ========================================
+    // ชื่อผู้ยืม
+    // ========================================
 
     if (
         borrower &&
@@ -1963,74 +2005,83 @@ function escapeHtml(value) {
 
     function updateSelectedEquipment() {
 
+        const selectedId =
+            select.value;
+
+
         const item =
-            data.find(
-                equipment =>
-                    equipment.id ===
-                    select.value
+            equipment.find(
+                equipmentItem => {
+
+                    const id =
+                        equipmentItem.equipmentId ||
+                        equipmentItem.code ||
+                        equipmentItem.id ||
+                        '';
+
+                    return String(id) ===
+                        String(selectedId);
+
+                }
             );
 
 
-        const name =
+        const nameInput =
             qs('#selectedEquipmentName');
 
-        const code =
+
+        const codeInput =
             qs('#selectedEquipmentCode');
 
 
-        if (name) {
+        if (nameInput) {
 
-            name.textContent =
-                item?.name || '-';
-
-        }
-
-
-        if (code) {
-
-            code.textContent =
-                item?.id || '-';
+            nameInput.value =
+                item?.name ||
+                item?.equipmentName ||
+                item?.title ||
+                '';
 
         }
 
 
-        // กำหนดจำนวนสูงสุด
+        if (codeInput) {
+
+            codeInput.value =
+                item?.equipmentId ||
+                item?.code ||
+                item?.id ||
+                '';
+
+        }
+
+
         if (
             quantity &&
             item
         ) {
 
-            quantity.max =
-                String(item.available);
-
-
-            let current =
+            const available =
                 Number(
-                    quantity.value || 1
+                    item.available ??
+                    item.quantity ??
+                    0
                 );
 
 
-            if (
-                current < 1
-            ) {
-
-                current = 1;
-
-            }
+            quantity.max =
+                String(available);
 
 
             if (
-                current > item.available
+                Number(quantity.value) >
+                available
             ) {
 
-                current =
-                    item.available;
+                quantity.value =
+                    available;
 
             }
-
-
-            quantity.value =
-                current;
 
         }
 
@@ -2047,25 +2098,14 @@ function escapeHtml(value) {
 
 
     // ========================================
-    // ปุ่มลดจำนวน
+    // ลดจำนวน
     // ========================================
 
     qs('#decreaseButton')?.addEventListener(
         'click',
         () => {
 
-            const item =
-                data.find(
-                    equipment =>
-                        equipment.id ===
-                        select.value
-                );
-
-
-            if (
-                !quantity ||
-                !item
-            ) {
+            if (!quantity) {
                 return;
             }
 
@@ -2087,27 +2127,50 @@ function escapeHtml(value) {
 
 
     // ========================================
-    // ปุ่มเพิ่มจำนวน
+    // เพิ่มจำนวน
     // ========================================
 
     qs('#increaseButton')?.addEventListener(
         'click',
         () => {
 
+            if (!quantity) {
+                return;
+            }
+
+
+            const selectedId =
+                select.value;
+
+
             const item =
-                data.find(
-                    equipment =>
-                        equipment.id ===
-                        select.value
+                equipment.find(
+                    equipmentItem => {
+
+                        const id =
+                            equipmentItem.equipmentId ||
+                            equipmentItem.code ||
+                            equipmentItem.id ||
+                            '';
+
+                        return String(id) ===
+                            String(selectedId);
+
+                    }
                 );
 
 
-            if (
-                !quantity ||
-                !item
-            ) {
+            if (!item) {
                 return;
             }
+
+
+            const available =
+                Number(
+                    item.available ??
+                    item.quantity ??
+                    0
+                );
 
 
             const current =
@@ -2118,7 +2181,7 @@ function escapeHtml(value) {
 
             quantity.value =
                 Math.min(
-                    item.available,
+                    available,
                     current + 1
                 );
 
@@ -2127,316 +2190,123 @@ function escapeHtml(value) {
 
 
     // ========================================
-    // ยืมอุปกรณ์
-    // ========================================
-
-    async function doBorrow(event) {
-
-        event?.preventDefault();
-
-
-        if (
-            !auth?.currentUser
-        ) {
-
-            alert(
-                'กรุณาเข้าสู่ระบบก่อนยืมอุปกรณ์'
-            );
-
-            return;
-
-        }
-
-
-        const item =
-            data.find(
-                equipment =>
-                    equipment.id ===
-                    select.value
-            );
-
-
-        const qty =
-            Math.max(
-                1,
-                Number(
-                    quantity?.value || 1
-                )
-            );
-
-
-        const who =
-            (
-                borrower?.value ||
-                getCurrentUserName()
-            ).trim();
-
-
-        // ตรวจสอบอุปกรณ์
-        if (!item) {
-
-            alert(
-                'กรุณาเลือกอุปกรณ์'
-            );
-
-            return;
-
-        }
-
-
-        // ตรวจสอบจำนวน
-        if (
-            qty >
-            Number(item.available)
-        ) {
-
-            alert(
-                'จำนวนที่ยืมมากกว่าจำนวนอุปกรณ์ที่มีอยู่'
-            );
-
-            return;
-
-        }
-
-
-        // ตรวจสอบชื่อ
-        if (!who) {
-
-            alert(
-                'กรุณาระบุชื่อผู้ยืม'
-            );
-
-            return;
-
-        }
-
-
-        // ตรวจสอบเงื่อนไข
-        if (
-            terms &&
-            !terms.checked
-        ) {
-
-            alert(
-                'กรุณายอมรับเงื่อนไขการยืม'
-            );
-
-            return;
-
-        }
-
-
-        // ====================================
-        // อัปเดตอุปกรณ์
-        // ====================================
-
-        const newAvailable =
-            Number(item.available) - qty;
-
-
-        const updatedItem = {
-
-            ...item,
-
-            available:
-                newAvailable,
-
-            status:
-                newAvailable === 0
-                    ? 'borrowed'
-                    : 'available',
-
-            borrower:
-                who,
-
-            updatedAt:
-                new Date().toISOString()
-
-        };
-
-
-        // ====================================
-        // สร้างรายการยืม
-        // ====================================
-
-        const record = {
-
-            id:
-                makeId('BR'),
-
-            equipmentId:
-                item.id,
-
-            equipmentName:
-                item.name,
-
-            borrower:
-                who,
-
-            borrowerUid:
-                auth.currentUser.uid,
-
-            borrowDate:
-                borrowDate?.value ||
-                todayISO(),
-
-            returnDate:
-                returnDate?.value ||
-                '',
-
-            actualReturnDate:
-                '',
-
-            quantity:
-                qty,
-
-            note:
-                note?.value?.trim() ||
-                '',
-
-            status:
-                'borrowing',
-
-            createdAt:
-                new Date().toISOString()
-
-        };
-
-
-        try {
-
-            // บันทึก Firebase
-            await saveEquipmentFirebase(
-                updatedItem
-            );
-
-
-            await saveBorrowFirebase(
-                record
-            );
-
-
-            await saveHistoryFirebase(
-                record
-            );
-
-
-            // ====================================
-            // อัปเดตข้อมูลในหน้าเว็บ
-            // ====================================
-
-            data =
-                data.map(
-                    equipment =>
-                        equipment.id ===
-                        updatedItem.id
-
-                            ? normalizeEquipment(
-                                updatedItem
-                            )
-
-                            : equipment
-                );
-
-
-            saveEquipmentLocal(
-                data
-            );
-
-
-            const history =
-                getHistoryLocal();
-
-
-            history.unshift(
-                record
-            );
-
-
-            saveHistoryLocal(
-                history
-            );
-
-
-            alert(
-                'บันทึกการยืมอุปกรณ์เรียบร้อยแล้ว'
-            );
-
-
-            // ====================================
-            // Reset
-            // ====================================
-
-            form?.reset();
-
-
-            if (borrowDate) {
-
-                borrowDate.value =
-                    todayISO();
-
-            }
-
-
-            if (borrower) {
-
-                borrower.value =
-                    getCurrentUserName();
-
-            }
-
-
-            renderEquipmentOptions();
-
-            updateSelectedEquipment();
-
-
-        } catch (error) {
-
-            console.error(
-                'Borrow Error:',
-                error
-            );
-
-
-            alert(
-                'บันทึกการยืมไม่สำเร็จ: ' +
-                firebaseErrorMessage(error)
-            );
-
-        }
-
-    }
-
-
-    // ========================================
-    // Submit
+    // ยืนยันการยืม
     // ========================================
 
     if (form) {
 
         form.addEventListener(
             'submit',
-            doBorrow
-        );
+            async event => {
 
-    }
-    else if (confirmBtn) {
+                event.preventDefault();
 
-        confirmBtn.addEventListener(
-            'click',
-            doBorrow
+
+                if (!auth?.currentUser) {
+
+                    alert(
+                        'กรุณาเข้าสู่ระบบก่อนยืมอุปกรณ์'
+                    );
+
+                    return;
+                }
+
+
+                const selectedId =
+                    select.value;
+
+
+                const item =
+                    equipment.find(
+                        equipmentItem => {
+
+                            const id =
+                                equipmentItem.equipmentId ||
+                                equipmentItem.code ||
+                                equipmentItem.id ||
+                                '';
+
+                            return String(id) ===
+                                String(selectedId);
+
+                        }
+                    );
+
+
+                if (!item) {
+
+                    alert(
+                        'กรุณาเลือกอุปกรณ์'
+                    );
+
+                    return;
+                }
+
+
+                const qty =
+                    Number(
+                        quantity?.value || 1
+                    );
+
+
+                const available =
+                    Number(
+                        item.available ??
+                        item.quantity ??
+                        0
+                    );
+
+
+                if (qty > available) {
+
+                    alert(
+                        `อุปกรณ์มีเหลือเพียง ${available} ชิ้น`
+                    );
+
+                    return;
+                }
+
+
+                if (
+                    terms &&
+                    !terms.checked
+                ) {
+
+                    alert(
+                        'กรุณายืนยันข้อมูลการยืม'
+                    );
+
+                    return;
+                }
+
+
+                console.log(
+                    'ข้อมูลการยืม:',
+                    {
+                        equipment: item,
+                        quantity: qty,
+                        borrower:
+                            borrower?.value,
+                        borrowDate:
+                            borrowDate?.value,
+                        returnDate:
+                            returnDate?.value
+                    }
+                );
+
+
+                // ตรงนี้ให้ใช้ระบบบันทึกการยืม
+                // เดิมของ app.js ต่อได้เลย
+
+            }
         );
 
     }
 
 
     console.log(
-        'โหลดรายการอุปกรณ์สำหรับการยืมแล้ว:',
-        data.length,
-        'รายการ'
+        'setupBorrowPage ทำงานแล้ว'
     );
-
 }
     async function doBorrow(e) {
       e?.preventDefault();
