@@ -320,9 +320,10 @@
   }
 
   function initIcons() {
-    if (window.lucide?.createIcons) window.lucide.createIcons();
+  if (window.lucide && typeof window.lucide.createIcons === 'function') {
+    window.lucide.createIcons();
   }
-
+}
   // ============================================================
   // PASSWORD SHOW / HIDE
   // ============================================================
