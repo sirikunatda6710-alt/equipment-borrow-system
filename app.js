@@ -320,9 +320,20 @@
   }
 
   function initIcons() {
-  if (window.lucide && typeof window.lucide.createIcons === 'function') {
-    window.lucide.createIcons();
-  }
+    function renderIcons() {
+        if (
+            window.lucide &&
+            typeof window.lucide.createIcons === 'function'
+        ) {
+            window.lucide.createIcons();
+            console.log('Lucide Icons แสดงแล้ว');
+        } else {
+            console.warn('ยังไม่พบ Lucide กำลังรอโหลด...');
+            setTimeout(renderIcons, 300);
+        }
+    }
+
+    renderIcons();
 }
   // ============================================================
   // PASSWORD SHOW / HIDE
