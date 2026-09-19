@@ -118,6 +118,16 @@
       updatedAt: item.updatedAt || new Date().toISOString()
     };
   }
+  function equipmentIcon(category) {
+  // แมปชื่อประเภทกับชื่อไอคอน
+  const map = {
+    'เครื่องฉาย': 'projector',
+    'กล้องถ่ายภาพ': 'camera',
+    'เครื่องเสียง': 'mic'
+  };
+  // ถ้าไม่มีใน map ให้ใช้ไอคอน 'package' เป็นค่าเริ่มต้น
+  return map[category] || 'package';
+}
 
   function getEquipmentLocal() {
     let data = parseJSON(KEYS.equipment, null);
@@ -458,7 +468,20 @@
       <circle cx="12" cy="12" r="9"></circle>
       <path d="M12 8v4"></path>
       <path d="M12 16h.01"></path>
-    `
+    `,
+projector: `
+  <path d="M5 7 3 5"/><path d="M19 7l2-2"/><path d="M22 9v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2Z"/><circle cx="9" cy="13" r="3"/><path d="M17 13h.01"/>
+`,
+camera: `
+  <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>
+`,
+mic: `
+  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/>
+`,
+speaker: `
+  <rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><circle cx="12" cy="14" r="4"/><line x1="12" x2="12.01" y1="6" y2="6"/>
+`,
+    
   };
 
   qsa('[data-lucide]').forEach(element => {
