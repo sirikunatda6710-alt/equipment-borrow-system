@@ -2066,13 +2066,12 @@ function escapeHtml(value) {
     let data = await loadEquipmentFromFirebase();
 
    const active = () => records.filter(h => {
-
-  return (
-    h.status === 'borrowing' &&
-    !h.actualReturnDate
-  );
-
-});
+     return (
+       h.status === 'borrowing' &&
+       !h.actualReturnDate &&
+       h.borrowerUid === auth.currentUser?.uid // <--- เพิ่มบรรทัดนี้เพื่อกรองเอาเฉพาะของคนที่ล็อกอินอยู่
+     );
+   });
     function renderReturnOptions() {
       if (!select) return;
       select.innerHTML = '<option value="">-- เลือกรายการยืม --</option>' + active().map(h => `<option value="${escapeHtml(h.id)}">${escapeHtml(h.equipmentName)} — ${escapeHtml(h.borrower)}</option>`).join('');
@@ -2095,6 +2094,11 @@ function escapeHtml(value) {
     async function completeReturn(id) {
       const record = records.find(h => h.id === id && h.status === 'borrowing');
       if (!record) return alert('ไม่พบรายการยืม');
+      // --- เพิ่มโค้ดดักจับตรงนี้ ---
+      if (record.borrowerUid !== auth.currentUser?.uid) {
+          return alert('คุณไม่สามารถคืนอุปกรณ์ที่ผู้อื่นเป็นคนยืมได้');
+      }
+      // ------------------------
       const item = data.find(x => x.id === record.equipmentId);
       if (!item) return alert('ไม่พบอุปกรณ์รายการนี้');
 
