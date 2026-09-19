@@ -503,6 +503,11 @@ speaker: `
     svg.setAttribute('stroke-width', '2');
     svg.setAttribute('stroke-linecap', 'round');
     svg.setAttribute('stroke-linejoin', 'round');
+    svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('width', '24');   // <-- เพิ่มบรรทัดนี้
+    svg.setAttribute('height', '24');  // <-- เพิ่มบรรทัดนี้
+    svg.setAttribute('fill', 'none');
 
     if (element.className) {
       svg.setAttribute('class', String(element.className));
@@ -2034,7 +2039,7 @@ function escapeHtml(value) {
   }
 
   async function setupReturnPage() {
-    const select = qs('#returnEquipmentSelect') || qs('#equipmentSelect');
+    const select = qs('#returnEquipmentSelect');
     const form = qs('#returnForm');
     const table = qs('#returnTable');
     if (!select && !form && !table) return;
