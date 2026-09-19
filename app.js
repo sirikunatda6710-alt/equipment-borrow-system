@@ -2196,7 +2196,7 @@ function escapeHtml(value) {
       }).join('');
 
       if (empty) empty.style.display = rows.length ? 'none' : '';
-      initIcons();
+      initIcons(); // เรียกแปลงไอคอนทั้งหมดในหน้าประวัติ
     }
 
     window.viewHistory = encodedId => {
@@ -2225,20 +2225,6 @@ function escapeHtml(value) {
     filter?.addEventListener('change', render);
     render();
   }
-
-  function setupMiscModals() {
-    qsa('.modal').forEach(modal => {
-      modal.addEventListener('click', e => {
-        if (e.target === modal) modal.classList.remove('show');
-      });
-    });
-
-    qs('#notificationButton')?.addEventListener('click', () => {
-      if (location.pathname.endsWith('history.html')) return;
-      window.location.href = 'history.html';
-    });
-  }
-
   async function guardProtectedPage() {
 
     const page =
