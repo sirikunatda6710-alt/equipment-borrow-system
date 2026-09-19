@@ -321,163 +321,174 @@
 
   function initIcons() {
 
-    const icons = {
+  const icons = {
 
-        package: `
-            <rect x="3" y="3" width="18" height="18" rx="2"></rect>
-            <path d="M3 9h18"></path>
-            <path d="M9 3v6"></path>
-        `,
+    package: `
+      <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+      <path d="M3 9h18"></path>
+      <path d="M9 3v6"></path>
+    `,
 
-        "circle-check": `
-            <circle cx="12" cy="12" r="9"></circle>
-            <path d="m9 12 2 2 4-4"></path>
-        `,
+    "circle-check": `
+      <circle cx="12" cy="12" r="9"></circle>
+      <path d="m9 12 2 2 4-4"></path>
+    `,
 
-        "clipboard-list": `
-            <rect x="5" y="4" width="14" height="17" rx="2"></rect>
-            <path d="M9 4V3h6v1"></path>
-            <path d="M9 9h6"></path>
-            <path d="M9 13h6"></path>
-            <path d="M9 17h4"></path>
-        `,
+    "clipboard-list": `
+      <rect x="5" y="4" width="14" height="17" rx="2"></rect>
+      <path d="M9 4V3h6v1"></path>
+      <path d="M9 9h6"></path>
+      <path d="M9 13h6"></path>
+      <path d="M9 17h4"></path>
+    `,
 
-        "circle-x": `
-            <circle cx="12" cy="12" r="9"></circle>
-            <path d="m9 9 6 6"></path>
-            <path d="m15 9-6 6"></path>
-        `,
+    "circle-x": `
+      <circle cx="12" cy="12" r="9"></circle>
+      <path d="m9 9 6 6"></path>
+      <path d="m15 9-6 6"></path>
+    `,
 
-        list: `
-            <path d="M8 6h13"></path>
-            <path d="M8 12h13"></path>
-            <path d="M8 18h13"></path>
-            <path d="M3 6h.01"></path>
-            <path d="M3 12h.01"></path>
-            <path d="M3 18h.01"></path>
-        `,
+    list: `
+      <path d="M8 6h13"></path>
+      <path d="M8 12h13"></path>
+      <path d="M8 18h13"></path>
+      <path d="M3 6h.01"></path>
+      <path d="M3 12h.01"></path>
+      <path d="M3 18h.01"></path>
+    `,
 
-        search: `
-            <circle cx="11" cy="11" r="7"></circle>
-            <path d="m20 20-4-4"></path>
-        `,
+    search: `
+      <circle cx="11" cy="11" r="7"></circle>
+      <path d="m20 20-4-4"></path>
+    `,
 
-        bell: `
-            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
-            <path d="M10 21h4"></path>
-        `,
+    bell: `
+      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
+      <path d="M10 21h4"></path>
+    `,
 
-        "circle-user-round": `
-            <circle cx="12" cy="12" r="9"></circle>
-            <circle cx="12" cy="10" r="3"></circle>
-            <path d="M7 20c1-3 3-4 5-4s4 1 5 4"></path>
-        `,
+    "circle-user-round": `
+      <circle cx="12" cy="12" r="9"></circle>
+      <circle cx="12" cy="10" r="3"></circle>
+      <path d="M7 20c1-3 3-4 5-4s4 1 5 4"></path>
+    `,
 
-        "log-out": `
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-            <path d="m16 17 5-5-5-5"></path>
-            <path d="M21 12H9"></path>
-        `,
+    "log-out": `
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+      <path d="m16 17 5-5-5-5"></path>
+      <path d="M21 12H9"></path>
+    `,
 
-        "layout-dashboard": `
-            <rect x="3" y="3" width="7" height="7" rx="1"></rect>
-            <rect x="14" y="3" width="7" height="7" rx="1"></rect>
-            <rect x="3" y="14" width="7" height="7" rx="1"></rect>
-            <rect x="14" y="14" width="7" height="7" rx="1"></rect>
-        `,
+    "layout-dashboard": `
+      <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+      <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+      <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+      <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+    `,
 
-        "package-search": `
-            <path d="M21 8 12 3 3 8v8l9 5 5-2.8"></path>
-            <path d="M3 8l9 5 9-5"></path>
-            <path d="M12 13v8"></path>
-            <circle cx="17.5" cy="17.5" r="3"></circle>
-            <path d="m20 20 2 2"></path>
-        `,
+    "package-search": `
+      <path d="M21 8 12 3 3 8v8l9 5 5-2.8"></path>
+      <path d="M3 8l9 5 9-5"></path>
+      <path d="M12 13v8"></path>
+      <circle cx="17.5" cy="17.5" r="3"></circle>
+      <path d="m20 20 2 2"></path>
+    `,
 
-        "undo-2": `
-            <path d="M9 14 4 9l5-5"></path>
-            <path d="M4 9h10a6 6 0 0 1 6 6v1"></path>
-        `,
+    "undo-2": `
+      <path d="M9 14 4 9l5-5"></path>
+      <path d="M4 9h10a6 6 0 0 1 6 6v1"></path>
+    `,
 
-        history: `
-            <path d="M3 12a9 9 0 1 0 3-6.7"></path>
-            <path d="M3 4v5h5"></path>
-            <path d="M12 7v5l3 2"></path>
-        `
-    };
+    history: `
+      <path d="M3 12a9 9 0 1 0 3-6.7"></path>
+      <path d="M3 4v5h5"></path>
+      <path d="M12 7v5l3 2"></path>
+    `,
 
+    /* ===== ไอคอนที่เพิ่ม ===== */
 
-    document
-        .querySelectorAll('[data-lucide]')
-        .forEach(element => {
+    eye: `
+      <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"></path>
+      <circle cx="12" cy="12" r="2.5"></circle>
+    `,
 
-            const name =
-                element.getAttribute('data-lucide');
+    pencil: `
+      <path d="M12 20h9"></path>
+      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+    `,
 
-            const icon =
-                icons[name];
+    "trash-2": `
+      <path d="M3 6h18"></path>
+      <path d="M8 6V4h8v2"></path>
+      <path d="M19 6l-1 15H6L5 6"></path>
+      <path d="M10 11v6"></path>
+      <path d="M14 11v6"></path>
+    `,
 
-            if (!icon) return;
+    plus: `
+      <path d="M12 5v14"></path>
+      <path d="M5 12h14"></path>
+    `,
 
+    minus: `
+      <path d="M5 12h14"></path>
+    `,
 
-            const svg =
-                document.createElementNS(
-                    'http://www.w3.org/2000/svg',
-                    'svg'
-                );
+    "package-check": `
+      <path d="m16.5 9.4-5 5-2.5-2.5"></path>
+      <path d="M21 16V8l-9-5-9 5v8l9 5 9-5Z"></path>
+      <path d="M3 8l9 5 9-5"></path>
+      <path d="M12 13v8"></path>
+    `,
 
+    "calendar-days": `
+      <rect x="3" y="4" width="18" height="18" rx="2"></rect>
+      <path d="M16 2v4"></path>
+      <path d="M8 2v4"></path>
+      <path d="M3 10h18"></path>
+      <path d="M8 14h.01"></path>
+      <path d="M12 14h.01"></path>
+      <path d="M16 14h.01"></path>
+      <path d="M8 18h.01"></path>
+      <path d="M12 18h.01"></path>
+      <path d="M16 18h.01"></path>
+    `,
 
-            svg.setAttribute(
-                'xmlns',
-                'http://www.w3.org/2000/svg'
-            );
+    "circle-alert": `
+      <circle cx="12" cy="12" r="9"></circle>
+      <path d="M12 8v4"></path>
+      <path d="M12 16h.01"></path>
+    `
+  };
 
-            svg.setAttribute(
-                'viewBox',
-                '0 0 24 24'
-            );
+  qsa('[data-lucide]').forEach(element => {
 
-            svg.setAttribute(
-                'fill',
-                'none'
-            );
+    const name = element.getAttribute('data-lucide');
+    const icon = icons[name];
 
-            svg.setAttribute(
-                'stroke',
-                'currentColor'
-            );
+    if (!icon) return;
 
-            svg.setAttribute(
-                'stroke-width',
-                '2'
-            );
+    const svg = document.createElementNS(
+      'http://www.w3.org/2000/svg',
+      'svg'
+    );
 
-            svg.setAttribute(
-                'stroke-linecap',
-                'round'
-            );
+    svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '2');
+    svg.setAttribute('stroke-linecap', 'round');
+    svg.setAttribute('stroke-linejoin', 'round');
 
-            svg.setAttribute(
-                'stroke-linejoin',
-                'round'
-            );
+    if (element.className) {
+      svg.setAttribute('class', String(element.className));
+    }
 
+    svg.innerHTML = icon;
 
-            // เอา class เดิมของ i มาใช้
-            if (element.className) {
-                svg.setAttribute(
-                    'class',
-                    element.className
-                );
-            }
-
-
-            svg.innerHTML = icon;
-
-
-            element.replaceWith(svg);
-
-        });
+    element.replaceWith(svg);
+  });
 
 }
   // ============================================================
@@ -1803,15 +1814,53 @@ function escapeHtml(value) {
   }
 
   function populateEquipmentSelectLocal(select, data) {
-    if (!select) return;
-    const previous = select.value;
-    select.innerHTML = '<option value="">-- เลือกอุปกรณ์ --</option>' + data
-      .filter(x => x.status !== 'unavailable' && x.available > 0)
-      .map(x => `<option value="${escapeHtml(x.id)}">${escapeHtml(x.name)} (${escapeHtml(x.id)}) — เหลือ ${x.available}</option>`)
-      .join('');
-    if (previous && data.some(x => x.id === previous && x.available > 0)) select.value = previous;
+
+  if (!select) return;
+
+  const previous = select.value;
+
+  const availableEquipment = data.filter(item => {
+
+    const available = Number(item.available || 0);
+
+    const status = normalizeStatus(item.status);
+
+    return (
+      status !== 'unavailable' &&
+      available > 0
+    );
+
+  });
+
+  select.innerHTML = `
+    <option value="">
+      -- เลือกอุปกรณ์ --
+    </option>
+  `;
+
+  availableEquipment.forEach(item => {
+
+    const option = document.createElement('option');
+
+    option.value = item.id;
+
+    option.textContent =
+      `${item.name} (${item.id}) — เหลือ ${item.available} ชิ้น`;
+
+    select.appendChild(option);
+
+  });
+
+  if (
+    previous &&
+    availableEquipment.some(item => item.id === previous)
+  ) {
+
+    select.value = previous;
+
   }
 
+}
   async function setupBorrowPage() {
     const select = qs('#equipmentSelect');
     if (!select) return;
@@ -2275,96 +2324,68 @@ function escapeHtml(value) {
     }
 
 
-    // ==============================
-    // 5. หน้า Dashboard
-    // ==============================
+   // ==============================
+// 5. เตรียมข้อมูล Firebase
+// ==============================
 
-    await setupDashboard();
+if (auth.currentUser) {
 
+    await ensureEquipmentSeed();
 
-    // ==============================
-    // 6. หน้าอุปกรณ์
-    // ==============================
+    await loadEquipmentFromFirebase();
 
-    await setupEquipmentPage();
+    await loadHistoryFromFirebase();
 
-
-    // ==============================
-    // 7. หน้ายืม
-    // ==============================
-
-    await setupBorrowPage();
+}
 
 
-    // ==============================
-    // 8. หน้าคืน
-    // ==============================
+// ==============================
+// 6. หน้า Dashboard
+// ==============================
 
-    await setupReturnPage();
-
-
-    // ==============================
-    // 9. หน้าประวัติ
-    // ==============================
-
-    await setupHistoryPage();
+await setupDashboard();
 
 
-    // ==============================
-    // 10. Modal
-    // ==============================
+// ==============================
+// 7. หน้าอุปกรณ์
+// ==============================
 
-    setupMiscModals();
-
-
-    // ==============================
-    // 11. ไอคอน
-    // ==============================
-
-    initIcons();
+await setupEquipmentPage();
 
 
-    // ==============================
-    // 12. เติมชื่อผู้ใช้
-    // ==============================
+// ==============================
+// 8. หน้ายืม
+// ==============================
 
-    const currentUser =
-        auth.currentUser;
-
-    if (currentUser) {
-
-        let name =
-            localStorage.getItem(
-                KEYS.userName
-            ) ||
-            currentUser.displayName ||
-            currentUser.email ||
-            'ผู้ใช้งาน';
-
-        qsa(
-            '#userName, .profile-name, #welcomeUserName'
-        ).forEach(element => {
-
-            element.textContent = name;
-
-        });
-    }
+await setupBorrowPage();
 
 
-    // ==============================
-    // 13. โหลดข้อมูล Firebase
-    // ==============================
+// ==============================
+// 9. หน้าคืน
+// ==============================
 
-    if (auth.currentUser) {
+await setupReturnPage();
 
-        await ensureEquipmentSeed();
 
-        await loadEquipmentFromFirebase();
+// ==============================
+// 10. หน้าประวัติ
+// ==============================
 
-        await loadHistoryFromFirebase();
+await setupHistoryPage();
 
-    }
 
+// ==============================
+// 11. Modal
+// ==============================
+
+setupMiscModals();
+
+
+// ==============================
+// 12. ไอคอน
+// ==============================
+
+initIcons();
 
     // ==============================
     // เสร็จสมบูรณ์
