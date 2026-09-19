@@ -858,6 +858,22 @@ async function setupLogin() {
         }
     );
 }
+  // ============================================================
+  // ฟังก์ชันตรวจสอบรหัสผ่าน (เพิ่มใหม่เพื่อแก้บัคหน้า Register)
+  // ============================================================
+  function passwordValid(password) {
+    if (!password) return false;
+    // ตรวจสอบ: ยาว 8 ตัวขึ้นไป, มีพิมพ์ใหญ่, มีพิมพ์เล็ก, มีตัวเลข
+    const hasUpper = /[A-Z]/.test(password);
+    const hasLower = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const isLongEnough = password.length >= 8;
+    return hasUpper && hasLower && hasNumber && isLongEnough;
+  }
+
+  function updatePasswordRules(type, password) {
+    // ป้องกัน Error เวลาผู้ใช้พิมพ์รหัสผ่าน (ปล่อยว่างไว้ได้ถ้าไม่ได้ทำ UI เช็คลิสต์รหัสผ่านบนหน้าเว็บ)
+  }
   async function setupRegister() {
     const form = qs('#registerForm');
     if (!form || !auth) return;
