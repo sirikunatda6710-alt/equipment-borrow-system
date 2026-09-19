@@ -858,7 +858,7 @@ async function setupLogin() {
         }
     );
 }
-  // ============================================================
+// ============================================================
   // ฟังก์ชันตรวจสอบรหัสผ่าน (เพิ่มใหม่เพื่อแก้บัคหน้า Register)
   // ============================================================
   function passwordValid(password) {
@@ -1032,220 +1032,869 @@ function escapeHtml(value) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
-async function setupDashboard() {
-    const totalEquipmentEl = qs('#totalEquipment');
-    const availableEquipmentEl = qs('#availableEquipment');
-    const borrowedEquipmentEl = qs('#borrowedEquipment');
-    const unavailableEquipmentEl = qs('#unavailableEquipment');
-    const equipmentTable = qs('#equipmentTable');
-    const userNameEl = qs('#userName');
-    const headerSearch = qs('#headerSearch');
-    const tableSearch = qs('#tableSearch');
+  async function setupDashboard() {
+  const totalEquipmentEl = qs('#totalEquipment');
+  const availableEquipmentEl = qs('#availableEquipment');
+  const borrowedEquipmentEl = qs('#borrowedEquipment');
+  const unavailableEquipmentEl = qs('#unavailableEquipment');
+  const equipmentTable = qs('#equipmentTable');
+  const userNameEl = qs('#userName');
+  const headerSearch = qs('#headerSearch');
+  const tableSearch = qs('#tableSearch');
 
-    // ถ้าไม่ใช่หน้า Dashboard ให้ข้ามการทำงาน
-    if (!totalEquipmentEl && !availableEquipmentEl && !borrowedEquipmentEl && !unavailableEquipmentEl && !equipmentTable) {
-      return;
+  // ถ้าไม่ใช่หน้า Dashboard
+  if (
+    !totalEquipmentEl &&
+    !availableEquipmentEl &&
+    !borrowedEquipmentEl &&
+    !unavailableEquipmentEl &&
+    !equipmentTable
+  ) {
+    return;
+  }
+
+  // ==========================================
+  // รอ Firebase
+  // ==========================================
+  const firebaseOK = await initFirebase();
+
+  if (!firebaseOK || !auth) {
+    console.error('Firebase ยังไม่พร้อมสำหรับ Dashboard');
+    return;
+  }
+
+  // ==========================================
+  // ตรวจสอบผู้ใช้ที่ Login อยู่
+  // ==========================================
+  const user = auth.currentUser;
+
+  if (!user) {
+    console.warn('ไม่พบผู้ใช้ที่ Login อยู่');
+
+    window.location.replace('index.html');
+    return;
+  }
+
+  console.log(
+    'Dashboard User:',
+    user.email
+  );
+
+  // ==========================================
+  // ข้อมูลผู้ใช้งาน
+  // ==========================================
+  let userName =
+    user.displayName ||
+    localStorage.getItem(KEYS.userName) ||
+    user.email ||
+    'ผู้ใช้งาน';
+
+  if (userNameEl) {
+    userNameEl.textContent = userName;
+  }
+
+  localStorage.setItem(
+    KEYS.userName,
+    userName
+  );
+
+  localStorage.setItem(
+    KEYS.userEmail,
+    user.email || ''
+  );
+
+  localStorage.setItem(
+    KEYS.firebaseUid,
+    user.uid
+  );
+
+  // ==========================================
+  // โหลดข้อมูลอุปกรณ์
+  // ==========================================
+  let equipment = [];
+
+  try {
+
+    if (db) {
+
+      const snapshot =
+        await db.collection('equipment').get();
+
+      snapshot.forEach(doc => {
+
+        const data = doc.data() || {};
+
+        equipment.push({
+          id: doc.id,
+          ...data
+        });
+
+      });
+
+      console.log(
+        'โหลดอุปกรณ์จาก Firebase:',
+        equipment.length,
+        'รายการ'
+      );
+
     }
 
-    const firebaseOK = await initFirebase();
-    if (!firebaseOK || !auth) return;
+  } catch (error) {
 
-    const user = auth.currentUser;
-    if (!user) {
-      window.location.replace('index.html');
-      return;
-    }
+    console.error(
+      'ไม่สามารถโหลด equipment จาก Firebase:',
+      error
+    );
 
-    let userName = user.displayName || localStorage.getItem(KEYS.userName) || user.email || 'ผู้ใช้งาน';
-    if (userNameEl) userNameEl.textContent = userName;
+  }
 
-    let equipment = [];
+  // ==========================================
+  // ถ้า Firebase ยังไม่มีข้อมูล
+  // ให้ลองอ่าน LocalStorage
+  // ==========================================
+  if (!equipment.length) {
 
-    // ฟังก์ชันตรวจสอบสถานะหลัก
-    function getEquipmentStatus(item) {
-      const status = String(item.status || item.state || item.availability || '').trim().toLowerCase();
-      if (status === 'borrowed' || status === 'ยืม' || status === 'กำลังถูกยืม' || status === 'ถูกยืม') return 'borrowed';
-      if (status === 'unavailable' || status === 'ไม่พร้อมใช้งาน' || status === 'เสีย' || status === 'ซ่อม') return 'unavailable';
-      return 'available';
-    }
+    const localEquipment =
+      localStorage.getItem(KEYS.equipment) ||
+      localStorage.getItem(KEYS.equipmentData);
 
-    // ฟังก์ชันคำนวณสถิติจาก "จำนวนชิ้น" แทนการนับแถว
-    function updateDashboardStats() {
-      let total = 0;
-      let available = 0;
-      let borrowed = 0;
-      let unavailable = 0;
+    if (localEquipment) {
 
-      equipment.forEach(item => {
-        const itemTotal = Number(item.total) || 1;
-        const itemAvailable = Number(item.available) >= 0 ? Number(item.available) : itemTotal;
-        const status = getEquipmentStatus(item);
+      try {
 
-        total += itemTotal;
+        const parsed =
+          JSON.parse(localEquipment);
 
-        if (status === 'unavailable') {
-          unavailable += itemTotal;
-        } else {
-          available += itemAvailable;
-          borrowed += (itemTotal - itemAvailable); // จำนวนที่ถูกยืม = ทั้งหมด - พร้อมใช้
+        if (Array.isArray(parsed)) {
+          equipment = parsed;
         }
-      });
 
-      if (totalEquipmentEl) totalEquipmentEl.textContent = total;
-      if (availableEquipmentEl) availableEquipmentEl.textContent = available;
-      if (borrowedEquipmentEl) borrowedEquipmentEl.textContent = borrowed;
-      if (unavailableEquipmentEl) unavailableEquipmentEl.textContent = unavailable;
+      } catch (error) {
+
+        console.error(
+          'อ่านข้อมูลอุปกรณ์จาก LocalStorage ไม่สำเร็จ:',
+          error
+        );
+
+      }
+
     }
 
-    function renderEquipmentTable(searchText = '') {
-      if (!equipmentTable) return;
-      const keyword = String(searchText).trim().toLowerCase();
-      const filteredEquipment = equipment.filter(item => {
+  }
+
+  // ==========================================
+  // ฟังก์ชันตรวจสถานะอุปกรณ์
+  // ==========================================
+  function getEquipmentStatus(item) {
+
+    const status =
+      String(
+        item.status ||
+        item.state ||
+        item.availability ||
+        ''
+      )
+        .trim()
+        .toLowerCase();
+
+    if (
+      status === 'borrowed' ||
+      status === 'ยืม' ||
+      status === 'กำลังถูกยืม' ||
+      status === 'ถูกยืม'
+    ) {
+      return 'borrowed';
+    }
+
+    if (
+      status === 'unavailable' ||
+      status === 'ไม่พร้อมใช้งาน' ||
+      status === 'เสีย' ||
+      status === 'ซ่อม'
+    ) {
+      return 'unavailable';
+    }
+
+    return 'available';
+  }
+
+  // ==========================================
+  // คำนวณจำนวนอุปกรณ์
+  // ==========================================
+  let total = equipment.length;
+  let available = 0;
+  let borrowed = 0;
+  let unavailable = 0;
+
+  equipment.forEach(item => {
+
+    const status =
+      getEquipmentStatus(item);
+
+    if (status === 'borrowed') {
+      borrowed++;
+    }
+    else if (status === 'unavailable') {
+      unavailable++;
+    }
+    else {
+      available++;
+    }
+
+  });
+
+  // ==========================================
+  // แสดงสถิติบน Dashboard
+  // ==========================================
+  if (totalEquipmentEl) {
+    totalEquipmentEl.textContent = total;
+  }
+
+  if (availableEquipmentEl) {
+    availableEquipmentEl.textContent = available;
+  }
+
+  if (borrowedEquipmentEl) {
+    borrowedEquipmentEl.textContent = borrowed;
+  }
+
+  if (unavailableEquipmentEl) {
+    unavailableEquipmentEl.textContent =
+      unavailable;
+  }
+
+  // ==========================================
+  // แปลงสถานะสำหรับแสดงบนหน้าเว็บ
+  // ==========================================
+  function getStatusText(item) {
+
+    const status =
+      getEquipmentStatus(item);
+
+    if (status === 'borrowed') {
+      return 'กำลังถูกยืม';
+    }
+
+    if (status === 'unavailable') {
+      return 'ไม่พร้อมใช้งาน';
+    }
+
+    return 'พร้อมใช้งาน';
+  }
+
+  // ==========================================
+  // สร้างรายการอุปกรณ์ในตาราง
+  // ==========================================
+  function renderEquipmentTable(
+    searchText = ''
+  ) {
+
+    if (!equipmentTable) return;
+
+    const keyword =
+      String(searchText)
+        .trim()
+        .toLowerCase();
+
+    const filteredEquipment =
+      equipment.filter(item => {
+
         if (!keyword) return true;
-        const id = String(item.id || item.equipmentId || item.code || '');
-        const name = String(item.name || item.equipmentName || item.title || '');
-        const type = String(item.type || item.category || '');
-        const borrower = String(item.borrower || item.borrowerName || item.userName || '');
-        return id.toLowerCase().includes(keyword) || name.toLowerCase().includes(keyword) || type.toLowerCase().includes(keyword) || borrower.toLowerCase().includes(keyword);
+
+        const id =
+          String(
+            item.id ||
+            item.equipmentId ||
+            item.code ||
+            ''
+          );
+
+        const name =
+          String(
+            item.name ||
+            item.equipmentName ||
+            item.title ||
+            ''
+          );
+
+        const type =
+          String(
+            item.type ||
+            item.category ||
+            ''
+          );
+
+        const borrower =
+          String(
+            item.borrower ||
+            item.borrowerName ||
+            item.userName ||
+            ''
+          );
+
+        return (
+          id.toLowerCase().includes(keyword) ||
+          name.toLowerCase().includes(keyword) ||
+          type.toLowerCase().includes(keyword) ||
+          borrower.toLowerCase().includes(keyword)
+        );
+
       });
 
-      if (!filteredEquipment.length) {
-        equipmentTable.innerHTML = '<tr><td colspan="6" style="text-align:center;">ไม่พบข้อมูลอุปกรณ์</td></tr>';
+    // ไม่มีข้อมูล
+    if (!filteredEquipment.length) {
+
+      equipmentTable.innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align:center;">
+            ไม่พบข้อมูลอุปกรณ์
+          </td>
+        </tr>
+      `;
+
+      return;
+    }
+
+    equipmentTable.innerHTML =
+      filteredEquipment
+        .map(item => {
+
+          const id =
+            item.equipmentId ||
+            item.code ||
+            item.id ||
+            '-';
+
+          const name =
+            item.name ||
+            item.equipmentName ||
+            item.title ||
+            '-';
+
+          const type =
+            item.type ||
+            item.category ||
+            '-';
+
+          const status =
+            getEquipmentStatus(item);
+
+          const statusText =
+            getStatusText(item);
+
+          const borrower =
+            item.borrower ||
+            item.borrowerName ||
+            item.userName ||
+            '-';
+
+          let statusClass =
+            'status-available';
+
+          if (status === 'borrowed') {
+            statusClass =
+              'status-borrowed';
+          }
+
+          if (status === 'unavailable') {
+            statusClass =
+              'status-unavailable';
+          }
+
+          return `
+            <tr>
+              <td>${escapeHtml(id)}</td>
+
+              <td>${escapeHtml(name)}</td>
+
+              <td>${escapeHtml(type)}</td>
+
+              <td>
+                <span class="status-badge ${statusClass}">
+                  ${escapeHtml(statusText)}
+                </span>
+              </td>
+
+              <td>
+                ${escapeHtml(borrower)}
+              </td>
+
+              <td>
+                <button
+                  type="button"
+                  class="table-action-button"
+                  data-equipment-id="${escapeHtml(id)}"
+                >
+                  ดูรายละเอียด
+                </button>
+              </td>
+            </tr>
+          `;
+
+        })
+        .join('');
+
+    // ========================================
+    // ปุ่มดูรายละเอียด
+    // ========================================
+    qsa(
+      '.table-action-button',
+      equipmentTable
+    ).forEach(button => {
+
+      button.addEventListener(
+        'click',
+        () => {
+
+          const equipmentId =
+            button.dataset.equipmentId;
+
+          const item =
+            equipment.find(
+              equipmentItem =>
+                String(
+                  equipmentItem.equipmentId ||
+                  equipmentItem.code ||
+                  equipmentItem.id
+                ) === String(equipmentId)
+            );
+
+          if (!item) return;
+
+          const modal =
+            qs('#equipmentModal');
+
+          const modalContent =
+            qs('#modalContent');
+
+          if (
+            modal &&
+            modalContent
+          ) {
+
+            modalContent.innerHTML = `
+              <h2>
+                ${escapeHtml(
+                  item.name ||
+                  item.equipmentName ||
+                  item.title ||
+                  'รายละเอียดอุปกรณ์'
+                )}
+              </h2>
+
+              <p>
+                <strong>รหัส:</strong>
+                ${escapeHtml(
+                  item.equipmentId ||
+                  item.code ||
+                  item.id ||
+                  '-'
+                )}
+              </p>
+
+              <p>
+                <strong>ประเภท:</strong>
+                ${escapeHtml(
+                  item.type ||
+                  item.category ||
+                  '-'
+                )}
+              </p>
+
+              <p>
+                <strong>สถานะ:</strong>
+                ${escapeHtml(
+                  getStatusText(item)
+                )}
+              </p>
+
+              <p>
+                <strong>ผู้ยืม:</strong>
+                ${escapeHtml(
+                  item.borrower ||
+                  item.borrowerName ||
+                  item.userName ||
+                  '-'
+                )}
+              </p>
+            `;
+
+            modal.classList.add('show');
+
+          }
+
+        }
+      );
+
+    });
+
+  }
+
+  // ==========================================
+  // แสดงข้อมูลครั้งแรก
+  // ==========================================
+  renderEquipmentTable();
+
+  // ==========================================
+  // ค้นหาจากช่องค้นหาด้านบน
+  // ==========================================
+  if (headerSearch) {
+
+    headerSearch.addEventListener(
+      'input',
+      () => {
+
+        const value =
+          headerSearch.value;
+
+        if (tableSearch) {
+          tableSearch.value = value;
+        }
+
+        renderEquipmentTable(value);
+
+      }
+    );
+
+  }
+
+  // ==========================================
+  // ค้นหาจากช่องค้นหาในตาราง
+  // ==========================================
+  if (tableSearch) {
+
+    tableSearch.addEventListener(
+      'input',
+      () => {
+
+        const value =
+          tableSearch.value;
+
+        if (headerSearch) {
+          headerSearch.value = value;
+        }
+
+        renderEquipmentTable(value);
+
+      }
+    );
+
+  }
+
+  // ==========================================
+  // ปุ่มปิด Modal
+  // ==========================================
+  const closeModal =
+    qs('#closeModal');
+
+  const equipmentModal =
+    qs('#equipmentModal');
+
+  if (
+    closeModal &&
+    equipmentModal
+  ) {
+
+    closeModal.addEventListener(
+      'click',
+      () => {
+        equipmentModal.classList.remove(
+          'show'
+        );
+      }
+    );
+
+  }
+
+  // ==========================================
+  // Logout
+  // ==========================================
+  const logoutButton =
+    qs('#logoutButton');
+
+  if (
+    logoutButton &&
+    logoutButton.dataset.logoutReady !== 'true'
+  ) {
+
+    logoutButton.dataset.logoutReady = 'true';
+
+    logoutButton.addEventListener(
+      'click',
+      async () => {
+
+        try {
+
+          if (auth) {
+            await auth.signOut();
+          }
+
+        } catch (error) {
+
+          console.error(
+            'Logout Error:',
+            error
+          );
+
+        }
+
+        // ล้างสถานะ Login
+        localStorage.removeItem(
+          KEYS.loggedIn
+        );
+
+        localStorage.removeItem(
+          KEYS.firebaseUid
+        );
+
+        localStorage.removeItem(
+          KEYS.userEmail
+        );
+
+        localStorage.removeItem(
+          KEYS.userName
+        );
+
+        localStorage.removeItem(
+          KEYS.currentUser
+        );
+
+        window.location.replace(
+          'index.html'
+        );
+
+      }
+    );
+
+  }
+
+  console.log(
+    'Dashboard พร้อมใช้งาน'
+  );
+}
+  async function setupEquipmentPage() {
+    const table = qs('#equipmentTable');
+    if (!table) return;
+
+    const search = qs('#equipmentSearch');
+    const modal = qs('#equipmentFormModal');
+    const form = qs('#equipmentForm');
+    const addBtn = qs('#addEquipmentButton');
+    const closeBtn = qs('#closeEquipmentFormModal');
+    const idInput = qs('#equipmentId');
+    const nameInput = qs('#equipmentName');
+    const categoryInput = qs('#equipmentCategory');
+    const statusInput = qs('#equipmentStatus');
+    const borrowerInput = qs('#equipmentBorrower');
+    const quantityInput = qs('#equipmentQuantity');
+    let editingId = null;
+
+    let allData = await loadEquipmentFromFirebase();
+
+    function openForm(item = null) {
+      editingId = item?.id || null;
+      const title = qs('#equipmentFormTitle');
+      if (title) title.textContent = item ? 'แก้ไขข้อมูลอุปกรณ์' : 'เพิ่มอุปกรณ์';
+      if (idInput) { idInput.value = item?.id || ''; idInput.readOnly = !!item; }
+      if (nameInput) nameInput.value = item?.name || '';
+      if (categoryInput) categoryInput.value = item?.category || '';
+      if (statusInput) statusInput.value = statusToThai(item?.status || 'available');
+      if (borrowerInput) borrowerInput.value = item?.borrower || '';
+      if (quantityInput) quantityInput.value = item?.total || 1;
+      modal?.classList.add('show');
+    }
+
+    function closeForm() {
+      modal?.classList.remove('show');
+      editingId = null;
+      form?.reset();
+      if (idInput) idInput.readOnly = false;
+    }
+
+    function render() {
+      const term = (search?.value || '').trim().toLowerCase();
+      const data = allData.filter(x => !term || [x.id, x.name, x.category, x.borrower, statusToThai(x.status)].join(' ').toLowerCase().includes(term));
+
+      if (!data.length) {
+        table.innerHTML = '<tr><td colspan="6" class="empty-state">ไม่พบข้อมูลอุปกรณ์</td></tr>';
+        initIcons();
         return;
       }
 
-      equipmentTable.innerHTML = filteredEquipment.map(item => {
-        const id = item.equipmentId || item.code || item.id || '-';
-        const name = item.name || item.equipmentName || item.title || '-';
-        const type = item.type || item.category || '-';
-        const status = getEquipmentStatus(item);
-        
-        const itemTotal = Number(item.total) || 1;
-        const itemAvailable = Number(item.available);
-        
-        // เช็คว่ามีของถูกยืมไปบ้างหรือไม่
-        const isPartiallyBorrowed = itemAvailable < itemTotal && status !== 'unavailable';
-        
-        let displayStatusText = 'พร้อมใช้งาน';
-        let statusClass = 'status-available';
-
-        if (status === 'borrowed' || isPartiallyBorrowed) {
-          statusClass = 'status-borrowed';
-          displayStatusText = 'กำลังถูกยืม';
-        } else if (status === 'unavailable') {
-          statusClass = 'status-unavailable';
-          displayStatusText = 'ไม่พร้อมใช้งาน';
-        }
-
-        const borrower = (itemTotal - itemAvailable > 0) ? (item.borrower || item.borrowerName || item.userName || '-') : '-';
-
-        return `
-          <tr>
-            <td>${escapeHtml(id)}</td>
-            <td>${escapeHtml(name)}</td>
-            <td>${escapeHtml(type)}</td>
-            <td><span class="status-badge ${statusClass}">${escapeHtml(displayStatusText)}</span></td>
-            <td>${escapeHtml(borrower)}</td>
-            <td>
-              <button type="button" class="table-action-button" data-equipment-id="${escapeHtml(id)}">ดูรายละเอียด</button>
-            </td>
-          </tr>
-        `;
+      table.innerHTML = data.map(x => {
+        const state = x.status === 'unavailable' ? 'ไม่พร้อมใช้งาน' : (x.available < x.total ? 'กำลังถูกยืม' : 'พร้อมใช้งาน');
+        const cls = x.status === 'unavailable' ? 'unavailable' : (x.available < x.total ? 'borrowed' : 'available');
+        return `<tr>
+          <td><strong>${escapeHtml(x.id)}</strong></td>
+          <td><div class="equipment-name"><i data-lucide="${equipmentIcon(x.category)}"></i><div><strong>${escapeHtml(x.name)}</strong><small>จำนวน ${x.total} ชิ้น • พร้อมใช้ ${x.available}</small></div></div></td>
+          <td>${escapeHtml(x.category)}</td>
+          <td><span class="status-badge ${cls}">${state}</span></td>
+          <td>${escapeHtml(x.borrower || '-')}</td>
+          <td><div class="table-actions">
+            <button type="button" class="icon-button" title="ดูรายละเอียด" onclick="viewEquipment('${encodeURIComponent(x.id)}')"><i data-lucide="eye"></i></button>
+            <button type="button" class="icon-button" title="แก้ไข" onclick="editEquipment('${encodeURIComponent(x.id)}')"><i data-lucide="pencil"></i></button>
+            <button type="button" class="icon-button danger" title="ลบ" onclick="deleteEquipment('${encodeURIComponent(x.id)}')"><i data-lucide="trash-2"></i></button>
+          </div></td>
+        </tr>`;
       }).join('');
-
-      // ผูก Event ให้ปุ่มดูรายละเอียดในตาราง
-      qsa('.table-action-button', equipmentTable).forEach(button => {
-        button.addEventListener('click', () => {
-          const equipmentId = button.dataset.equipmentId;
-          const item = equipment.find(eq => String(eq.equipmentId || eq.code || eq.id) === String(equipmentId));
-          if (!item) return;
-
-          const modal = qs('#equipmentModal');
-          const modalContent = qs('#modalContent');
-          if (modal && modalContent) {
-            const itemTotal = Number(item.total) || 1;
-            const itemAvailable = Number(item.available);
-            const isPartiallyBorrowed = itemAvailable < itemTotal && getEquipmentStatus(item) !== 'unavailable';
-            const displayStatusText = isPartiallyBorrowed ? 'กำลังถูกยืม' : (getEquipmentStatus(item) === 'unavailable' ? 'ไม่พร้อมใช้งาน' : 'พร้อมใช้งาน');
-            
-            modalContent.innerHTML = `
-              <h2>${escapeHtml(item.name || item.equipmentName || item.title || 'รายละเอียดอุปกรณ์')}</h2>
-              <p><strong>รหัส:</strong> ${escapeHtml(item.equipmentId || item.code || item.id || '-')}</p>
-              <p><strong>ประเภท:</strong> ${escapeHtml(item.type || item.category || '-')}</p>
-              <p><strong>จำนวนทั้งหมด:</strong> ${itemTotal} ชิ้น</p>
-              <p><strong>คงเหลือ:</strong> ${itemAvailable} ชิ้น</p>
-              <p><strong>สถานะ:</strong> ${escapeHtml(displayStatusText)}</p>
-              <p><strong>ผู้ยืมล่าสุด:</strong> ${escapeHtml((itemTotal - itemAvailable > 0) ? (item.borrower || item.borrowerName || item.userName || '-') : '-')}</p>
-            `;
-            modal.classList.add('show');
-          }
-        });
-      });
+      initIcons();
     }
 
-    // ==========================================
-    // ใช้ onSnapshot ดึงข้อมูลแบบ Real-time
-    // ==========================================
-    if (db) {
-      db.collection('equipment').onSnapshot(snapshot => {
-        equipment = [];
-        snapshot.forEach(doc => {
-          equipment.push({ id: doc.id, ...doc.data() });
-        });
-        
-        updateDashboardStats(); // คำนวณสถิติใหม่ทันที
-        renderEquipmentTable(tableSearch ? tableSearch.value : headerSearch ? headerSearch.value : ''); // อัปเดตตารางทันที
-      }, error => {
-        console.error('Real-time Dashboard Error:', error);
-      });
-    } else {
-      const localEq = localStorage.getItem(KEYS.equipment) || localStorage.getItem(KEYS.equipmentData);
-      if (localEq) {
-        try {
-          const parsed = JSON.parse(localEq);
-          if (Array.isArray(parsed)) equipment = parsed;
-        } catch (e) {}
+    addBtn?.addEventListener('click', () => openForm());
+    closeBtn?.addEventListener('click', closeForm);
+    search?.addEventListener('input', render);
+
+    form?.addEventListener('submit', async e => {
+      e.preventDefault();
+      const id = (idInput?.value || '').trim();
+      const name = (nameInput?.value || '').trim();
+      const category = (categoryInput?.value || 'ทั่วไป').trim();
+      const quantity = Math.max(1, Number(quantityInput?.value || 1));
+      const status = normalizeStatus(statusInput?.value || 'available');
+      const borrower = (borrowerInput?.value || '').trim();
+
+      if (!id || !name) return alert('กรุณากรอกรหัสและชื่ออุปกรณ์');
+      if (!Number.isFinite(quantity) || quantity < 1) return alert('จำนวนอุปกรณ์ต้องมากกว่า 0');
+
+      const existing = allData.find(x => x.id.toLowerCase() === id.toLowerCase());
+      if (existing && !editingId) return alert('รหัสอุปกรณ์นี้มีอยู่แล้ว');
+      if (editingId && !existing) return alert('ไม่พบอุปกรณ์ที่ต้องการแก้ไข');
+
+      let item;
+      if (editingId) {
+        const borrowedCount = existing.total - existing.available;
+        if (quantity < borrowedCount) return alert(`จำนวนใหม่ต้องไม่น้อยกว่าจำนวนที่กำลังถูกยืม (${borrowedCount} ชิ้น)`);
+        item = {
+          ...existing,
+          name,
+          category,
+          icon: equipmentIcon(category),
+          total: quantity,
+          available: status === 'unavailable' ? 0 : quantity - borrowedCount,
+          status: status === 'unavailable' ? 'unavailable' : (borrowedCount > 0 ? 'borrowed' : 'available'),
+          borrower
+        };
+      } else {
+        item = {
+          id,
+          name,
+          category,
+          icon: equipmentIcon(category),
+          total: quantity,
+          available: status === 'unavailable' ? 0 : quantity,
+          status,
+          borrower,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
       }
-      updateDashboardStats();
-      renderEquipmentTable();
-    }
 
-    // ตั้งค่าช่องค้นหา
-    if (headerSearch) {
-      headerSearch.addEventListener('input', () => {
-        if (tableSearch) tableSearch.value = headerSearch.value;
-        renderEquipmentTable(headerSearch.value);
-      });
-    }
-    if (tableSearch) {
-      tableSearch.addEventListener('input', () => {
-        if (headerSearch) headerSearch.value = tableSearch.value;
-        renderEquipmentTable(tableSearch.value);
-      });
-    }
+      try {
+        await saveEquipmentFirebase(item);
+        allData = [...allData.filter(x => x.id !== item.id), normalizeEquipment(item)];
+        allData.sort((a, b) => a.id.localeCompare(b.id));
+        saveEquipmentLocal(allData);
+        closeForm();
+        render();
+      } catch (error) {
+        alert('บันทึกอุปกรณ์ไม่สำเร็จ: ' + firebaseErrorMessage(error));
+      }
+    });
 
-    // ปิด Modal
-    const closeModal = qs('#closeModal');
-    const equipmentModal = qs('#equipmentModal');
-    if (closeModal && equipmentModal) {
-      closeModal.addEventListener('click', () => equipmentModal.classList.remove('show'));
-    }
+    window.viewEquipment = encodedId => {
+      const id = decodeURIComponent(encodedId);
+      const item = allData.find(x => x.id === id);
+      const detailModal = qs('#equipmentModal');
+      const content = qs('#modalContent');
+      if (!item || !detailModal || !content) return;
+      content.innerHTML = `<div class="equipment-detail">
+        <div><strong>รหัสอุปกรณ์</strong><span>${escapeHtml(item.id)}</span></div>
+        <div><strong>ชื่ออุปกรณ์</strong><span>${escapeHtml(item.name)}</span></div>
+        <div><strong>ประเภท</strong><span>${escapeHtml(item.category)}</span></div>
+        <div><strong>จำนวน</strong><span>${item.total} ชิ้น</span></div>
+        <div><strong>พร้อมใช้งาน</strong><span>${item.available} ชิ้น</span></div>
+        <div><strong>สถานะ</strong><span>${statusToThai(item.status)}</span></div>
+        <div><strong>ผู้ยืม</strong><span>${escapeHtml(item.borrower || '-')}</span></div>
+      </div>`;
+      detailModal.classList.add('show');
+      initIcons();
+    };
 
-    // จัดการปุ่มออกจากระบบ
-    const logoutButton = qs('#logoutButton');
-    if (logoutButton && logoutButton.dataset.logoutReady !== 'true') {
-      logoutButton.dataset.logoutReady = 'true';
-      logoutButton.addEventListener('click', async () => {
-        try { if (auth) await auth.signOut(); } catch (error) {}
-        localStorage.removeItem(KEYS.loggedIn);
-        localStorage.removeItem(KEYS.firebaseUid);
-        localStorage.removeItem(KEYS.userEmail);
-        localStorage.removeItem(KEYS.userName);
-        localStorage.removeItem(KEYS.currentUser);
-        window.location.replace('index.html');
-      });
-    }
+    window.editEquipment = encodedId => {
+      const id = decodeURIComponent(encodedId);
+      const item = allData.find(x => x.id === id);
+      if (item) openForm(item);
+    };
+
+    window.deleteEquipment = async encodedId => {
+      const id = decodeURIComponent(encodedId);
+      const item = allData.find(x => x.id === id);
+      if (!item) return;
+      if (item.total - item.available > 0) return alert('ไม่สามารถลบอุปกรณ์ที่กำลังถูกยืมได้');
+      if (!confirm(`ต้องการลบ “${item.name}” ใช่หรือไม่?`)) return;
+
+      try {
+        await deleteEquipmentFirebase(id);
+        allData = allData.filter(x => x.id !== id);
+        saveEquipmentLocal(allData);
+        render();
+      } catch (error) {
+        alert('ลบอุปกรณ์ไม่สำเร็จ: ' + firebaseErrorMessage(error));
+      }
+    };
+
+    qs('#closeModal')?.addEventListener('click', () => qs('#equipmentModal')?.classList.remove('show'));
+    render();
   }
+
+  function populateEquipmentSelectLocal(select, data) {
+
+  if (!select) return;
+
+  const previous = select.value;
+
+  const availableEquipment = data.filter(item => {
+
+    const available = Number(item.available || 0);
+
+    const status = normalizeStatus(item.status);
+
+    return (
+      status !== 'unavailable' &&
+      available > 0
+    );
+
+  });
+
+  select.innerHTML = `
+    <option value="">
+      -- เลือกอุปกรณ์ --
+    </option>
+  `;
+
+  availableEquipment.forEach(item => {
+
+    const option = document.createElement('option');
+
+    option.value = item.id;
+
+    option.textContent =
+      `${item.name} (${item.id}) — เหลือ ${item.available} ชิ้น`;
+
+    select.appendChild(option);
+
+  });
+
+  if (
+    previous &&
+    availableEquipment.some(item => item.id === previous)
+  ) {
+
+    select.value = previous;
+
+  }
+
+}
 
   async function setupBorrowPage() {
     const select = qs('#equipmentSelect');
@@ -1266,20 +1915,13 @@ async function setupDashboard() {
     populateEquipmentSelectLocal(select, data);
     if (borrowDate && !borrowDate.value) borrowDate.value = todayISO();
     if (borrower && !borrower.value) borrower.value = getCurrentUserName();
-const updateSelected = () => {
+
+    const updateSelected = () => {
       const item = data.find(x => x.id === select.value);
       const name = qs('#selectedEquipmentName');
       const code = qs('#selectedEquipmentCode');
-      
-      if (name) {
-        name.value = item?.name || '';        // สำหรับแท็ก <input>
-        name.textContent = item?.name || '-'; // สำหรับแท็ก <span>, <div>
-      }
-      if (code) {
-        code.value = item?.id || '';          // สำหรับแท็ก <input>
-        code.textContent = item?.id || '-';   // สำหรับแท็ก <span>, <div>
-      }
-      
+      if (name) name.textContent = item?.name || '-';
+      if (code) code.textContent = item?.id || '-';
       if (quantity && item) {
         quantity.max = String(item.available);
         if (Number(quantity.value || 1) > item.available) quantity.value = item.available;
