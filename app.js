@@ -342,7 +342,20 @@ function equipmentIcon(category) {
       <circle cx="12" cy="12" r="9"></circle>
       <path d="m9 12 2 2 4-4"></path>
     `,
+"package-open": `
+      <path d="M12 3v12"></path>
+      <path d="m8 7 4-4 4 4"></path>
+      <path d="M21 11V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v4"></path>
+      <path d="M3 15v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4"></path>
+      <path d="M3 15h18"></path>
+    `,
 
+    "triangle-alert": `
+      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+      <path d="M12 9v4"></path>
+      <path d="M12 17h.01"></path>
+    `,
+    // ===================================
     "clipboard-list": `
       <rect x="5" y="4" width="14" height="17" rx="2"></rect>
       <path d="M9 4V3h6v1"></path>
