@@ -1234,48 +1234,32 @@ function escapeHtml(value) {
   // ==========================================
   // คำนวณจำนวนอุปกรณ์
   // ==========================================
-  let total = equipment.length;
-  let available = 0;
-  let borrowed = 0;
-  let unavailable = 0;
+  function updateDashboardStats() {
+      let total = 0;
+      let available = 0;
+      let borrowed = 0;
+      let unavailable = 0;
 
-  equipment.forEach(item => {
+      equipment.forEach(item => {
+        const itemTotal = Number(item.total) || 1;
+        const itemAvailable = Number(item.available) >= 0 ? Number(item.available) : itemTotal;
+        const status = getEquipmentStatus(item);
 
-    const status =
-      getEquipmentStatus(item);
+        total += itemTotal;
 
-    if (status === 'borrowed') {
-      borrowed++;
+        if (status === 'unavailable') {
+          unavailable += itemTotal;
+        } else {
+          available += itemAvailable; // นับจากจำนวนที่เหลือให้ยืมจริง
+          borrowed += (itemTotal - itemAvailable); // นับจากจำนวนที่ถูกยืมไป
+        }
+      });
+
+      if (totalEquipmentEl) totalEquipmentEl.textContent = total;
+      if (availableEquipmentEl) availableEquipmentEl.textContent = available;
+      if (borrowedEquipmentEl) borrowedEquipmentEl.textContent = borrowed;
+      if (unavailableEquipmentEl) unavailableEquipmentEl.textContent = unavailable;
     }
-    else if (status === 'unavailable') {
-      unavailable++;
-    }
-    else {
-      available++;
-    }
-
-  });
-
-  // ==========================================
-  // แสดงสถิติบน Dashboard
-  // ==========================================
-  if (totalEquipmentEl) {
-    totalEquipmentEl.textContent = total;
-  }
-
-  if (availableEquipmentEl) {
-    availableEquipmentEl.textContent = available;
-  }
-
-  if (borrowedEquipmentEl) {
-    borrowedEquipmentEl.textContent = borrowed;
-  }
-
-  if (unavailableEquipmentEl) {
-    unavailableEquipmentEl.textContent =
-      unavailable;
-  }
-
   // ==========================================
   // แปลงสถานะสำหรับแสดงบนหน้าเว็บ
   // ==========================================
