@@ -1923,6 +1923,13 @@ function escapeHtml(value) {
 
     select.addEventListener('change', updateSelected);
     updateSelected();
+    // เติมโค้ดนี้ต่อท้าย updateSelected();
+    const urlParams = new URLSearchParams(window.location.search);
+    const preSelectId = urlParams.get('id');
+    if (preSelectId && select.querySelector(`option[value="${preSelectId}"]`)) {
+        select.value = preSelectId;
+        updateSelected(); // สั่งให้อัปเดตชื่อและรหัสลงช่องอัตโนมัติ
+    }
 
    qsa('#decreaseButton, #increaseButton').forEach(btn => {
 
@@ -2067,12 +2074,28 @@ function escapeHtml(value) {
     function renderTable() {
       if (!table) return;
       const list = active();
+      const today = todayISO(); // ใช้วันที่ปัจจุบันมาเทียบ
+      
       table.innerHTML = list.length
-        ? list.map(h => `<tr><td>${escapeHtml(h.id)}</td><td>${escapeHtml(h.equipmentName)}</td><td>${escapeHtml(h.borrower)}</td><td>${formatDate(h.borrowDate)}</td><td>${formatDate(h.returnDate)}</td><td><button type="button" class="return-action-button" onclick="returnEquipment('${encodeURIComponent(h.id)}')">คืนอุปกรณ์</button></td></tr>`).join('')
+        ? list.map(h => {
+            // เช็คว่าเลยกำหนดหรือยัง
+            const isOverdue = h.returnDate && h.returnDate < today;
+            const statusHtml = isOverdue 
+              ? '<span class="status-badge status-unavailable">เลยกำหนดคืน</span>' 
+              : '<span class="status-badge status-available">อยู่ในกำหนด</span>';
+
+            return `<tr>
+              <td>${escapeHtml(h.id)}</td>
+              <td>${escapeHtml(h.equipmentName)}</td>
+              <td>${escapeHtml(h.borrower)}</td>
+              <td>${formatDate(h.borrowDate)}</td>
+              <td>${formatDate(h.returnDate)}</td>
+              <td>${statusHtml}</td>
+            </tr>`;
+          }).join('')
         : '<tr><td colspan="6" class="empty-state">ไม่มีรายการที่กำลังยืม</td></tr>';
       initIcons();
     }
-
     window.returnEquipment = async encodedId => {
       const id = decodeURIComponent(encodedId);
       await completeReturn(id);
@@ -2109,13 +2132,13 @@ function escapeHtml(value) {
         saveEquipmentLocal(data);
         saveHistoryLocal(records);
 
-        alert('บันทึกการคืนอุปกรณ์เรียบร้อยแล้ว');
-        renderReturnOptions();
-        renderTable();
+        // เปลี่ยนคำสั่งแจ้งเตือนและเด้งหน้าเพจตรงนี้
+        alert('คืนอุปกรณ์เรียบร้อยแล้ว');
+        window.location.href = 'dashboard.html';
+        
       } catch (error) {
         alert('บันทึกการคืนไม่สำเร็จ: ' + firebaseErrorMessage(error));
       }
-    }
 
     if (form) form.addEventListener('submit', async e => {
       e.preventDefault();
