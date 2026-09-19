@@ -2039,10 +2039,13 @@ function escapeHtml(value) {
   }
 
   async function setupReturnPage() {
-    const select = qs('#returnEquipmentSelect');
-    const form = qs('#returnForm');
-    const table = qs('#returnTable');
-    if (!select && !form && !table) return;
+  // ลบส่วนที่ดึง ID ของหน้ายืมออก ให้เหลือแค่ของหน้าคืน
+  const select = qs('#returnEquipmentSelect'); 
+  const form = qs('#returnForm');
+  const table = qs('#returnTable');
+  
+  if (!select && !form && !table) return;
+  // ... โค้ดส่วนอื่นๆ ในฟังก์ชันคงเดิม ...
 
     let records = await loadHistoryFromFirebase();
     let data = await loadEquipmentFromFirebase();
