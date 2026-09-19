@@ -1896,13 +1896,53 @@ function escapeHtml(value) {
     select.addEventListener('change', updateSelected);
     updateSelected();
 
-    qsa('#decreaseButton, #increaseButton').forEach(btn => btn.addEventListener('click', () => {
-      const item = data.find(x => x.id === select.value);
-      if (!quantity || !item) return;
-      const delta = btn.id === 'increaseButton' ? 1 : -1;
-      quantity.value = Math.max(1, Math.min(item.available, Number(quantity.value || 1) + delta));
-    }));
+   qsa('#decreaseButton, #increaseButton').forEach(btn => {
 
+  // ป้องกันไม่ให้ปุ่มไป submit form
+  btn.type = 'button';
+
+  btn.addEventListener('click', event => {
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const item =
+      data.find(x => x.id === select.value);
+
+    if (!quantity || !item) {
+      alert('กรุณาเลือกอุปกรณ์ก่อน');
+      return;
+    }
+
+    const current =
+      Number(quantity.value || 1);
+
+    let next;
+
+    if (btn.id === 'increaseButton') {
+
+      next = current + 1;
+
+    } else {
+
+      next = current - 1;
+
+    }
+
+    next =
+      Math.max(
+        1,
+        Math.min(
+          Number(item.available),
+          next
+        )
+      );
+
+    quantity.value = next;
+
+  });
+
+});
     sendOtp?.addEventListener('click', () => {
       alert('ระบบ OTP สำหรับการยืมยังเป็นโหมดตัวอย่าง ไม่ใช่ OTP จริง');
       otpInputs[0]?.focus();
@@ -1979,7 +2019,14 @@ function escapeHtml(value) {
     let records = await loadHistoryFromFirebase();
     let data = await loadEquipmentFromFirebase();
 
-    const active = () => records.filter(h => h.status === 'borrowing' && !h.actualReturnDate);
+   const active = () => records.filter(h => {
+
+  return (
+    h.status === 'borrowing' &&
+    !h.actualReturnDate
+  );
+
+});
 
     function renderReturnOptions() {
       if (!select) return;
@@ -2270,65 +2317,70 @@ function escapeHtml(value) {
 }
  async function initializeApp() {
 
-    // ==============================
-    // 1. เริ่ม Firebase
-    // ==============================
+  console.log('เริ่มต้นระบบ...');
 
-    const ready = await initFirebase();
+  // ==============================
+  // 1. Firebase
+  // ==============================
 
-    if (!ready || !auth || !db) {
+  const ready = await initFirebase();
 
-        console.error(
-            'Firebase ไม่พร้อมใช้งาน'
-        );
+  if (!ready || !auth || !db) {
 
-        setupPasswordToggle();
-        setupCommonUI();
-
-        return;
-    }
-
-
-    // ==============================
-    // 2. UI พื้นฐาน
-    // ==============================
+    console.error(
+      'Firebase ไม่พร้อมใช้งาน'
+    );
 
     setupPasswordToggle();
+
     setupCommonUI();
 
-
-    // ==============================
-    // 3. Login / Register
-    // ต้องตั้งค่าก่อน Guard
-    // ==============================
-
-    await setupLogin();
-
-    await setupRegister();
-
-    await setupForgotPassword();
-
-    await setupResetPassword();
+    return;
+  }
 
 
-    // ==============================
-    // 4. ตรวจสอบ Firebase Login
-    // ==============================
+  // ==============================
+  // 2. UI พื้นฐาน
+  // ==============================
 
-    const protectedPageAllowed =
-        await guardProtectedPage();
+  setupPasswordToggle();
 
-
-    if (!protectedPageAllowed) {
-        return;
-    }
+  setupCommonUI();
 
 
-   // ==============================
-// 5. เตรียมข้อมูล Firebase
-// ==============================
+  // ==============================
+  // 3. Login / Register
+  // ==============================
 
-if (auth.currentUser) {
+  await setupLogin();
+
+  await setupRegister();
+
+  await setupForgotPassword();
+
+  await setupResetPassword();
+
+
+  // ==============================
+  // 4. ตรวจสอบ Login
+  // ==============================
+
+  const protectedPageAllowed =
+    await guardProtectedPage();
+
+  if (!protectedPageAllowed) {
+
+    return;
+
+  }
+
+
+  // ==============================
+  // 5. เตรียมข้อมูล Firebase
+  // ต้องทำก่อนหน้า Borrow / Return
+  // ==============================
+
+  if (auth.currentUser) {
 
     await ensureEquipmentSeed();
 
@@ -2336,64 +2388,88 @@ if (auth.currentUser) {
 
     await loadHistoryFromFirebase();
 
-}
+  }
 
 
-// ==============================
-// 6. หน้า Dashboard
-// ==============================
+  // ==============================
+  // 6. Dashboard
+  // ==============================
 
-await setupDashboard();
-
-
-// ==============================
-// 7. หน้าอุปกรณ์
-// ==============================
-
-await setupEquipmentPage();
+  await setupDashboard();
 
 
-// ==============================
-// 8. หน้ายืม
-// ==============================
+  // ==============================
+  // 7. Equipment
+  // ==============================
 
-await setupBorrowPage();
-
-
-// ==============================
-// 9. หน้าคืน
-// ==============================
-
-await setupReturnPage();
+  await setupEquipmentPage();
 
 
-// ==============================
-// 10. หน้าประวัติ
-// ==============================
+  // ==============================
+  // 8. Borrow
+  // ==============================
 
-await setupHistoryPage();
-
-
-// ==============================
-// 11. Modal
-// ==============================
-
-setupMiscModals();
+  await setupBorrowPage();
 
 
-// ==============================
-// 12. ไอคอน
-// ==============================
+  // ==============================
+  // 9. Return
+  // ==============================
 
-initIcons();
+  await setupReturnPage();
 
-    // ==============================
-    // เสร็จสมบูรณ์
-    // ==============================
 
-    console.log(
-        'ระบบพร้อมใช้งาน'
-    );
+  // ==============================
+  // 10. History
+  // ==============================
+
+  await setupHistoryPage();
+
+
+  // ==============================
+  // 11. Modal
+  // ==============================
+
+  setupMiscModals();
+
+
+  // ==============================
+  // 12. Icons
+  // ==============================
+
+  initIcons();
+
+
+  // ==============================
+  // 13. แสดงชื่อผู้ใช้
+  // ==============================
+
+  const currentUser =
+    auth.currentUser;
+
+  if (currentUser) {
+
+    const name =
+      localStorage.getItem(KEYS.userName) ||
+      currentUser.displayName ||
+      currentUser.email ||
+      'ผู้ใช้งาน';
+
+    qsa(
+      '#userName, .profile-name, #welcomeUserName'
+    ).forEach(element => {
+
+      element.textContent = name;
+
+    });
+
+  }
+
+
+  console.log(
+    'ระบบพร้อมใช้งาน'
+  );
+
 }
 document.addEventListener(
     'DOMContentLoaded',
