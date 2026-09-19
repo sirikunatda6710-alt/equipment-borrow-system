@@ -1584,7 +1584,9 @@ function escapeHtml(value) {
 
     if (form) form.addEventListener('submit', doBorrow);
     else confirmBtn?.addEventListener('click', doBorrow);
+    initIcons();
   }
+  
 
   async function setupReturnPage() {
   // ลบส่วนที่ดึง ID ของหน้ายืมออก ให้เหลือแค่ของหน้าคืน
