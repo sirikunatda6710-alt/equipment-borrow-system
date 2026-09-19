@@ -1234,32 +1234,48 @@ function escapeHtml(value) {
   // ==========================================
   // คำนวณจำนวนอุปกรณ์
   // ==========================================
-  function updateDashboardStats() {
-      let total = 0;
-      let available = 0;
-      let borrowed = 0;
-      let unavailable = 0;
+  let total = equipment.length;
+  let available = 0;
+  let borrowed = 0;
+  let unavailable = 0;
 
-      equipment.forEach(item => {
-        const itemTotal = Number(item.total) || 1;
-        const itemAvailable = Number(item.available) >= 0 ? Number(item.available) : itemTotal;
-        const status = getEquipmentStatus(item);
+  equipment.forEach(item => {
 
-        total += itemTotal;
+    const status =
+      getEquipmentStatus(item);
 
-        if (status === 'unavailable') {
-          unavailable += itemTotal;
-        } else {
-          available += itemAvailable; // นับจากจำนวนที่เหลือให้ยืมจริง
-          borrowed += (itemTotal - itemAvailable); // นับจากจำนวนที่ถูกยืมไป
-        }
-      });
-
-      if (totalEquipmentEl) totalEquipmentEl.textContent = total;
-      if (availableEquipmentEl) availableEquipmentEl.textContent = available;
-      if (borrowedEquipmentEl) borrowedEquipmentEl.textContent = borrowed;
-      if (unavailableEquipmentEl) unavailableEquipmentEl.textContent = unavailable;
+    if (status === 'borrowed') {
+      borrowed++;
     }
+    else if (status === 'unavailable') {
+      unavailable++;
+    }
+    else {
+      available++;
+    }
+
+  });
+
+  // ==========================================
+  // แสดงสถิติบน Dashboard
+  // ==========================================
+  if (totalEquipmentEl) {
+    totalEquipmentEl.textContent = total;
+  }
+
+  if (availableEquipmentEl) {
+    availableEquipmentEl.textContent = available;
+  }
+
+  if (borrowedEquipmentEl) {
+    borrowedEquipmentEl.textContent = borrowed;
+  }
+
+  if (unavailableEquipmentEl) {
+    unavailableEquipmentEl.textContent =
+      unavailable;
+  }
+
   // ==========================================
   // แปลงสถานะสำหรับแสดงบนหน้าเว็บ
   // ==========================================
@@ -1761,32 +1777,26 @@ function escapeHtml(value) {
       if (editingId) {
         const borrowedCount = existing.total - existing.available;
         if (quantity < borrowedCount) return alert(`จำนวนใหม่ต้องไม่น้อยกว่าจำนวนที่กำลังถูกยืม (${borrowedCount} ชิ้น)`);
-        
-        // คำนวณสถานะและจำนวนพร้อมใช้ให้อัตโนมัติจากจำนวนทั้งหมดและของที่ถูกยืมไป
-        const newAvailable = Math.max(0, quantity - borrowedCount);
-        const isUnavailable = statusInput?.value === 'ไม่พร้อมใช้งาน';
-
         item = {
           ...existing,
           name,
           category,
           icon: equipmentIcon(category),
           total: quantity,
-          available: isUnavailable ? 0 : newAvailable,
-          status: isUnavailable ? 'unavailable' : (newAvailable === 0 ? 'borrowed' : 'available'),
-          borrower: newAvailable === 0 ? existing.borrower : ''
+          available: status === 'unavailable' ? 0 : quantity - borrowedCount,
+          status: status === 'unavailable' ? 'unavailable' : (borrowedCount > 0 ? 'borrowed' : 'available'),
+          borrower
         };
       } else {
-        const isUnavailable = statusInput?.value === 'ไม่พร้อมใช้งาน';
         item = {
           id,
           name,
           category,
           icon: equipmentIcon(category),
           total: quantity,
-          available: isUnavailable ? 0 : quantity,
-          status: isUnavailable ? 'unavailable' : 'available',
-          borrower: '',
+          available: status === 'unavailable' ? 0 : quantity,
+          status,
+          borrower,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
