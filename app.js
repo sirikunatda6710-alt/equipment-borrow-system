@@ -1915,13 +1915,20 @@ function escapeHtml(value) {
     populateEquipmentSelectLocal(select, data);
     if (borrowDate && !borrowDate.value) borrowDate.value = todayISO();
     if (borrower && !borrower.value) borrower.value = getCurrentUserName();
-
-    const updateSelected = () => {
+const updateSelected = () => {
       const item = data.find(x => x.id === select.value);
       const name = qs('#selectedEquipmentName');
       const code = qs('#selectedEquipmentCode');
-      if (name) name.textContent = item?.name || '-';
-      if (code) code.textContent = item?.id || '-';
+      
+      if (name) {
+        name.value = item?.name || '';        // สำหรับแท็ก <input>
+        name.textContent = item?.name || '-'; // สำหรับแท็ก <span>, <div>
+      }
+      if (code) {
+        code.value = item?.id || '';          // สำหรับแท็ก <input>
+        code.textContent = item?.id || '-';   // สำหรับแท็ก <span>, <div>
+      }
+      
       if (quantity && item) {
         quantity.max = String(item.available);
         if (Number(quantity.value || 1) > item.available) quantity.value = item.available;
