@@ -118,7 +118,7 @@
       updatedAt: item.updatedAt || new Date().toISOString()
     };
   }
-  function equipmentIcon(category) {
+function equipmentIcon(category) {
   // แมปชื่อประเภทกับชื่อไอคอน
   const map = {
     'เครื่องฉาย': 'projector',
@@ -128,7 +128,6 @@
   // ถ้าไม่มีใน map ให้ใช้ไอคอน 'package' เป็นค่าเริ่มต้น
   return map[category] || 'package';
 }
-
   function getEquipmentLocal() {
     let data = parseJSON(KEYS.equipment, null);
     if (!Array.isArray(data)) data = parseJSON(KEYS.equipmentData, null);
@@ -468,21 +467,12 @@
       <circle cx="12" cy="12" r="9"></circle>
       <path d="M12 8v4"></path>
       <path d="M12 16h.01"></path>
-    `,
-projector: `
-  <path d="M5 7 3 5"/><path d="M19 7l2-2"/><path d="M22 9v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2Z"/><circle cx="9" cy="13" r="3"/><path d="M17 13h.01"/>
-`,
-camera: `
-  <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>
-`,
-mic: `
-  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/>
-`,
-speaker: `
-  <rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><circle cx="12" cy="14" r="4"/><line x1="12" x2="12.01" y1="6" y2="6"/>
-`,
+    `
+    
+    
     
   };
+  
 
   qsa('[data-lucide]').forEach(element => {
 
@@ -1889,6 +1879,7 @@ function escapeHtml(value) {
   }
 
 }
+
   async function setupBorrowPage() {
     const select = qs('#equipmentSelect');
     if (!select) return;
@@ -1923,13 +1914,6 @@ function escapeHtml(value) {
 
     select.addEventListener('change', updateSelected);
     updateSelected();
-    // เติมโค้ดนี้ต่อท้าย updateSelected();
-    const urlParams = new URLSearchParams(window.location.search);
-    const preSelectId = urlParams.get('id');
-    if (preSelectId && select.querySelector(`option[value="${preSelectId}"]`)) {
-        select.value = preSelectId;
-        updateSelected(); // สั่งให้อัปเดตชื่อและรหัสลงช่องอัตโนมัติ
-    }
 
    qsa('#decreaseButton, #increaseButton').forEach(btn => {
 
@@ -1978,6 +1962,7 @@ function escapeHtml(value) {
   });
 
 });
+
     sendOtp?.addEventListener('click', () => {
       alert('ระบบ OTP สำหรับการยืมยังเป็นโหมดตัวอย่าง ไม่ใช่ OTP จริง');
       otpInputs[0]?.focus();
@@ -2044,95 +2029,95 @@ function escapeHtml(value) {
     if (form) form.addEventListener('submit', doBorrow);
     else confirmBtn?.addEventListener('click', doBorrow);
   }
-async function setupReturnPage() {
-  const select = qs('#returnEquipmentSelect');
+
+  async function setupReturnPage() {
+  // ลบส่วนที่ดึง ID ของหน้ายืมออก ให้เหลือแค่ของหน้าคืน
+  const select = qs('#returnEquipmentSelect'); 
   const form = qs('#returnForm');
   const table = qs('#returnTable');
+  
   if (!select && !form && !table) return;
+  // ... โค้ดส่วนอื่นๆ ในฟังก์ชันคงเดิม ...
+    let records = await loadHistoryFromFirebase();
+    let data = await loadEquipmentFromFirebase();
 
-  let records = await loadHistoryFromFirebase();
-  let data = await loadEquipmentFromFirebase();
+   const active = () => records.filter(h => {
 
-  const active = () => records.filter(h => h.status === 'borrowing' && !h.actualReturnDate);
+  return (
+    h.status === 'borrowing' &&
+    !h.actualReturnDate
+  );
 
-  function renderReturnOptions() {
-    if (!select) return;
-    select.innerHTML = '<option value="">-- เลือกรายการยืม --</option>' + active().map(h => `<option value="${escapeHtml(h.id)}">${escapeHtml(h.equipmentName)} — ${escapeHtml(h.borrower)}</option>`).join('');
-  }
-
-  function renderTable() {
-    if (!table) return;
-    const list = active();
-    const today = todayISO();
-    
-    table.innerHTML = list.length
-      ? list.map(h => {
-          const isOverdue = h.returnDate && h.returnDate < today;
-          const statusHtml = isOverdue 
-            ? '<span class="status-badge status-unavailable">เลยกำหนดคืน</span>' 
-            : '<span class="status-badge status-available">อยู่ในกำหนด</span>';
-
-          return `<tr>
-            <td>${escapeHtml(h.id)}</td>
-            <td>${escapeHtml(h.equipmentName)}</td>
-            <td>${escapeHtml(h.borrower)}</td>
-            <td>${formatDate(h.borrowDate)}</td>
-            <td>${formatDate(h.returnDate)}</td>
-            <td>${statusHtml}</td>
-          </tr>`;
-        }).join('')
-      : '<tr><td colspan="6" class="empty-state">ไม่มีรายการที่กำลังยืม</td></tr>';
-    initIcons();
-  }
-
-  async function completeReturn(id) {
-    const record = records.find(h => h.id === id && h.status === 'borrowing');
-    if (!record) return alert('ไม่พบรายการยืม');
-    const item = data.find(x => x.id === record.equipmentId);
-    if (!item) return alert('ไม่พบอุปกรณ์รายการนี้');
-
-    const updatedItem = {
-      ...item,
-      available: Math.min(item.total, item.available + Number(record.quantity || 1)),
-      status: Math.min(item.total, item.available + Number(record.quantity || 1)) === item.total ? 'available' : 'borrowed',
-      borrower: Math.min(item.total, item.available + Number(record.quantity || 1)) === item.total ? '' : item.borrower,
-      updatedAt: new Date().toISOString()
-    };
-
-    const updatedRecord = {
-      ...record,
-      actualReturnDate: new Date().toISOString(),
-      status: 'returned',
-      updatedAt: new Date().toISOString()
-    };
-
-    try {
-      await saveEquipmentFirebase(updatedItem);
-      await updateBorrowFirebase(updatedRecord);
-      await saveHistoryFirebase(updatedRecord);
-
-      data = data.map(x => x.id === updatedItem.id ? normalizeEquipment(updatedItem) : x);
-      records = records.map(x => x.id === updatedRecord.id ? updatedRecord : x);
-      saveEquipmentLocal(data);
-      saveHistoryLocal(records);
-
-      alert('คืนอุปกรณ์เรียบร้อยแล้ว');
-      window.location.replace('dashboard.html');
-    } catch (error) {
-      alert('บันทึกการคืนไม่สำเร็จ: ' + firebaseErrorMessage(error));
+});
+    function renderReturnOptions() {
+      if (!select) return;
+      select.innerHTML = '<option value="">-- เลือกรายการยืม --</option>' + active().map(h => `<option value="${escapeHtml(h.id)}">${escapeHtml(h.equipmentName)} — ${escapeHtml(h.borrower)}</option>`).join('');
     }
+
+    function renderTable() {
+      if (!table) return;
+      const list = active();
+      table.innerHTML = list.length
+        ? list.map(h => `<tr><td>${escapeHtml(h.id)}</td><td>${escapeHtml(h.equipmentName)}</td><td>${escapeHtml(h.borrower)}</td><td>${formatDate(h.borrowDate)}</td><td>${formatDate(h.returnDate)}</td><td><button type="button" class="return-action-button" onclick="returnEquipment('${encodeURIComponent(h.id)}')">คืนอุปกรณ์</button></td></tr>`).join('')
+        : '<tr><td colspan="6" class="empty-state">ไม่มีรายการที่กำลังยืม</td></tr>';
+      initIcons();
+    }
+
+    window.returnEquipment = async encodedId => {
+      const id = decodeURIComponent(encodedId);
+      await completeReturn(id);
+    };
+
+    async function completeReturn(id) {
+      const record = records.find(h => h.id === id && h.status === 'borrowing');
+      if (!record) return alert('ไม่พบรายการยืม');
+      const item = data.find(x => x.id === record.equipmentId);
+      if (!item) return alert('ไม่พบอุปกรณ์รายการนี้');
+
+      const updatedItem = {
+        ...item,
+        available: Math.min(item.total, item.available + Number(record.quantity || 1)),
+        status: Math.min(item.total, item.available + Number(record.quantity || 1)) === item.total ? 'available' : 'borrowed',
+        borrower: Math.min(item.total, item.available + Number(record.quantity || 1)) === item.total ? '' : item.borrower,
+        updatedAt: new Date().toISOString()
+      };
+
+      const updatedRecord = {
+        ...record,
+        actualReturnDate: new Date().toISOString(),
+        status: 'returned',
+        updatedAt: new Date().toISOString()
+      };
+
+      try {
+        await saveEquipmentFirebase(updatedItem);
+        await updateBorrowFirebase(updatedRecord);
+        await saveHistoryFirebase(updatedRecord);
+
+        data = data.map(x => x.id === updatedItem.id ? normalizeEquipment(updatedItem) : x);
+        records = records.map(x => x.id === updatedRecord.id ? updatedRecord : x);
+        saveEquipmentLocal(data);
+        saveHistoryLocal(records);
+
+        alert('บันทึกการคืนอุปกรณ์เรียบร้อยแล้ว');
+        renderReturnOptions();
+        renderTable();
+      } catch (error) {
+        alert('บันทึกการคืนไม่สำเร็จ: ' + firebaseErrorMessage(error));
+      }
+    }
+
+    if (form) form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const id = select?.value;
+      if (!id) return alert('กรุณาเลือกรายการยืม');
+      await completeReturn(id);
+    });
+
+    renderReturnOptions();
+    renderTable();
   }
 
-  if (form) form.addEventListener('submit', async e => {
-    e.preventDefault();
-    const id = select?.value;
-    if (!id) return alert('กรุณาเลือกรายการยืม');
-    await completeReturn(id);
-  });
-
-  renderReturnOptions();
-  renderTable();
-}
   async function setupHistoryPage() {
     const table = qs('#historyTable');
     if (!table) return;
@@ -2351,7 +2336,7 @@ async function setupReturnPage() {
 
     return true;
 }
- async function initializeApp() {
+async function initializeApp() {
 
   console.log('เริ่มต้นระบบ...');
 
