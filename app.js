@@ -628,6 +628,30 @@ async function setupLogin() {
   const loginRole = qs('#loginRole');
   const adminCodeGroup = qs('#adminCodeGroup');
   const adminCode = qs('#adminCode');
+  const email =
+    (emailInput?.value || '')
+        .trim()
+        .toLowerCase();
+
+const password =
+    passwordInput?.value || '';
+
+const selectedRole =
+    loginRole?.value || 'user';
+
+const enteredAdminCode =
+    adminCode?.value || '';
+  if (selectedRole === 'admin') {
+
+    if (enteredAdminCode !== '24236') {
+
+        alert(
+            'รหัสผู้ดูแลระบบไม่ถูกต้อง'
+        );
+
+        return;
+    }
+}
   
   function updateLoginRoleUI() {
   
@@ -874,9 +898,18 @@ async function setupLogin() {
                 // ไป Dashboard
                 // ========================================
 
-                window.location.replace(
-                    'dashboard.html'
-                );
+              if (actualRole === 'admin') {
+
+    window.location.replace(
+        'dashboard.html'
+    );
+
+} else {
+
+    window.location.replace(
+        'user-dashboard.html'
+    );
+}
 
             } catch (error) {
 
@@ -1801,39 +1834,43 @@ function escapeHtml(value) {
     filter?.addEventListener('change', render);
     render();
   }
-  async function guardProtectedPage() {
+  async function getCurrentUserRole() {
 
-    const page =
-        location.pathname.split('/').pop() || 'index.html';
-
-    const publicPages = [
-        'index.html',
-        'register.html',
-        'forgot-password.html',
-        'reset-password.html',
-        ''
-    ];
-
-    // หน้า Login / Register ไม่ต้องตรวจสอบ Login
-    if (publicPages.includes(page)) {
-        return true;
+    if (!auth?.currentUser || !db) {
+        return null;
     }
 
-    if (!auth) {
-        console.error('Firebase Auth ยังไม่พร้อม');
-        window.location.replace('index.html');
-        return false;
-    }
+    try {
 
-    // ⭐ รอ Firebase ตรวจสอบ Session ก่อน
-    const user = await new Promise(resolve => {
+        const snap =
+            await db
+                .collection('users')
+                .doc(auth.currentUser.uid)
+                .get();
 
-        if (auth.currentUser) {
-            resolve(auth.currentUser);
-            return;
+        if (!snap.exists) {
+            return 'user';
         }
 
-        let unsubscribe = null;
+        return snap.data().role || 'user';
+
+    } catch (error) {
+
+        console.error(
+            'อ่าน Role ไม่สำเร็จ:',
+            error
+        );
+
+        return null;
+    }
+}
+  const role =
+    await getCurrentUserRole();
+
+const page =
+    location.pathname
+        .split('/')
+        .pop() || 'index.html';
 
         unsubscribe = auth.onAuthStateChanged(currentUser => {
 
