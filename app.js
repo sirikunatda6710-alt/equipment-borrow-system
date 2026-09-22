@@ -625,12 +625,46 @@ function equipmentIcon(category) {
   }
 
 async function setupLogin() {
-
-    const form = qs('#loginForm');
-
-    if (!form || !auth) {
-        return;
-    }
+  const loginRole = qs('#loginRole');
+  const adminCodeGroup = qs('#adminCodeGroup');
+  const adminCode = qs('#adminCode');
+  
+  function updateLoginRoleUI() {
+  
+      if (!loginRole) return;
+  
+      if (loginRole.value === 'admin') {
+  
+          adminCodeGroup?.style.setProperty(
+              'display',
+              'block'
+          );
+  
+      } else {
+  
+          adminCodeGroup?.style.setProperty(
+              'display',
+              'none'
+          );
+  
+          if (adminCode) {
+              adminCode.value = '';
+          }
+      }
+  }
+  
+  loginRole?.addEventListener(
+      'change',
+      updateLoginRoleUI
+  );
+  
+  updateLoginRoleUI();
+  
+      const form = qs('#loginForm');
+  
+      if (!form || !auth) {
+          return;
+      }
 
     const remember = qs('#rememberMe');
     const emailInput = qs('#email');
