@@ -918,14 +918,22 @@ async function setupLogin() {
           await user.updateProfile({ displayName: name });
         } catch (_) {}
 
-        await db.collection('users').doc(user.uid).set({
-          uid: user.uid,
-          name,
-          email,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          status: 'active'
-        }, { merge: true });
+        const role =
+    qs('input[name="userRole"]:checked')?.value || 'user';
+
+await db.collection('users').doc(user.uid).set({
+    uid: user.uid,
+    name,
+    email,
+
+    // ประเภทผู้ใช้งาน
+    role: role,
+
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+
+    status: 'active'
+}, { merge: true });
 
         await auth.signOut();
         localStorage.setItem('registerEmail', email);
