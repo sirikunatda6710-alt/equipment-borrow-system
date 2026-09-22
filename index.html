@@ -28,16 +28,30 @@
         <p class="login-subtitle">
             เข้าสู่ระบบเพื่อใช้งานระบบ
         </p>
-        <div class="form-group">
-            <label>ประเภทผู้ใช้งาน</label>
-        
-            <select id="loginRole">
-                <option value="user">ผู้ใช้งานทั่วไป</option>
-                <option value="admin">ผู้ดูแลระบบ</option>
-            </select>
-        </div>
+
         <!-- แบบฟอร์มเข้าสู่ระบบ -->
         <form id="loginForm" class="login-form">
+
+            <!-- ประเภทผู้ใช้งาน -->
+            <div class="form-group">
+
+                <label for="loginRole">
+                    ประเภทผู้ใช้งาน
+                </label>
+
+                <select id="loginRole">
+
+                    <option value="user">
+                        ผู้ใช้งานทั่วไป
+                    </option>
+
+                    <option value="admin">
+                        ผู้ดูแลระบบ
+                    </option>
+
+                </select>
+
+            </div>
 
             <!-- อีเมล -->
             <label for="email">
@@ -64,33 +78,39 @@
                     placeholder="กรอกรหัสผ่าน"
                     required
                 >
-            <div
-                class="form-group"
-                id="adminCodeGroup"
-                style="display:none;"
-            >
-                <label for="adminCode">
-                    รหัสผู้ดูแลระบบ
-                </label>
 
-                <input
-                    type="password"
-                    id="adminCode"
-                    inputmode="numeric"
-                    maxlength="5"
-                    placeholder="กรอกรหัสผู้ดูแล 5 หลัก"
-                >
-            </div>
                 <button
                     type="button"
                     class="toggle-password"
+                    data-target="password"
                 >
                     แสดง
                 </button>
 
             </div>
 
-            <!-- จดจำอีเมล -->
+            <!-- รหัสผู้ดูแลระบบ -->
+            <div
+                class="form-group"
+                id="adminCodeGroup"
+                style="display: none;"
+            >
+
+                <label for="adminCode">
+                    รหัสผู้ดูแลระบบ
+                </label>
+
+                <input
+                    id="adminCode"
+                    type="password"
+                    inputmode="numeric"
+                    maxlength="5"
+                    placeholder="กรอกรหัสผู้ดูแล 5 หลัก"
+                >
+
+            </div>
+
+            <!-- จดจำอีเมลและรหัสผ่าน -->
             <div class="remember-row">
 
                 <input
@@ -117,17 +137,22 @@
 
             <!-- ลืมรหัสผ่าน -->
             <p class="forgot-link">
+
                 <a href="forgot-password.html">
                     ลืมรหัสผ่าน?
                 </a>
+
             </p>
 
             <!-- ลงทะเบียน -->
             <p class="register-link">
+
                 ยังไม่มีบัญชี?
+                
                 <a href="register.html">
                     ลงทะเบียน
                 </a>
+
             </p>
 
         </form>
