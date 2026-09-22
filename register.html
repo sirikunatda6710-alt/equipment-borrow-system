@@ -39,6 +39,7 @@
 
             <input
                 id="name"
+                type="text"
                 required
                 placeholder="กรอกชื่อ-นามสกุล"
             >
@@ -55,6 +56,38 @@
                 placeholder="กรอกอีเมล"
             >
 
+            <!-- ประเภทผู้ใช้งาน -->
+            <div class="form-group">
+
+                <label>
+                    ประเภทผู้ใช้งาน
+                </label>
+
+                <div class="role-options">
+
+                    <label class="role-option">
+                        <input
+                            type="radio"
+                            name="userRole"
+                            value="user"
+                            checked
+                        >
+                        <span>ผู้ใช้งานทั่วไป</span>
+                    </label>
+
+                    <label class="role-option">
+                        <input
+                            type="radio"
+                            name="userRole"
+                            value="admin"
+                        >
+                        <span>ผู้ดูแลระบบ</span>
+                    </label>
+
+                </div>
+
+            </div>
+
             <!-- รหัสผ่าน -->
             <label for="password">
                 รหัสผ่าน
@@ -68,35 +101,11 @@
                     required
                     placeholder="สร้างรหัสผ่าน"
                 >
-<div class="form-group">
-    <label>ประเภทผู้ใช้งาน</label>
 
-    <div class="role-options">
-
-        <label class="role-option">
-            <input
-                type="radio"
-                name="userRole"
-                value="user"
-                checked
-            >
-            <span>ผู้ใช้งานทั่วไป</span>
-        </label>
-
-        <label class="role-option">
-            <input
-                type="radio"
-                name="userRole"
-                value="admin"
-            >
-            <span>ผู้ดูแลระบบ</span>
-        </label>
-
-    </div>
-</div>
                 <button
                     type="button"
                     class="toggle-password"
+                    data-target="password"
                 >
                     แสดง
                 </button>
@@ -157,6 +166,7 @@
                 <button
                     type="button"
                     class="toggle-password"
+                    data-target="confirmPassword"
                 >
                     แสดง
                 </button>
