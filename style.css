@@ -1282,3 +1282,82 @@ tr:hover td {
     align-items: center;
     gap: 8px;
 }
+/* ================================
+   ประเภทผู้ใช้งาน
+================================ */
+
+.role-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.role-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    width: fit-content;
+    margin: 0;
+    padding: 0;
+
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+/* ปุ่มวงกลม */
+.role-option input[type="radio"] {
+    appearance: none;
+    -webkit-appearance: none;
+
+    width: 18px !important;
+    height: 18px !important;
+
+    min-width: 18px;
+    min-height: 18px;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    border: 2px solid #777;
+    border-radius: 50%;
+
+    background: #fff;
+
+    cursor: pointer;
+    position: relative;
+
+    box-sizing: border-box;
+}
+
+/* ตอนเลือก */
+.role-option input[type="radio"]:checked {
+    border-color: #1565c0;
+}
+
+/* จุดตรงกลาง */
+.role-option input[type="radio"]:checked::after {
+    content: "";
+
+    position: absolute;
+
+    width: 10px;
+    height: 10px;
+
+    top: 50%;
+    left: 50%;
+
+    transform: translate(-50%, -50%);
+
+    background: #1565c0;
+    border-radius: 50%;
+}
+
+/* ข้อความ */
+.role-option span {
+    font-size: 16px;
+    line-height: 1.4;
+    color: #333;
+}
