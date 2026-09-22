@@ -68,7 +68,32 @@
                     required
                     placeholder="สร้างรหัสผ่าน"
                 >
+<div class="form-group">
+    <label>ประเภทผู้ใช้งาน</label>
 
+    <div class="role-options">
+
+        <label class="role-option">
+            <input
+                type="radio"
+                name="userRole"
+                value="user"
+                checked
+            >
+            <span>ผู้ใช้งานทั่วไป</span>
+        </label>
+
+        <label class="role-option">
+            <input
+                type="radio"
+                name="userRole"
+                value="admin"
+            >
+            <span>ผู้ดูแลระบบ</span>
+        </label>
+
+    </div>
+</div>
                 <button
                     type="button"
                     class="toggle-password"
