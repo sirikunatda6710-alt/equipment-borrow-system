@@ -171,7 +171,7 @@
     : 'out';
 }
 
-  ffunction normalizeEquipment(item) {
+  function normalizeEquipment(item) {
   const total = Math.max(
     0,
     Number(item.total ?? item.quantity ?? 0)
