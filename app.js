@@ -72,14 +72,12 @@
   ];
 
   const STATUS_MAP = {
-    'พร้อมใช้งาน': 'available',
-    'กำลังถูกยืม': 'borrowed',
-    'ไม่พร้อมใช้งาน': 'unavailable',
-    available: 'available',
-    borrowed: 'borrowed',
-    unavailable: 'unavailable'
-  };
+  'มีการเบิกใช้': 'in_use',
+  'หมด': 'out',
 
+  in_use: 'in_use',
+  out: 'out'
+};
   let db = null;
   let auth = null;
   let firebaseReadyPromise = null;
@@ -159,83 +157,77 @@
   }
 
   function statusToThai(status) {
-    return (
-      {
-        available: 'พร้อมใช้งาน',
-        borrowed: 'กำลังถูกยืม',
-        unavailable: 'ไม่พร้อมใช้งาน'
-      }[STATUS_MAP[status] || status]
-    ) || status || '-';
-  }
-
+  return ({
+    in_use: 'มีการเบิกใช้',
+    out: 'หมด'
+  }[STATUS_MAP[status] || status]) || status || '-';
+}
   function normalizeStatus(status) {
     return STATUS_MAP[status] || 'available';
   }
+  function calculateStockStatus(available) {
+  return Number(available) > 0
+    ? 'in_use'
+    : 'out';
+}
 
-  function normalizeEquipment(item) {
-    const total = Math.max(
-      1,
-      Number(item.total ?? item.quantity ?? 1)
-    );
+  ffunction normalizeEquipment(item) {
+  const total = Math.max(
+    0,
+    Number(item.total ?? item.quantity ?? 0)
+  );
 
-    let available = Number(item.available);
+  let available = Number(item.available);
 
-    if (!Number.isFinite(available)) {
-      available = total;
-    }
-
-    available = Math.max(
-      0,
-      Math.min(total, available)
-    );
-
-    return {
-      id: String(
-        item.id ??
-        item.equipmentId ??
-        ''
-      ).trim(),
-
-      name: String(
-        item.name ??
-        item.equipmentName ??
-        ''
-      ).trim(),
-
-      category: String(
-        item.category ??
-        'ทั่วไป'
-      ).trim(),
-
-      icon: item.icon || 'package',
-
-      total,
-
-      available,
-
-      status: normalizeStatus(
-        item.status ||
-        (
-          available < total
-            ? 'borrowed'
-            : 'available'
-        )
-      ),
-
-      borrower: String(
-        item.borrower ?? ''
-      ).trim(),
-
-      createdAt:
-        item.createdAt ||
-        new Date().toISOString(),
-
-      updatedAt:
-        item.updatedAt ||
-        new Date().toISOString()
-    };
+  if (!Number.isFinite(available)) {
+    available = total;
   }
 
+  available = Math.max(
+    0,
+    Math.min(total, available)
+  );
+
+  return {
+    id: String(
+      item.id ??
+      item.equipmentId ??
+      ''
+    ).trim(),
+
+    name: String(
+      item.name ??
+      item.equipmentName ??
+      ''
+    ).trim(),
+
+    category: String(
+      item.category ??
+      'ทั่วไป'
+    ).trim(),
+
+    icon: item.icon || 'package',
+
+    total,
+
+    available,
+
+    status: calculateStockStatus(available),
+
+    borrower: String(
+      item.borrower ??
+      ''
+    ).trim(),
+
+    createdAt:
+      item.createdAt ||
+      new Date().toISOString(),
+
+    updatedAt:
+      item.updatedAt ||
+      new Date().toISOString()
+  };
+}
   function equipmentIcon(category) {
     const map = {
       'เครื่องฉาย': 'projector',
@@ -848,6 +840,89 @@
         }
       );
   }
+  async function saveInventoryHistory({
+  equipment,
+  action,
+  quantity = 0,
+  beforeQuantity = 0,
+  afterQuantity = 0,
+  beforeStatus = '',
+  afterStatus = '',
+  note = ''
+}) {
+  if (!auth?.currentUser || !db) {
+    throw new Error('ไม่พบผู้ใช้งานที่เข้าสู่ระบบ');
+  }
+
+  const user = auth.currentUser;
+
+  let userName =
+    localStorage.getItem('userName') ||
+    user.displayName ||
+    user.email ||
+    'ผู้ใช้งาน';
+
+  try {
+    const userSnap = await db
+      .collection('users')
+      .doc(user.uid)
+      .get();
+
+    if (
+      userSnap.exists &&
+      userSnap.data().name
+    ) {
+      userName = userSnap.data().name;
+    }
+  } catch (error) {
+    console.warn(
+      'อ่านชื่อผู้ใช้งานไม่ได้:',
+      error
+    );
+  }
+
+  const record = {
+    id: makeId('HIS'),
+
+    equipmentId: equipment.id,
+    equipmentName: equipment.name,
+    category: equipment.category || 'ทั่วไป',
+
+    action,
+
+    quantity: Number(quantity) || 0,
+
+    beforeQuantity:
+      Number(beforeQuantity) || 0,
+
+    afterQuantity:
+      Number(afterQuantity) || 0,
+
+    beforeStatus,
+
+    afterStatus,
+
+    userUid: user.uid,
+
+    userName,
+
+    userEmail:
+      user.email || '',
+
+    note:
+      String(note || '').trim(),
+
+    createdAt:
+      new Date().toISOString()
+  };
+
+  await db
+    .collection('history')
+    .doc(record.id)
+    .set(record);
+
+  return record;
+}
 
   async function saveBorrowFirebase(
     record
@@ -902,6 +977,328 @@
         }
       );
   }
+  async function issueStock(
+  item,
+  quantity,
+  note = ''
+) {
+  const qty = Number(quantity);
+
+  if (!Number.isFinite(qty) || qty <= 0) {
+    throw new Error(
+      'จำนวนที่เบิกต้องมากกว่า 0'
+    );
+  }
+
+  if (qty > Number(item.available)) {
+    throw new Error(
+      'จำนวนที่เบิกมากกว่าจำนวนคงเหลือ'
+    );
+  }
+
+  const beforeQuantity =
+    Number(item.available) || 0;
+
+  const beforeStatus =
+    calculateStockStatus(
+      beforeQuantity
+    );
+
+  const afterQuantity =
+    beforeQuantity - qty;
+
+  const afterStatus =
+    calculateStockStatus(
+      afterQuantity
+    );
+
+  const updatedItem = {
+    ...item,
+
+    available:
+      afterQuantity,
+
+    status:
+      afterStatus,
+
+    updatedAt:
+      new Date().toISOString()
+  };
+
+  /*
+   * 1. บันทึกคลัง
+   */
+  await saveEquipmentFirebase(
+    updatedItem
+  );
+
+  /*
+   * 2. บันทึกประวัติ
+   */
+  await saveInventoryHistory({
+    equipment: item,
+
+    action: 'เบิกจ่าย',
+
+    quantity: qty,
+
+    beforeQuantity,
+
+    afterQuantity,
+
+    beforeStatus:
+      statusToThai(
+        beforeStatus
+      ),
+
+    afterStatus:
+      statusToThai(
+        afterStatus
+      ),
+
+    note
+  });
+
+  /*
+   * 3. ถ้าเหลือ 0 ให้แจ้งผู้ดูแล
+   */
+  if (
+    afterQuantity === 0 &&
+    beforeQuantity > 0
+  ) {
+    await createStockEmptyNotification(
+      updatedItem
+    );
+  }
+
+  return updatedItem;
+}
+  async function addStock(
+  item,
+  quantity,
+  note = ''
+) {
+  const qty = Number(quantity);
+
+  if (!Number.isFinite(qty) || qty <= 0) {
+    throw new Error(
+      'จำนวนที่เพิ่มต้องมากกว่า 0'
+    );
+  }
+
+  const beforeQuantity =
+    Number(item.available) || 0;
+
+  const beforeStatus =
+    calculateStockStatus(
+      beforeQuantity
+    );
+
+  const afterQuantity =
+    beforeQuantity + qty;
+
+  const afterStatus =
+    calculateStockStatus(
+      afterQuantity
+    );
+
+  const updatedItem = {
+    ...item,
+
+    total:
+      Number(item.total || 0) + qty,
+
+    available:
+      afterQuantity,
+
+    status:
+      afterStatus,
+
+    updatedAt:
+      new Date().toISOString()
+  };
+
+  /*
+   * บันทึกข้อมูลคลัง
+   */
+  await saveEquipmentFirebase(
+    updatedItem
+  );
+
+  /*
+   * บันทึกประวัติ
+   */
+  await saveInventoryHistory({
+    equipment: item,
+
+    action: 'เพิ่มเติม',
+
+    quantity: qty,
+
+    beforeQuantity,
+
+    afterQuantity,
+
+    beforeStatus:
+      statusToThai(
+        beforeStatus
+      ),
+
+    afterStatus:
+      statusToThai(
+        afterStatus
+      ),
+
+    note
+  });
+
+  return updatedItem;
+}
+  async function changeEquipmentStatus(
+  item,
+  newStatus,
+  note = ''
+) {
+  const normalized =
+    normalizeStatus(
+      newStatus
+    );
+
+  if (
+    normalized !== 'in_use' &&
+    normalized !== 'out'
+  ) {
+    throw new Error(
+      'สถานะไม่ถูกต้อง'
+    );
+  }
+
+  const beforeStatus =
+    calculateStockStatus(
+      item.available
+    );
+
+  const afterStatus =
+    normalized;
+
+  const updatedItem = {
+    ...item,
+
+    status:
+      afterStatus,
+
+    updatedAt:
+      new Date().toISOString()
+  };
+
+  await saveEquipmentFirebase(
+    updatedItem
+  );
+
+  await saveInventoryHistory({
+    equipment: item,
+
+    action: 'แก้ไขสถานะ',
+
+    quantity: 0,
+
+    beforeQuantity:
+      item.available,
+
+    afterQuantity:
+      item.available,
+
+    beforeStatus:
+      statusToThai(
+        beforeStatus
+      ),
+
+    afterStatus:
+      statusToThai(
+        afterStatus
+      ),
+
+    note
+  });
+
+  /*
+   * ถ้าแก้เป็น "หมด"
+   * ให้แจ้งเตือนผู้ดูแลด้วย
+   */
+  if (
+    afterStatus === 'out' &&
+    beforeStatus !== 'out'
+  ) {
+    await createStockEmptyNotification(
+      updatedItem
+    );
+  }
+
+  return updatedItem;
+}
+  async function loadAdminNotifications() {
+  if (!db || !auth?.currentUser) {
+    return [];
+  }
+
+  const snapshot = await db
+    .collection('notifications')
+    .where(
+      'targetRole',
+      '==',
+      'admin'
+    )
+    .orderBy(
+      'createdAt',
+      'desc'
+    )
+    .limit(30)
+    .get();
+
+  return snapshot.docs.map(
+    doc => ({
+      id: doc.id,
+      ...doc.data()
+    })
+  );
+}
+  async function getUnreadNotificationCount() {
+  if (!db || !auth?.currentUser) {
+    return 0;
+  }
+
+  const snapshot = await db
+    .collection('notifications')
+    .where(
+      'targetRole',
+      '==',
+      'admin'
+    )
+    .where(
+      'status',
+      '==',
+      'unread'
+    )
+    .get();
+
+  return snapshot.size;
+}
+  async function markNotificationAsRead(
+  notificationId
+) {
+  if (!db) return;
+
+  await db
+    .collection('notifications')
+    .doc(notificationId)
+    .update({
+      status: 'read',
+      readAt:
+        new Date().toISOString(),
+      readByUid:
+        auth?.currentUser?.uid || ''
+    });
+}
 
   // ============================================================
   // ICON SYSTEM
