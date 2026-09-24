@@ -1299,7 +1299,255 @@
         auth?.currentUser?.uid || ''
     });
 }
+// ============================================================
+// DASHBOARD NOTIFICATIONS
+// ============================================================
 
+async function setupDashboardNotifications() {
+
+  const button =
+    qs('#notificationButton');
+
+  const panel =
+    qs('#notificationPanel');
+
+  const list =
+    qs('#notificationList');
+
+  const count =
+    qs('#notificationCount');
+
+  const close =
+    qs('#closeNotificationPanel');
+
+  if (
+    !button ||
+    !panel ||
+    !list ||
+    !count
+  ) {
+    return;
+  }
+
+  async function renderNotifications() {
+
+    try {
+
+      let notifications = [];
+
+      if (
+        db &&
+        auth?.currentUser
+      ) {
+
+        const snapshot =
+          await db
+            .collection('notifications')
+            .where(
+              'targetRole',
+              '==',
+              'admin'
+            )
+            .limit(30)
+            .get();
+
+        notifications =
+          snapshot.docs.map(
+            doc => ({
+              id: doc.id,
+              ...doc.data()
+            })
+          );
+
+        notifications.sort(
+          (a, b) =>
+            String(
+              b.createdAt || ''
+            ).localeCompare(
+              String(
+                a.createdAt || ''
+              )
+            )
+        );
+      }
+
+      const unread =
+        notifications.filter(
+          notification =>
+            notification.status ===
+            'unread'
+        ).length;
+
+      count.textContent =
+        unread;
+
+      count.style.display =
+        unread > 0
+          ? ''
+          : 'none';
+
+      if (
+        notifications.length === 0
+      ) {
+
+        list.innerHTML = `
+          <div class="notification-empty">
+            ไม่มีการแจ้งเตือน
+          </div>
+        `;
+
+        return;
+      }
+
+      list.innerHTML =
+        notifications
+          .map(
+            notification => `
+              <button
+                type="button"
+                class="notification-item ${
+                  notification.status ===
+                  'unread'
+                    ? 'unread'
+                    : ''
+                }"
+                data-notification-id="${escapeHtml(
+                  notification.id
+                )}"
+              >
+
+                <strong>
+                  ${escapeHtml(
+                    notification.message ||
+                    notification.equipmentName ||
+                    'แจ้งเตือน'
+                  )}
+                </strong>
+
+                <span>
+                  ${escapeHtml(
+                    notification.category ||
+                    ''
+                  )}
+                </span>
+
+                <small>
+                  ${escapeHtml(
+                    formatDateTime(
+                      notification.createdAt
+                    )
+                  )}
+                </small>
+
+              </button>
+            `
+          )
+          .join('');
+
+      qsa(
+        '[data-notification-id]',
+        list
+      ).forEach(
+        element => {
+
+          element.addEventListener(
+            'click',
+            async () => {
+
+              const id =
+                element.dataset
+                  .notificationId;
+
+              try {
+
+                await markNotificationAsRead(
+                  id
+                );
+
+              } catch (error) {
+
+                console.error(
+                  'อ่านแจ้งเตือนไม่สำเร็จ:',
+                  error
+                );
+              }
+
+              await renderNotifications();
+            }
+          );
+        }
+      );
+
+    } catch (error) {
+
+      console.error(
+        'โหลดแจ้งเตือนไม่สำเร็จ:',
+        error
+      );
+
+      list.innerHTML = `
+        <div class="notification-empty">
+          โหลดการแจ้งเตือนไม่สำเร็จ
+        </div>
+      `;
+    }
+  }
+
+  button.addEventListener(
+    'click',
+    async event => {
+
+      event.stopPropagation();
+
+      panel.classList.toggle(
+        'show'
+      );
+
+      if (
+        panel.classList.contains(
+          'show'
+        )
+      ) {
+
+        await renderNotifications();
+      }
+    }
+  );
+
+  close?.addEventListener(
+    'click',
+    event => {
+
+      event.stopPropagation();
+
+      panel.classList.remove(
+        'show'
+      );
+    }
+  );
+
+  document.addEventListener(
+    'click',
+    event => {
+
+      if (
+        !panel.contains(
+          event.target
+        ) &&
+        !button.contains(
+          event.target
+        )
+      ) {
+
+        panel.classList.remove(
+          'show'
+        );
+      }
+    }
+  );
+
+  await renderNotifications();
+}
   // ============================================================
   // ICON SYSTEM
   // ============================================================
@@ -1952,91 +2200,11 @@
       }
     );
 
-    const notificationCount =
-      qs('#notificationCount');
+   // ============================================================
+// ระบบแจ้งเตือน Dashboard
+// ============================================================
 
-    if (notificationCount) {
-
-      const active =
-        getHistoryLocal()
-          .filter(
-            h =>
-              h.status ===
-                'borrowing' &&
-              !h.actualReturnDate
-          )
-          .length;
-
-      notificationCount.textContent =
-        active;
-
-      notificationCount.style.display =
-        active ? '' : 'none';
-    }
-
-    const headerSearch =
-      qs('#headerSearch');
-
-    headerSearch?.addEventListener(
-      'keydown',
-      e => {
-
-        if (e.key !== 'Enter') {
-          return;
-        }
-
-        const term =
-          headerSearch.value.trim();
-
-        if (!term) {
-          return;
-        }
-
-        if (
-          location.pathname.endsWith(
-            'equipment.html'
-          )
-        ) {
-
-          const s =
-            qs('#equipmentSearch');
-
-          if (s) {
-
-            s.value =
-              term;
-
-            s.dispatchEvent(
-              new Event(
-                'input'
-              )
-            );
-          }
-
-        } else if (
-          location.pathname.endsWith(
-            'history.html'
-          )
-        ) {
-
-          const s =
-            qs('#historySearch');
-
-          if (s) {
-
-            s.value =
-              term;
-
-            s.dispatchEvent(
-              new Event(
-                'input'
-              )
-            );
-          }
-        }
-      }
-    );
-  }
+setupDashboardNotifications();
     // ============================================================
   // LOGIN
   // ============================================================
