@@ -490,68 +490,157 @@
     );
   }
 
-  async function initFirebase() {
+ async function initFirebase() {
 
-    if (firebaseReadyPromise) {
-      return firebaseReadyPromise;
-    }
+  if (firebaseReadyPromise) {
+    return firebaseReadyPromise;
+  }
 
-    firebaseReadyPromise =
-      (async () => {
+  firebaseReadyPromise = (async () => {
 
-        if (
-          window.firebase?.apps?.length
-        ) {
+    try {
 
-          db =
-            window.firebase.firestore();
+      console.log('กำลังเริ่ม Firebase...');
 
-          auth =
-            window.firebase.auth();
+      // ------------------------------------------------
+      // ถ้า Firebase ถูกโหลดไว้แล้ว
+      // ------------------------------------------------
+      if (
+        window.firebase &&
+        window.firebase.apps &&
+        window.firebase.apps.length
+      ) {
 
-          return true;
-        }
+        console.log('พบ Firebase ที่โหลดไว้แล้ว');
 
-        const base =
-          `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}`;
+        db = window.firebase.firestore();
+        auth = window.firebase.auth();
 
-        await loadScript(
-          `${base}/firebase-app-compat.js`
+        console.log('Firebase พร้อมใช้งาน');
+
+        return true;
+      }
+
+      // ------------------------------------------------
+      // URL ของ Firebase SDK
+      // ------------------------------------------------
+      const base =
+        `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}`;
+
+      console.log(
+        'กำลังโหลด Firebase SDK:',
+        base
+      );
+
+      // ------------------------------------------------
+      // Firebase App
+      // ------------------------------------------------
+      await loadScript(
+        `${base}/firebase-app-compat.js`
+      );
+
+      console.log(
+        'โหลด firebase-app สำเร็จ'
+      );
+
+      // ------------------------------------------------
+      // Firebase Authentication
+      // ------------------------------------------------
+      await loadScript(
+        `${base}/firebase-auth-compat.js`
+      );
+
+      console.log(
+        'โหลด firebase-auth สำเร็จ'
+      );
+
+      // ------------------------------------------------
+      // Firebase Firestore
+      // ------------------------------------------------
+      await loadScript(
+        `${base}/firebase-firestore-compat.js`
+      );
+
+      console.log(
+        'โหลด firebase-firestore สำเร็จ'
+      );
+
+      // ------------------------------------------------
+      // ตรวจสอบ Firebase
+      // ------------------------------------------------
+      if (!window.firebase) {
+
+        throw new Error(
+          'ไม่พบ window.firebase หลังจากโหลด SDK'
         );
+      }
 
-        await loadScript(
-          `${base}/firebase-auth-compat.js`
-        );
-
-        await loadScript(
-          `${base}/firebase-firestore-compat.js`
-        );
+      // ------------------------------------------------
+      // Initialize Firebase
+      // ------------------------------------------------
+      if (
+        !window.firebase.apps ||
+        !window.firebase.apps.length
+      ) {
 
         window.firebase.initializeApp(
           FIREBASE_CONFIG
         );
 
-        db =
-          window.firebase.firestore();
-
-        auth =
-          window.firebase.auth();
-
-        return true;
-
-      })().catch(error => {
-
-        console.error(
-          'Firebase initialization error:',
-          error
+        console.log(
+          'Firebase initializeApp สำเร็จ'
         );
+      }
 
-        return false;
+      // ------------------------------------------------
+      // Firestore
+      // ------------------------------------------------
+      db =
+        window.firebase.firestore();
 
-      });
+      // ------------------------------------------------
+      // Authentication
+      // ------------------------------------------------
+      auth =
+        window.firebase.auth();
 
-    return firebaseReadyPromise;
-  }
+      // ------------------------------------------------
+      // ตรวจสอบว่า Auth / Firestore ใช้งานได้
+      // ------------------------------------------------
+      if (!auth) {
+
+        throw new Error(
+          'Firebase Authentication ไม่พร้อมใช้งาน'
+        );
+      }
+
+      if (!db) {
+
+        throw new Error(
+          'Firebase Firestore ไม่พร้อมใช้งาน'
+        );
+      }
+
+      console.log(
+        'Firebase พร้อมใช้งานแล้ว'
+      );
+
+      return true;
+
+    } catch (error) {
+
+      console.error(
+        'Firebase initialization error:',
+        error
+      );
+
+      return false;
+    }
+
+  })();
+
+  return firebaseReadyPromise;
+}
 
   async function getUserProfile(
     user = auth?.currentUser
