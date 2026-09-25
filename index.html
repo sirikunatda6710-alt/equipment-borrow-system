@@ -38,101 +38,52 @@
 
             <!-- ประเภทผู้ใช้งาน -->
             <div class="form-group">
+  <label for="loginRole">
+    ประเภทผู้ใช้งาน
+  </label>
 
-                <label for="loginRole">
-                    ประเภทผู้ใช้งาน
-                </label>
+  <select id="loginRole" name="role">
+    <option value="user">
+      ผู้ใช้งานทั่วไป
+    </option>
 
-                <select
-                    id="loginRole"
-                    name="loginRole"
-                >
+    <option value="admin">
+      ผู้ดูแลระบบ
+    </option>
+  </select>
+</div>
 
-                    <option value="user">
-                        ผู้ใช้งานทั่วไป
-                    </option>
+<div
+  id="adminCodeGroup"
+  class="form-group"
+  style="display: none;"
+>
+  <label for="adminCode">
+    รหัสผู้ดูแลระบบ
+  </label>
 
-                    <option value="admin">
-                        ผู้ดูแลระบบ
-                    </option>
+  <div class="password-wrapper">
 
-                </select>
+    <input
+      type="password"
+      id="adminCode"
+      name="adminCode"
+      inputmode="numeric"
+      maxlength="5"
+      autocomplete="off"
+      placeholder="กรอกรหัส 5 หลัก"
+    >
 
-            </div>
+    <button
+      type="button"
+      class="toggle-password"
+      data-target="adminCode"
+    >
+      แสดง
+    </button>
 
-
-            <!-- EMAIL -->
-            <div class="form-group">
-
-                <label for="email">
-                    อีเมล
-                </label>
-
-                <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    placeholder="กรอกอีเมลของคุณ"
-                    autocomplete="email"
-                    required
-                >
-
-            </div>
-
-
-            <!-- PASSWORD -->
-            <div class="form-group">
-
-                <label for="password">
-                    รหัสผ่าน
-                </label>
-
-                <div class="password-wrapper">
-
-                    <input
-                        id="password"
-                        name="password"
-                        type="password"
-                        placeholder="กรอกรหัสผ่าน"
-                        autocomplete="current-password"
-                        required
-                    >
-
-                    <button
-                        type="button"
-                        class="toggle-password"
-                        data-target="password"
-                    >
-                        แสดง
-                    </button>
-
-                </div>
-
-            </div>
-
-
-            <!-- ADMIN CODE -->
-            <!-- จะปรากฏเฉพาะเมื่อเลือก "ผู้ดูแลระบบ" -->
-            <div
-                class="form-group"
-                id="adminCodeGroup"
-                style="display: none;"
-            >
-
-                <label for="adminCode">
-                    รหัสผู้ดูแลระบบ
-                </label>
-
-                <input
-                    id="adminCode"
-                    name="adminCode"
-                    type="password"
-                    inputmode="numeric"
-                    maxlength="5"
-                    pattern="[0-9]{5}"
-                    placeholder="กรอกรหัสผู้ดูแล 5 หลัก"
-                    autocomplete="off"
-                >
+  </div>
+</div>
 
                 <small
                     style="
