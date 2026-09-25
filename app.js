@@ -17,15 +17,17 @@
   const FIREBASE_VERSION = '12.19.0';
 
   const KEYS = {
-    equipment: 'equipment',
-    equipmentData: 'equipment_data',
-    history: 'borrow_history',
-    currentUser: 'equipment_current_user',
-    loggedIn: 'isLoggedIn',
-    userEmail: 'userEmail',
-    userName: 'userName',
-    firebaseUid: 'firebaseUid'
-  };
+  equipment: 'equipment',
+  equipmentData: 'equipment_data',
+  history: 'borrow_history',
+  currentUser: 'equipment_current_user',
+  loggedIn: 'isLoggedIn',
+  userEmail: 'userEmail',
+  userName: 'userName',
+  firebaseUid: 'firebaseUid',
+  userRole: 'userRole'
+};
+
 
   const DEFAULT_EQUIPMENT = [
     {
@@ -1258,84 +1260,99 @@
 
   function setupPasswordToggle() {
 
-    qsa(
-      '.toggle-password'
-    ).forEach(
-      button => {
+  qsa('.toggle-password').forEach(button => {
+
+    if (
+      button.dataset.passwordToggleReady === 'true'
+    ) {
+      return;
+    }
+
+    let input = null;
+
+    // 1. หา input จาก data-target
+    const targetId =
+      button.getAttribute('data-target') ||
+      button.getAttribute('aria-controls');
+
+    if (targetId) {
+      input = document.getElementById(targetId);
+    }
+
+    // 2. ถ้ายังไม่เจอ ให้หา input ใน wrapper
+    if (!input) {
+      const wrapper =
+        button.closest(
+          '.password-wrapper'
+        );
+
+      input =
+        wrapper?.querySelector(
+          'input[type="password"], input[type="text"]'
+        );
+    }
+
+    // 3. ถ้ายังไม่เจอ ให้ข้าม
+    if (!input) {
+      console.warn(
+        'ไม่พบ input สำหรับปุ่มแสดง/ซ่อนรหัสผ่าน:',
+        button
+      );
+
+      return;
+    }
+
+    button.dataset.passwordToggleReady =
+      'true';
+
+    button.type = 'button';
+
+    function updateButton() {
+
+      const isVisible =
+        input.type === 'text';
+
+      button.textContent =
+        isVisible
+          ? 'ซ่อน'
+          : 'แสดง';
+
+      button.setAttribute(
+        'aria-label',
+        isVisible
+          ? 'ซ่อนรหัสผ่าน'
+          : 'แสดงรหัสผ่าน'
+      );
+    }
+
+    updateButton();
+
+    button.addEventListener(
+      'click',
+      event => {
+
+        event.preventDefault();
+        event.stopPropagation();
 
         if (
-          button.dataset.passwordToggleReady ===
-          'true'
+          input.type === 'password'
         ) {
-          return;
+
+          input.type = 'text';
+
+        } else {
+
+          input.type = 'password';
         }
 
-        const wrapper =
-          button.closest(
-            '.password-wrapper'
-          );
+        updateButton();
 
-        const targetId =
-          button.getAttribute(
-            'data-target'
-          ) ||
-          button.getAttribute(
-            'aria-controls'
-          );
-
-        const input =
-          (
-            wrapper &&
-            wrapper.querySelector(
-              'input'
-            )
-          ) ||
-          (
-            targetId
-              ? document.getElementById(
-                  targetId
-                )
-              : null
-          );
-
-        if (!input) {
-          return;
-        }
-
-        button.dataset.passwordToggleReady =
-          'true';
-
-        button.type =
-          'button';
-
-        button.textContent =
-          input.type === 'text'
-            ? 'ซ่อน'
-            : 'แสดง';
-
-        button.addEventListener(
-          'click',
-          () => {
-
-            const showing =
-              input.type === 'text';
-
-            input.type =
-              showing
-                ? 'password'
-                : 'text';
-
-            button.textContent =
-              showing
-                ? 'แสดง'
-                : 'ซ่อน';
-
-            input.focus();
-          }
-        );
+        input.focus();
       }
     );
-  }
+  });
+}
+
   // ============================================================
   // COMMON UI
   // ============================================================
@@ -4969,16 +4986,59 @@ function updatePasswordRules(
   // ============================================================
 
   async function startApp() {
-  const firebaseOK = await initFirebase();
+
+  const firebaseOK =
+    await initFirebase();
 
   setupPasswordToggle();
   initIcons();
 
-  const path = window.location.pathname;
+  const path =
+    window.location.pathname;
 
-  if (path.endsWith('register.html')) {
+  // ==========================================================
+  // LOGIN
+  // ==========================================================
 
-    if (!firebaseOK || !auth || !db) {
+  if (
+    path.endsWith('index.html') ||
+    path === '/' ||
+    path.endsWith('/')
+  ) {
+
+    setupCommonUI();
+
+    if (
+      !firebaseOK ||
+      !auth
+    ) {
+
+      console.error(
+        'Firebase ยังไม่พร้อมสำหรับ Login'
+      );
+
+      return;
+    }
+
+    await setupLogin();
+
+    return;
+  }
+
+  // ==========================================================
+  // REGISTER
+  // ==========================================================
+
+  if (
+    path.endsWith('register.html')
+  ) {
+
+    if (
+      !firebaseOK ||
+      !auth ||
+      !db
+    ) {
+
       console.error(
         'Firebase ยังไม่พร้อมใช้งาน',
         {
@@ -4995,24 +5055,104 @@ function updatePasswordRules(
       return;
     }
 
-    setupRegister();
+    await setupRegister();
+
     return;
   }
 
-  if (path.endsWith('dashboard.html')) {
+  // ==========================================================
+  // FORGOT PASSWORD
+  // ==========================================================
+
+  if (
+    path.endsWith(
+      'forgot-password.html'
+    )
+  ) {
+
+    if (
+      !firebaseOK ||
+      !auth
+    ) {
+
+      console.error(
+        'Firebase Auth ยังไม่พร้อมใช้งาน'
+      );
+
+      return;
+    }
+
+    await setupForgotPassword();
+
+    return;
+  }
+
+  // ==========================================================
+  // RESET PASSWORD
+  // ==========================================================
+
+  if (
+    path.endsWith(
+      'reset-password.html'
+    )
+  ) {
+
+    if (
+      !firebaseOK ||
+      !auth
+    ) {
+
+      console.error(
+        'Firebase Auth ยังไม่พร้อมใช้งาน'
+      );
+
+      return;
+    }
+
+    await setupResetPassword();
+
+    return;
+  }
+
+  // ==========================================================
+  // DASHBOARD
+  // ==========================================================
+
+  if (
+    path.endsWith(
+      'dashboard.html'
+    )
+  ) {
+
     setupCommonUI();
 
-    if (auth?.currentUser) {
+    if (
+      auth?.currentUser
+    ) {
+
       await setupDashboard();
+      await setupDashboardNotifications();
     }
 
     return;
   }
 
-  if (path.endsWith('equipment.html')) {
+  // ==========================================================
+  // EQUIPMENT
+  // ==========================================================
+
+  if (
+    path.endsWith(
+      'equipment.html'
+    )
+  ) {
+
     setupCommonUI();
 
-    if (auth?.currentUser) {
+    if (
+      auth?.currentUser
+    ) {
+
       await setupEquipmentPage();
     }
 
