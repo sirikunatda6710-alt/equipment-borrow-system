@@ -1712,461 +1712,491 @@
   // LOGIN
   // ============================================================
 
-  async function setupLogin() {
+  // ============================================================
+// LOGIN
+// ============================================================
 
-    const form =
-      qs('#loginForm');
+async function setupLogin() {
+    const form = qs('#loginForm');
 
-    if (
-      !form ||
-      !auth
-    ) {
-      return;
+    if (!form || !auth) {
+        return;
     }
 
-    const roleSelect =
-      qs('#loginRole');
+    const loginRole = qs('#loginRole');
+    const adminCodeGroup = qs('#adminCodeGroup');
+    const adminCode = qs('#adminCode');
+    const emailInput = qs('#email');
+    const passwordInput = qs('#password');
+    const remember = qs('#rememberMe');
 
-    const adminCodeGroup =
-      qs('#adminCodeGroup');
+    // ==========================================================
+    // รหัสสำหรับยืนยันการเข้าใช้งานของผู้ดูแลระบบ
+    // ==========================================================
+    const ADMIN_CODE = '24236';
 
-    const adminCode =
-      qs('#adminCode');
-
-    const remember =
-      qs('#rememberMe');
-
-    const emailInput =
-      qs('#email');
-
-    // ----------------------------------------------------------
-    // อ่าน Role จาก URL
-    // เช่น index.html?role=user
-    // ----------------------------------------------------------
-
-    const params =
-      new URLSearchParams(
+    // ==========================================================
+    // ตั้งค่า Role เริ่มต้น
+    // ==========================================================
+    const params = new URLSearchParams(
         window.location.search
-      );
+    );
 
-    const urlRole =
-      params.get('role');
+    const roleFromUrl = params.get('role');
 
-    if (
-      roleSelect &&
-      (
-        urlRole === 'user' ||
-        urlRole === 'admin'
-      )
-    ) {
-
-      roleSelect.value =
-        urlRole;
-    }
-
-    // ----------------------------------------------------------
-    // อีเมลจากการสมัครสมาชิก
-    // ----------------------------------------------------------
-
-    const registerEmail =
-      localStorage.getItem(
-        'registerEmail'
-      );
-
-    const rememberedEmail =
-      localStorage.getItem(
-        'rememberedEmail'
-      );
+    const savedRole =
+        localStorage.getItem(KEYS.userRole);
 
     if (
-      registerEmail &&
-      emailInput
+        loginRole &&
+        (
+            roleFromUrl === 'admin' ||
+            roleFromUrl === 'user'
+        )
     ) {
-
-      emailInput.value =
-        registerEmail;
-
-      localStorage.removeItem(
-        'registerEmail'
-      );
+        loginRole.value = roleFromUrl;
 
     } else if (
-      rememberedEmail &&
-      emailInput
+        loginRole &&
+        (
+            savedRole === 'admin' ||
+            savedRole === 'user'
+        )
     ) {
+        loginRole.value = savedRole;
 
-      emailInput.value =
-        rememberedEmail;
-
-      if (remember) {
-
-        remember.checked =
-          true;
-      }
+    } else if (loginRole) {
+        loginRole.value = 'user';
     }
 
-    // ----------------------------------------------------------
-    // Role Change
-    // ----------------------------------------------------------
+    // ==========================================================
+    // แสดง / ซ่อนช่องรหัส Admin
+    // ==========================================================
 
-    roleSelect?.addEventListener(
-      'change',
-      updateLoginRoleUI
+    function updateLoginRoleUI() {
+
+        const role =
+            loginRole?.value || 'user';
+
+        if (role === 'admin') {
+
+            if (adminCodeGroup) {
+                adminCodeGroup.style.display = 'block';
+            }
+
+            if (adminCode) {
+                adminCode.required = true;
+            }
+
+        } else {
+
+            if (adminCodeGroup) {
+                adminCodeGroup.style.display = 'none';
+            }
+
+            if (adminCode) {
+                adminCode.required = false;
+                adminCode.value = '';
+            }
+        }
+    }
+
+    loginRole?.addEventListener(
+        'change',
+        updateLoginRoleUI
     );
 
     updateLoginRoleUI();
 
-    // ----------------------------------------------------------
-    // Submit Login
-    // ----------------------------------------------------------
+    // ==========================================================
+    // โหลด Email ที่เคยจำไว้
+    // ==========================================================
+
+    const rememberedEmail =
+        localStorage.getItem('rememberedEmail');
+
+    const rememberedPassword =
+        localStorage.getItem('rememberedPassword');
+
+    if (rememberedEmail && emailInput) {
+        emailInput.value = rememberedEmail;
+    }
+
+    if (
+        rememberedPassword &&
+        passwordInput
+    ) {
+        passwordInput.value =
+            rememberedPassword;
+
+        if (remember) {
+            remember.checked = true;
+        }
+    }
+
+    // ==========================================================
+    // LOGIN
+    // ==========================================================
 
     form.addEventListener(
-      'submit',
-      async e => {
+        'submit',
+        async event => {
 
-        e.preventDefault();
+            event.preventDefault();
 
-        const email =
-          (
-            emailInput?.value ||
-            ''
-          ).trim().toLowerCase();
+            const email =
+                emailInput?.value
+                    ?.trim()
+                    ?.toLowerCase();
 
-        const password =
-          qs('#password')?.value ||
-          '';
+            const password =
+                passwordInput?.value || '';
 
-        const selectedRole =
-          roleSelect?.value ||
-          'user';
+            const selectedRole =
+                loginRole?.value || 'user';
 
-        const enteredAdminCode =
-          (
-            adminCode?.value ||
-            ''
-          ).trim();
+            const enteredAdminCode =
+                adminCode?.value
+                    ?.trim() || '';
 
-        // ------------------------------------------------------
-        // ตรวจข้อมูล
-        // ------------------------------------------------------
+            // --------------------------------------------------
+            // ตรวจสอบข้อมูลเบื้องต้น
+            // --------------------------------------------------
 
-        if (
-          !email ||
-          !password
-        ) {
-
-          return alert(
-            'กรุณากรอกอีเมลและรหัสผ่าน'
-          );
-        }
-
-        // ------------------------------------------------------
-        // ตรวจรหัส Admin
-        // ------------------------------------------------------
-
-        if (
-          selectedRole === 'admin'
-        ) {
-
-          if (
-            enteredAdminCode !==
-            '24236'
-          ) {
-
-            alert(
-              'รหัสผู้ดูแลระบบไม่ถูกต้อง'
-            );
-
-            adminCode?.focus();
-
-            return;
-          }
-        }
-
-        const submitButton =
-          form.querySelector(
-            '[type="submit"]'
-          );
-
-        if (submitButton) {
-
-          submitButton.disabled =
-            true;
-        }
-
-        try {
-
-          // ----------------------------------------------------
-          // Firebase Login
-          // ----------------------------------------------------
-
-          const credential =
-            await auth
-              .signInWithEmailAndPassword(
-                email,
-                password
-              );
-
-          const user =
-            credential.user;
-
-          // ----------------------------------------------------
-          // อ่าน Profile
-          // ----------------------------------------------------
-
-          const profile =
-            await getUserProfile(
-              user
-            );
-
-          const actualRole =
-            profile?.role ||
-            'user';
-
-          const name =
-            profile?.name ||
-            user.displayName ||
-            email;
-
-          // ----------------------------------------------------
-          // ตรวจ Role
-          // ----------------------------------------------------
-
-          if (
-            actualRole !==
-            selectedRole
-          ) {
-
-            await auth.signOut();
-
-            localStorage.removeItem(
-              KEYS.loggedIn
-            );
-
-            localStorage.removeItem(
-              KEYS.currentUser
-            );
-
-            localStorage.removeItem(
-              KEYS.firebaseUid
-            );
-
-            localStorage.removeItem(
-              KEYS.userRole
-            );
-
-            alert(
-              selectedRole === 'admin'
-                ? 'บัญชีนี้ไม่ได้มีสิทธิ์ผู้ดูแลระบบ'
-                : 'บัญชีนี้เป็นบัญชีผู้ดูแลระบบ กรุณาเลือกประเภทผู้ดูแลระบบ'
-            );
-
-            return;
-          }
-
-          // ----------------------------------------------------
-          // ตรวจสถานะบัญชี
-          // ----------------------------------------------------
-
-          if (
-            profile?.status &&
-            profile.status !==
-              'active'
-          ) {
-
-            await auth.signOut();
-
-            alert(
-              'บัญชีนี้ถูกระงับการใช้งาน'
-            );
-
-            return;
-          }
-
-          // ----------------------------------------------------
-          // Save Login Data
-          // ----------------------------------------------------
-
-          localStorage.setItem(
-            KEYS.loggedIn,
-            'true'
-          );
-
-          localStorage.setItem(
-            KEYS.userEmail,
-            email
-          );
-
-          localStorage.setItem(
-            KEYS.firebaseUid,
-            user.uid
-          );
-
-          localStorage.setItem(
-            KEYS.userName,
-            name
-          );
-
-          localStorage.setItem(
-            'userRole',
-            actualRole
-          );
-
-          saveJSON(
-            KEYS.currentUser,
-            {
-              id: user.uid,
-              uid: user.uid,
-              name: name,
-              email: email,
-              role: actualRole
+            if (!email) {
+                alert('กรุณากรอกอีเมล');
+                emailInput?.focus();
+                return;
             }
-          );
 
-          // ----------------------------------------------------
-          // Remember Email
-          // ----------------------------------------------------
+            if (!password) {
+                alert('กรุณากรอกรหัสผ่าน');
+                passwordInput?.focus();
+                return;
+            }
 
-          if (
-            remember?.checked
-          ) {
+            // --------------------------------------------------
+            // ถ้าเลือก Admin ต้องกรอกรหัส 5 หลัก
+            // --------------------------------------------------
 
-            localStorage.setItem(
-              'rememberedEmail',
-              email
-            );
+            if (selectedRole === 'admin') {
 
-          } else {
+                if (!enteredAdminCode) {
+                    alert(
+                        'กรุณากรอกรหัสผู้ดูแลระบบ 5 หลัก'
+                    );
 
-            localStorage.removeItem(
-              'rememberedEmail'
-            );
-          }
+                    adminCode?.focus();
+                    return;
+                }
 
-          // ----------------------------------------------------
-          // Load Data
-          // ----------------------------------------------------
+                if (!/^\d{5}$/.test(enteredAdminCode)) {
+                    alert(
+                        'รหัสผู้ดูแลระบบต้องเป็นตัวเลข 5 หลัก'
+                    );
 
-          await ensureEquipmentSeed();
+                    adminCode?.focus();
+                    return;
+                }
 
-          await loadEquipmentFromFirebase();
+                if (enteredAdminCode !== ADMIN_CODE) {
+                    alert(
+                        'รหัสผู้ดูแลระบบไม่ถูกต้อง'
+                    );
 
-          await loadHistoryFromFirebase();
+                    adminCode?.focus();
+                    adminCode?.select();
 
-          // ----------------------------------------------------
-          // Redirect
-          // ----------------------------------------------------
+                    return;
+                }
+            }
 
-          if (
-            actualRole ===
-            'admin'
-          ) {
+            // --------------------------------------------------
+            // ปุ่ม Login
+            // --------------------------------------------------
 
-            window.location.replace(
-              'dashboard.html'
-            );
+            const submitButton =
+                form.querySelector(
+                    'button[type="submit"]'
+                );
 
-          } else {
+            const originalText =
+                submitButton?.textContent ||
+                'เข้าสู่ระบบ';
 
-            window.location.replace(
-              'user-dashboard.html'
-            );
-          }
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.textContent =
+                    'กำลังเข้าสู่ระบบ...';
+            }
 
-        } catch (error) {
+            try {
 
-          console.error(
-            'Login Error:',
-            error
-          );
+                // =================================================
+                // Firebase Authentication
+                // =================================================
 
-          alert(
-            firebaseErrorMessage(
-              error
-            )
-          );
+                const credential =
+                    await auth.signInWithEmailAndPassword(
+                        email,
+                        password
+                    );
 
-        } finally {
+                const firebaseUser =
+                    credential.user;
 
-          if (
-            submitButton
-          ) {
+                if (!firebaseUser) {
+                    throw new Error(
+                        'ไม่พบข้อมูลผู้ใช้งาน'
+                    );
+                }
 
-            submitButton.disabled =
-              false;
-          }
+                // =================================================
+                // ดึงข้อมูล Profile จาก Firestore
+                // =================================================
+
+                let profile = null;
+
+                try {
+
+                    if (db) {
+
+                        const profileSnap =
+                            await db
+                                .collection('users')
+                                .doc(firebaseUser.uid)
+                                .get();
+
+                        if (profileSnap.exists) {
+                            profile =
+                                profileSnap.data();
+                        }
+                    }
+
+                } catch (profileError) {
+
+                    console.warn(
+                        'ไม่สามารถอ่าน Profile:',
+                        profileError
+                    );
+                }
+
+                // =================================================
+                // กำหนด Role จริงจาก Firestore
+                // =================================================
+
+                const actualRole =
+                    profile?.role ||
+                    'user';
+
+                // =================================================
+                // ตรวจสอบ Role
+                // =================================================
+
+                if (
+                    selectedRole === 'admin' &&
+                    actualRole !== 'admin'
+                ) {
+
+                    await auth.signOut();
+
+                    alert(
+                        'บัญชีนี้ไม่มีสิทธิ์ผู้ดูแลระบบ'
+                    );
+
+                    return;
+                }
+
+                if (
+                    selectedRole === 'user' &&
+                    actualRole === 'admin'
+                ) {
+
+                    await auth.signOut();
+
+                    alert(
+                        'บัญชีนี้เป็นบัญชีผู้ดูแลระบบ กรุณาเลือก "ผู้ดูแลระบบ"'
+                    );
+
+                    return;
+                }
+
+                // =================================================
+                // ตรวจสอบสถานะบัญชี
+                // =================================================
+
+                if (
+                    profile?.status === 'disabled' ||
+                    profile?.status === 'inactive'
+                ) {
+
+                    await auth.signOut();
+
+                    alert(
+                        'บัญชีนี้ถูกระงับการใช้งาน'
+                    );
+
+                    return;
+                }
+
+                // =================================================
+                // บันทึกข้อมูลผู้ใช้งาน
+                // =================================================
+
+                const displayName =
+                    profile?.name ||
+                    firebaseUser.displayName ||
+                    email;
+
+                localStorage.setItem(
+                    KEYS.loggedIn,
+                    'true'
+                );
+
+                localStorage.setItem(
+                    KEYS.currentUser,
+                    displayName
+                );
+
+                localStorage.setItem(
+                    KEYS.userName,
+                    displayName
+                );
+
+                localStorage.setItem(
+                    KEYS.userEmail,
+                    email
+                );
+
+                localStorage.setItem(
+                    KEYS.firebaseUid,
+                    firebaseUser.uid
+                );
+
+                localStorage.setItem(
+                    KEYS.userRole,
+                    actualRole
+                );
+
+                // =================================================
+                // จดจำ Email + Password
+                // =================================================
+
+                if (remember?.checked) {
+
+                    localStorage.setItem(
+                        'rememberedEmail',
+                        email
+                    );
+
+                    localStorage.setItem(
+                        'rememberedPassword',
+                        password
+                    );
+
+                } else {
+
+                    localStorage.removeItem(
+                        'rememberedEmail'
+                    );
+
+                    localStorage.removeItem(
+                        'rememberedPassword'
+                    );
+                }
+
+                // =================================================
+                // เก็บเวลา Login ล่าสุด
+                // =================================================
+
+                localStorage.setItem(
+                    'lastLoginAt',
+                    new Date().toISOString()
+                );
+
+                // =================================================
+                // Redirect ตาม Role
+                // =================================================
+
+                if (actualRole === 'admin') {
+
+                    window.location.href =
+                        'dashboard.html';
+
+                } else {
+
+                    // ผู้ใช้งานทั่วไป
+                    // ยังไม่เปิดหน้า Admin Dashboard
+                    window.location.href =
+                        'borrow.html';
+                }
+
+            } catch (error) {
+
+                console.error(
+                    'Login error:',
+                    error
+                );
+
+                let message =
+                    'ไม่สามารถเข้าสู่ระบบได้';
+
+                switch (error?.code) {
+
+                    case 'auth/invalid-email':
+                        message =
+                            'รูปแบบอีเมลไม่ถูกต้อง';
+                        break;
+
+                    case 'auth/user-not-found':
+                        message =
+                            'ไม่พบบัญชีผู้ใช้งานนี้';
+                        break;
+
+                    case 'auth/wrong-password':
+                        message =
+                            'รหัสผ่านไม่ถูกต้อง';
+                        break;
+
+                    case 'auth/invalid-credential':
+                        message =
+                            'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
+                        break;
+
+                    case 'auth/user-disabled':
+                        message =
+                            'บัญชีนี้ถูกระงับการใช้งาน';
+                        break;
+
+                    case 'auth/too-many-requests':
+                        message =
+                            'มีการพยายามเข้าสู่ระบบหลายครั้งเกินไป กรุณารอสักครู่';
+                        break;
+
+                    case 'auth/network-request-failed':
+                        message =
+                            'ไม่สามารถเชื่อมต่ออินเทอร์เน็ตได้';
+                        break;
+
+                    default:
+                        message =
+                            error?.message ||
+                            'ไม่สามารถเข้าสู่ระบบได้';
+                }
+
+                alert(message);
+
+            } finally {
+
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.textContent =
+                        originalText;
+                }
+            }
         }
-      }
     );
-  }
-
-  // ============================================================
-  // PASSWORD VALIDATION
-  // ============================================================
-
-  function passwordValid(
-    password
-  ) {
-
-    return (
-      password.length >= 8 &&
-      /[A-Z]/.test(password) &&
-      /[a-z]/.test(password) &&
-      /[0-9]/.test(password)
-    );
-  }
-
-  // ============================================================
-  // PASSWORD RULE UI
-  // ============================================================
-
-  function updatePasswordRules(
-    prefix,
-    password
-  ) {
-
-    const tests = {
-
-      Length:
-        password.length >= 8,
-
-      Uppercase:
-        /[A-Z]/.test(password),
-
-      Lowercase:
-        /[a-z]/.test(password),
-
-      Number:
-        /[0-9]/.test(password)
-    };
-
-    Object.entries(
-      tests
-    ).forEach(
-      ([key, ok]) => {
-
-        const element =
-          qs(
-            `#${prefix}${key}`
-          );
-
-        if (!element) {
-          return;
-        }
-
-        element.classList.toggle(
-          'rule-valid',
-          ok
-        );
-
-        element.classList.toggle(
-          'rule-invalid',
-          !ok
-        );
-      }
-    );
-  }
-
+}
   // ============================================================
   // REGISTER
   // ============================================================
