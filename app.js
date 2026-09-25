@@ -552,10 +552,18 @@
 
       })().catch(error => {
 
-        console.error(error);
+  console.error(
+    'Firebase initialization error:',
+    error
+  );
 
-        return false;
-      });
+  alert(
+    'ไม่สามารถเชื่อมต่อ Firebase ได้\n' +
+    (error?.message || 'กรุณาตรวจสอบการตั้งค่า Firebase')
+  );
+
+  return false;
+});
 
     return firebaseReadyPromise;
   }
@@ -4838,81 +4846,53 @@ async function setupLogin() {
   // ============================================================
 
   async function startApp() {
+  const firebaseOK = await initFirebase();
 
-    await initFirebase();
+  setupPasswordToggle();
+  initIcons();
 
-    setupPasswordToggle();
-    initIcons();
+  const path = window.location.pathname;
 
-    const path =
-      window.location.pathname;
+  if (path.endsWith('register.html')) {
 
-    if (
-      path.endsWith('index.html') ||
-      path.endsWith('/') ||
-      path === ''
-    ) {
+    if (!firebaseOK || !auth || !db) {
+      console.error(
+        'Firebase ยังไม่พร้อมใช้งาน',
+        {
+          firebaseOK,
+          auth,
+          db
+        }
+      );
 
-      updateLoginRoleUI();
-      setupLogin();
-
-      return;
-    }
-
-    if (
-      path.endsWith('register.html')
-    ) {
-
-      setupRegister();
+      alert(
+        'ระบบยังไม่สามารถเชื่อมต่อ Firebase ได้ กรุณารีเฟรชหน้าแล้วลองใหม่อีกครั้ง'
+      );
 
       return;
     }
 
-    if (
-      path.endsWith('dashboard.html')
-    ) {
-
-      setupCommonUI();
-
-      if (
-        auth?.currentUser
-      ) {
-        await setupDashboard();
-      }
-
-      return;
-    }
-
-    if (
-      path.endsWith('equipment.html')
-    ) {
-
-      setupCommonUI();
-
-      if (
-        auth?.currentUser
-      ) {
-        await setupEquipmentPage();
-      }
-
-      return;
-    }
-
+    setupRegister();
+    return;
   }
 
-  if (
-    document.readyState ===
-    'loading'
-  ) {
+  if (path.endsWith('dashboard.html')) {
+    setupCommonUI();
 
-    document.addEventListener(
-      'DOMContentLoaded',
-      startApp
-    );
+    if (auth?.currentUser) {
+      await setupDashboard();
+    }
 
-  } else {
-
-    startApp();
+    return;
   }
 
-})();
+  if (path.endsWith('equipment.html')) {
+    setupCommonUI();
+
+    if (auth?.currentUser) {
+      await setupEquipmentPage();
+    }
+
+    return;
+  }
+}
