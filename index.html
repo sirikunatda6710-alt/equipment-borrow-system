@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="th">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,7 +13,7 @@
 
     <div class="login-container">
 
-        <!-- โลโก้ -->
+        <!-- LOGO -->
         <div class="login-logo">
             <img
                 src="https://img2.pic.in.th/007-med-msu.md.webp"
@@ -22,15 +21,20 @@
             >
         </div>
 
-        <!-- หัวข้อ -->
+
+        <!-- TITLE -->
         <h1>เข้าสู่ระบบ</h1>
 
         <p class="login-subtitle">
-            เข้าสู่ระบบเพื่อใช้งานระบบ
+            เข้าสู่ระบบเพื่อใช้งานระบบยืม-คืนอุปกรณ์
         </p>
 
-        <!-- แบบฟอร์มเข้าสู่ระบบ -->
-        <form id="loginForm" class="login-form">
+
+        <!-- LOGIN FORM -->
+        <form
+            id="loginForm"
+            class="login-form"
+        >
 
             <!-- ประเภทผู้ใช้งาน -->
             <div class="form-group">
@@ -39,7 +43,10 @@
                     ประเภทผู้ใช้งาน
                 </label>
 
-                <select id="loginRole">
+                <select
+                    id="loginRole"
+                    name="loginRole"
+                >
 
                     <option value="user">
                         ผู้ใช้งานทั่วไป
@@ -53,43 +60,59 @@
 
             </div>
 
-            <!-- อีเมล -->
-            <label for="email">
-                อีเมล
-            </label>
 
-            <input
-                id="email"
-                type="email"
-                placeholder="กรอกอีเมลของคุณ"
-                required
-            >
+            <!-- EMAIL -->
+            <div class="form-group">
 
-            <!-- รหัสผ่าน -->
-            <label for="password">
-                รหัสผ่าน
-            </label>
-
-            <div class="password-wrapper">
+                <label for="email">
+                    อีเมล
+                </label>
 
                 <input
-                    id="password"
-                    type="password"
-                    placeholder="กรอกรหัสผ่าน"
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="กรอกอีเมลของคุณ"
+                    autocomplete="email"
                     required
                 >
 
-                <button
-                    type="button"
-                    class="toggle-password"
-                    data-target="password"
-                >
-                    แสดง
-                </button>
+            </div>
+
+
+            <!-- PASSWORD -->
+            <div class="form-group">
+
+                <label for="password">
+                    รหัสผ่าน
+                </label>
+
+                <div class="password-wrapper">
+
+                    <input
+                        id="password"
+                        name="password"
+                        type="password"
+                        placeholder="กรอกรหัสผ่าน"
+                        autocomplete="current-password"
+                        required
+                    >
+
+                    <button
+                        type="button"
+                        class="toggle-password"
+                        data-target="password"
+                    >
+                        แสดง
+                    </button>
+
+                </div>
 
             </div>
 
-            <!-- รหัสผู้ดูแลระบบ -->
+
+            <!-- ADMIN CODE -->
+            <!-- จะปรากฏเฉพาะเมื่อเลือก "ผู้ดูแลระบบ" -->
             <div
                 class="form-group"
                 id="adminCodeGroup"
@@ -102,19 +125,35 @@
 
                 <input
                     id="adminCode"
+                    name="adminCode"
                     type="password"
                     inputmode="numeric"
                     maxlength="5"
+                    pattern="[0-9]{5}"
                     placeholder="กรอกรหัสผู้ดูแล 5 หลัก"
+                    autocomplete="off"
                 >
+
+                <small
+                    style="
+                        display: block;
+                        margin-top: 6px;
+                        color: #666;
+                        font-size: 13px;
+                    "
+                >
+                    สำหรับผู้ดูแลระบบเท่านั้น
+                </small>
 
             </div>
 
-            <!-- จดจำอีเมลและรหัสผ่าน -->
+
+            <!-- REMEMBER -->
             <div class="remember-row">
 
                 <input
                     id="rememberMe"
+                    name="rememberMe"
                     type="checkbox"
                 >
 
@@ -127,7 +166,8 @@
 
             </div>
 
-            <!-- ปุ่มเข้าสู่ระบบ -->
+
+            <!-- LOGIN BUTTON -->
             <button
                 type="submit"
                 class="login-button"
@@ -135,7 +175,8 @@
                 เข้าสู่ระบบ
             </button>
 
-            <!-- ลืมรหัสผ่าน -->
+
+            <!-- FORGOT PASSWORD -->
             <p class="forgot-link">
 
                 <a href="forgot-password.html">
@@ -144,11 +185,11 @@
 
             </p>
 
-            <!-- ลงทะเบียน -->
+
+            <!-- REGISTER -->
             <p class="register-link">
 
                 ยังไม่มีบัญชี?
-                
                 <a href="register.html">
                     ลงทะเบียน
                 </a>
@@ -159,9 +200,9 @@
 
     </div>
 
-    <!-- JavaScript -->
+
+    <!-- APP JS -->
     <script src="app.js"></script>
 
 </body>
-
 </html>
