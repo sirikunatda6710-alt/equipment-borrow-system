@@ -4833,3 +4833,86 @@ async function setupLogin() {
 
     renderEquipment();
   }
+    // ============================================================
+  // START APP
+  // ============================================================
+
+  async function startApp() {
+
+    await initFirebase();
+
+    setupPasswordToggle();
+    initIcons();
+
+    const path =
+      window.location.pathname;
+
+    if (
+      path.endsWith('index.html') ||
+      path.endsWith('/') ||
+      path === ''
+    ) {
+
+      updateLoginRoleUI();
+      setupLogin();
+
+      return;
+    }
+
+    if (
+      path.endsWith('register.html')
+    ) {
+
+      setupRegister();
+
+      return;
+    }
+
+    if (
+      path.endsWith('dashboard.html')
+    ) {
+
+      setupCommonUI();
+
+      if (
+        auth?.currentUser
+      ) {
+        await setupDashboard();
+      }
+
+      return;
+    }
+
+    if (
+      path.endsWith('equipment.html')
+    ) {
+
+      setupCommonUI();
+
+      if (
+        auth?.currentUser
+      ) {
+        await setupEquipmentPage();
+      }
+
+      return;
+    }
+
+  }
+
+  if (
+    document.readyState ===
+    'loading'
+  ) {
+
+    document.addEventListener(
+      'DOMContentLoaded',
+      startApp
+    );
+
+  } else {
+
+    startApp();
+  }
+
+})();
