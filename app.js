@@ -2206,6 +2206,129 @@ async function setupLogin() {
     );
 }
   // ============================================================
+// PASSWORD VALIDATION
+// ============================================================
+
+function passwordValid(password) {
+
+    if (!password) {
+        return false;
+    }
+
+    const hasUpper =
+        /[A-Z]/.test(password);
+
+    const hasLower =
+        /[a-z]/.test(password);
+
+    const hasNumber =
+        /[0-9]/.test(password);
+
+    const isLongEnough =
+        password.length >= 8;
+
+    return (
+        hasUpper &&
+        hasLower &&
+        hasNumber &&
+        isLongEnough
+    );
+}
+
+
+// ============================================================
+// UPDATE PASSWORD RULES
+// ============================================================
+
+function updatePasswordRules(
+    type,
+    password
+) {
+
+    const value =
+        String(password || '');
+
+
+    const lengthRule =
+        qs(`#${type}Length`) ||
+        qs('#ruleLength');
+
+    const upperRule =
+        qs(`#${type}Uppercase`) ||
+        qs('#ruleUppercase');
+
+    const lowerRule =
+        qs(`#${type}Lowercase`) ||
+        qs('#ruleLowercase');
+
+    const numberRule =
+        qs(`#${type}Number`) ||
+        qs('#ruleNumber');
+
+
+    function updateRule(
+        element,
+        valid
+    ) {
+
+        if (!element) {
+            return;
+        }
+
+        element.classList.toggle(
+            'valid',
+            valid
+        );
+
+        element.classList.toggle(
+            'invalid',
+            !valid
+        );
+
+        const icon =
+            element.querySelector(
+                '.rule-icon'
+            );
+
+        if (icon) {
+
+            icon.textContent =
+                valid
+                    ? '✓'
+                    : '✕';
+        }
+    }
+
+
+    updateRule(
+        lengthRule,
+        value.length >= 8
+    );
+
+
+    updateRule(
+        upperRule,
+        /[A-Z]/.test(value)
+    );
+
+
+    updateRule(
+        lowerRule,
+        /[a-z]/.test(value)
+    );
+
+
+    updateRule(
+        numberRule,
+        /[0-9]/.test(value)
+    );
+}
+
+
+// ============================================================
+// REGISTER
+// ============================================================
+  // ============================================================
   // REGISTER
   // ============================================================
 
