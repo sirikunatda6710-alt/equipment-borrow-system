@@ -7686,7 +7686,73 @@
   /* =========================================================
      EQUIPMENT DATA INITIALIZATION
      ========================================================= */
+function loadEquipment() {
+    try {
+        let raw =
+            localStorage.getItem(
+                KEYS.equipment
+            );
 
+        // ถ้าไม่มีข้อมูลใน equipment
+        // ให้ลองอ่านจาก equipmentData
+        if (!raw) {
+            raw =
+                localStorage.getItem(
+                    KEYS.equipmentData
+                );
+        }
+
+        // ยังไม่มีข้อมูล
+        if (!raw) {
+            return [];
+        }
+
+        const equipment =
+            JSON.parse(raw);
+
+        if (
+            !Array.isArray(equipment)
+        ) {
+            return [];
+        }
+
+        return equipment.map(
+            normalizeAdminEquipmentForStorage
+        );
+
+    } catch (error) {
+
+        console.error(
+            'โหลดข้อมูลอุปกรณ์ไม่สำเร็จ:',
+            error
+        );
+
+        return [];
+    }
+}
+
+
+function initializeEquipmentData() {
+    let equipment =
+      loadEquipment();
+
+    if (
+      !Array.isArray(equipment)
+    ) {
+      equipment = [];
+    }
+
+    equipment =
+      equipment.map(
+        normalizeAdminEquipmentForStorage
+      );
+
+    saveEquipmentToLocal(
+      equipment
+    );
+
+    return equipment;
+}
   function initializeEquipmentData() {
     let equipment =
       loadEquipment();
