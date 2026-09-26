@@ -1740,3 +1740,67 @@ tr:hover td {
 
   font-size: 14px;
 }
+/* Category Card Layout */
+.category-section {
+  margin-top: 2rem;
+}
+
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.category-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.category-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  border-color: #10b981;
+}
+
+.category-icon {
+  width: 48px;
+  height: 48px;
+  background-color: #ecfdf5;
+  color: #10b981;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.category-stat-num {
+  font-weight: bold;
+  color: #059669;
+  margin-top: 0.5rem;
+}
+
+/* Badges & Status */
+.status-pending {
+  background-color: #fef3c7;
+  color: #d97706;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+}
+
+.status-approved {
+  background-color: #d1fae5;
+  color: #059669;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+}
+
+.badge-borrow { background-color: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; }
+.badge-return { background-color: #fce7f3; color: #be185d; padding: 2px 8px; border-radius: 4px; }
