@@ -358,6 +358,142 @@
       }
     });
   }
+  // ============================================================
+// ROLE-BASED DASHBOARD RENDER LOGIC
+// ============================================================
+
+function initDashboardByRole() {
+  const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {
+    name: 'ผู้ใช้งานระบบ',
+    role: 'user' // 'admin' หรือ 'user'
+  };
+
+  const roleBadge = document.getElementById('userRoleBadge');
+  const userNameElem = document.getElementById('userName');
+  const navbar = document.getElementById('mainNavbar');
+
+  if (userNameElem) userNameElem.textContent = currentUser.name;
+
+  if (currentUser.role === 'admin') {
+    if (roleBadge) roleBadge.textContent = 'ผู้ดูแลระบบ (Admin)';
+    
+    // แสดงเมนู Navigation ของ Admin
+    navbar.innerHTML = `
+      <a href="dashboard.html" class="active"><i data-lucide="layout-dashboard"></i> <span>Dashboard</span></a>
+      <a href="equipment.html"><i data-lucide="package-search"></i> <span>รายการอุปกรณ์</span></a>
+      <a href="admin-management.html"><i data-lucide="settings"></i> <span>จัดการสิ่งของ ( CRUD )</span></a>
+      <a href="admin-approvals.html"><i data-lucide="check-square"></i> <span>อนุมัติยืม-คืน</span></a>
+      <a href="history.html"><i data-lucide="history"></i> <span>ประวัติการแก้ไขระบบ</span></a>
+    `;
+
+    document.getElementById('adminDashboardView').style.display = 'block';
+    document.getElementById('userDashboardView').style.display = 'none';
+
+    renderAdminDashboardData();
+
+  } else {
+    if (roleBadge) roleBadge.textContent = 'ผู้ใช้งานทั่วไป';
+
+    // แสดงเมนู Navigation ของ User
+    navbar.innerHTML = `
+      <a href="dashboard.html" class="active"><i data-lucide="layout-dashboard"></i> <span>Dashboard</span></a>
+      <a href="borrow.html"><i data-lucide="clipboard-list"></i> <span>รายการยืม</span></a>
+      <a href="return.html"><i data-lucide="undo-2"></i> <span>คืนอุปกรณ์</span></a>
+      <a href="history.html"><i data-lucide="history"></i> <span>ประวัติยืม-คืน</span></a>
+    `;
+
+    document.getElementById('adminDashboardView').style.display = 'none';
+    document.getElementById('userDashboardView').style.display = 'block';
+
+    renderUserDashboardData(currentUser);
+  }
+
+  if (window.lucide) lucide.createIcons();
+}
+
+// ============================================================
+// ADMIN DASHBOARD RENDER
+// ============================================================
+function renderAdminDashboardData() {
+  // ดึงข้อมูล Equipment และ คำขอที่รออนุมัติ
+  const equipmentList = JSON.parse(localStorage.getItem('equipment')) || [];
+  const pendingRequests = JSON.parse(localStorage.getItem('pending_requests')) || [];
+
+  // คำนวณตัวเลข สถิติ
+  document.getElementById('adminTotalItems').textContent = equipmentList.reduce((acc, item) => acc + (item.total || 1), 0);
+  document.getElementById('adminAvailableItems').textContent = equipmentList.reduce((acc, item) => acc + (item.available || 0), 0);
+  document.getElementById('adminBorrowedItems').textContent = equipmentList.reduce((acc, item) => acc + ((item.total || 1) - (item.available || 0)), 0);
+  document.getElementById('adminPendingRequests').textContent = pendingRequests.length;
+
+  // แยกนับจำนวนหมวดหมู่ 3 ประเภท
+  document.getElementById('countBuilding').textContent = `${equipmentList.filter(i => i.category === 'ครุภัณฑ์').length} รายการ`;
+  document.getElementById('countMaterial').textContent = `${equipmentList.filter(i => i.category === 'วัสดุ').length} รายการ`;
+  document.getElementById('countDevice').textContent = `${equipmentList.filter(i => i.category === 'อุปกรณ์').length} รายการ`;
+
+  // Render ตารางอนุมัติยืม-คืน
+  const tableBody = document.getElementById('adminPendingTable');
+  if (pendingRequests.length === 0) {
+    tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">ไม่มีคำขอที่รอการอนุมัติในขณะนี้</td></tr>`;
+    return;
+  }
+
+  tableBody.innerHTML = pendingRequests.map(req => `
+    <tr>
+      <td>${req.userName}</td>
+      <td>${req.equipmentName}</td>
+      <td><span class="badge ${req.type === 'ยืม' ? 'badge-borrow' : 'badge-return'}">${req.type}</span></td>
+      <td>${req.requestDate}</td>
+      <td><span class="status-pending">รออนุมัติ</span></td>
+      <td>
+        <button onclick="approveRequest('${req.id}')" class="btn btn-sm btn-success">อนุมัติ</button>
+        <button onclick="rejectRequest('${req.id}')" class="btn btn-sm btn-danger">ปฏิเสธ</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// Navigation ไปยังอุปกรณ์แยกตามประเภท
+function viewCategory(categoryName) {
+  window.location.href = `equipment.html?category=${encodeURIComponent(categoryName)}`;
+}
+
+// ============================================================
+// USER DASHBOARD RENDER
+// ============================================================
+function renderUserDashboardData(user) {
+  const userRequests = JSON.parse(localStorage.getItem('user_requests')) || [];
+  const myRequests = userRequests.filter(r => r.userEmail === user.email || r.userName === user.name);
+
+  const activeBorrows = myRequests.filter(r => r.status === 'approved' && r.type === 'ยืม');
+  const pendingRequests = myRequests.filter(r => r.status === 'pending');
+
+  document.getElementById('userActiveBorrowCount').textContent = activeBorrows.length;
+  document.getElementById('userPendingCount').textContent = pendingRequests.length;
+  document.getElementById('userTotalHistoryCount').textContent = myRequests.length;
+
+  const tableBody = document.getElementById('userBorrowTable');
+  if (myRequests.length === 0) {
+    tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;">ยังไม่มีประวัติหรือรายการยืมอุปกรณ์</td></tr>`;
+    return;
+  }
+
+  tableBody.innerHTML = myRequests.map(req => `
+    <tr>
+      <td>${req.id}</td>
+      <td>${req.equipmentName}</td>
+      <td>${req.requestDate}</td>
+      <td><span class="status-${req.status}">${req.status === 'pending' ? 'รอผู้ดูแลอนุมัติ' : req.status === 'approved' ? 'อนุมัติแล้ว' : 'ปฏิเสธ'}</span></td>
+      <td>
+        ${req.status === 'approved' && req.type === 'ยืม' ? `<button onclick="requestReturn('${req.id}')" class="btn btn-sm">ส่งคำขอคืน</button>` : '-'}
+      </td>
+    </tr>
+  `).join('');
+}
+
+// เรียกใช้งานเมื่อโหลด DOM สำเร็จ
+document.addEventListener('DOMContentLoaded', () => {
+  initDashboardByRole();
+});
 
   // ============================================================
   // App Bootstrapper
