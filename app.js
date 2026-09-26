@@ -183,6 +183,35 @@
   }
 
   // ============================================================
+  // Dropdown Navigation Handler
+  // ============================================================
+
+  function setupDropdownToggle() {
+    const dropdownBtns = document.querySelectorAll('.nav-dropdown-btn');
+
+    dropdownBtns.forEach(btn => {
+      if (btn.dataset.bound === 'true') return;
+      btn.dataset.bound = 'true';
+
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const dropdown = btn.closest('.nav-dropdown');
+        if (dropdown) {
+          dropdown.classList.toggle('active');
+        }
+      });
+    });
+
+    // คลิกจุดอื่นนอกเมนูเพื่อปิด Dropdown
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.nav-dropdown').forEach(dropdown => {
+        dropdown.classList.remove('active');
+      });
+    });
+  }
+
+  // ============================================================
   // Register Feature
   // ============================================================
 
@@ -374,9 +403,6 @@
     const adminView = document.getElementById('adminDashboardView');
     const userView = document.getElementById('userDashboardView');
 
-    // ถ้านี่ไม่ใช่หน้า dashboard ให้ข้ามการรัน
-    if (!adminView && !userView) return;
-
     const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {
       name: 'ผู้ใช้งานระบบ',
       role: 'user'
@@ -393,11 +419,25 @@
       
       if (navbar) {
         navbar.innerHTML = `
-          <a href="dashboard.html" class="active"><i data-lucide="layout-dashboard"></i> <span>Dashboard</span></a>
-          <a href="equipment.html"><i data-lucide="package-search"></i> <span>รายการอุปกรณ์</span></a>
-          <a href="admin-management.html"><i data-lucide="settings"></i> <span>จัดการสิ่งของ</span></a>
-          <a href="admin-approvals.html"><i data-lucide="check-square"></i> <span>อนุมัติยืม-คืน</span></a>
-          <a href="history.html"><i data-lucide="history"></i> <span>ประวัติระบบ</span></a>
+          <a href="dashboard.html" class="nav-item active"><i data-lucide="layout-dashboard"></i> <span>Dashboard</span></a>
+          
+          <!-- Dropdown สำหรับประเภทอุปกรณ์ -->
+          <div class="nav-dropdown">
+            <button type="button" class="nav-dropdown-btn">
+              <i data-lucide="package-search"></i> 
+              <span>รายการอุปกรณ์</span>
+              <i data-lucide="chevron-down" class="dropdown-icon"></i>
+            </button>
+            <div class="nav-dropdown-content">
+              <a href="equipment.html?category=ครุภัณฑ์">🏢 ครุภัณฑ์</a>
+              <a href="equipment.html?category=วัสดุ">📦 วัสดุ</a>
+              <a href="equipment.html?category=อุปกรณ์">🔧 อุปกรณ์</a>
+            </div>
+          </div>
+
+          <a href="admin-management.html" class="nav-item"><i data-lucide="settings"></i> <span>จัดการสิ่งของ</span></a>
+          <a href="admin-approvals.html" class="nav-item"><i data-lucide="check-square"></i> <span>อนุมัติยืม-คืน</span></a>
+          <a href="history.html" class="nav-item"><i data-lucide="history"></i> <span>ประวัติระบบ</span></a>
         `;
       }
 
@@ -411,10 +451,25 @@
 
       if (navbar) {
         navbar.innerHTML = `
-          <a href="dashboard.html" class="active"><i data-lucide="layout-dashboard"></i> <span>Dashboard</span></a>
-          <a href="borrow.html"><i data-lucide="clipboard-list"></i> <span>รายการยืม</span></a>
-          <a href="return.html"><i data-lucide="undo-2"></i> <span>คืนอุปกรณ์</span></a>
-          <a href="history.html"><i data-lucide="history"></i> <span>ประวัติยืม-คืน</span></a>
+          <a href="dashboard.html" class="nav-item active"><i data-lucide="layout-dashboard"></i> <span>Dashboard</span></a>
+          
+          <!-- Dropdown สำหรับประเภทอุปกรณ์ของผู้ใช้ทั่วไป -->
+          <div class="nav-dropdown">
+            <button type="button" class="nav-dropdown-btn">
+              <i data-lucide="package-search"></i> 
+              <span>รายการอุปกรณ์</span>
+              <i data-lucide="chevron-down" class="dropdown-icon"></i>
+            </button>
+            <div class="nav-dropdown-content">
+              <a href="equipment.html?category=ครุภัณฑ์">🏢 ครุภัณฑ์</a>
+              <a href="equipment.html?category=วัสดุ">📦 วัสดุ</a>
+              <a href="equipment.html?category=อุปกรณ์">🔧 อุปกรณ์</a>
+            </div>
+          </div>
+
+          <a href="borrow.html" class="nav-item"><i data-lucide="clipboard-list"></i> <span>รายการยืม</span></a>
+          <a href="return.html" class="nav-item"><i data-lucide="undo-2"></i> <span>คืนอุปกรณ์</span></a>
+          <a href="history.html" class="nav-item"><i data-lucide="history"></i> <span>ประวัติยืม-คืน</span></a>
         `;
       }
 
@@ -423,6 +478,9 @@
 
       renderUserDashboardData(currentUser);
     }
+
+    // ผูก Event ให้กับ Dropdown ปุ่มกด
+    setupDropdownToggle();
 
     if (window.lucide) lucide.createIcons();
   }
@@ -434,7 +492,7 @@
   function renderAdminDashboardData() {
     const equipmentList = getEquipmentLocal();
 
-    // Helper คำนวณตามหมวดหมู่
+    // Helper คำนวณสถิติตามหมวดหมู่
     function calculateStats(categoryName) {
       const items = equipmentList.filter(item => {
         const cat = String(item.category || '').trim();
@@ -463,7 +521,7 @@
       return { total, available, borrowed, unavailable };
     }
 
-    // ฟังก์ชันช่วยอัปเดตข้อมูลลง Element
+    // อัปเดตข้อมูลลงบน UI
     function updateCategoryUI(prefix, stats) {
       const totalElem = document.getElementById(`total${prefix}`);
       const availElem = document.getElementById(`avail${prefix}`);
@@ -526,7 +584,7 @@
     `).join('');
   }
 
-  // Global helper เพื่อย้ายหน้า
+  // Helper สำหรับปุ่มย้ายหน้า
   window.viewCategory = function(categoryName) {
     window.location.href = `equipment.html?category=${encodeURIComponent(categoryName)}`;
   };
