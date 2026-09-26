@@ -1826,3 +1826,73 @@ tr:hover td {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1.25rem;
 }
+/* Navigation Dropdown Container */
+.nav-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+/* ปุ่ม Dropdown */
+.nav-dropdown-btn {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.nav-dropdown-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.dropdown-icon {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease;
+}
+
+/* เมนูย่อยที่เลื่อนลงมา */
+.nav-dropdown-content {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 180px;
+  background-color: #ffffff;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  padding: 0.5rem 0;
+  z-index: 1000;
+}
+
+/* ลิงก์ภายในเมนูย่อย */
+.nav-dropdown-content a {
+  color: #374151;
+  padding: 0.6rem 1.2rem;
+  text-decoration: none;
+  display: block;
+  font-size: 0.95rem;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.nav-dropdown-content a:hover {
+  background-color: #f3f4f6;
+  color: #10b981;
+}
+
+/* แสดงเมนูเมื่อคลิกปุ่ม active หรือ Hover */
+.nav-dropdown.active .nav-dropdown-content,
+.nav-dropdown:hover .nav-dropdown-content {
+  display: block;
+}
+
+.nav-dropdown.active .dropdown-icon {
+  transform: rotate(180deg);
+}
