@@ -2,29 +2,22 @@
   'use strict';
 
   // ============================================================
-  // Firebase configuration
+  // Configuration (อัปเดต API Key ล่าสุดเรียบร้อยแล้ว)
   // ============================================================
 
   const FIREBASE_CONFIG = {
-    apiKey: 'AIzaSyC3JRPuC-2LCs8nqiLy_LKvi72nyLLd7_U',
-    authDomain: 'equipment-borrow-1303c.firebaseapp.com',
-    projectId: 'equipment-borrow-1303c',
-    storageBucket: 'equipment-borrow-1303c.firebasestorage.app',
-    messagingSenderId: '433020378004',
-    appId: '1:433020378004:web:d574cf9c4e7fafa4034d81',
-    measurementId: 'G-MFWPB1GBKZ'
+    apiKey: "AIzaSyC3JRPuC-2LCs8nqiLy_LKvi72NyLLd7_U",
+    authDomain: "equipment-borrow-1303c.firebaseapp.com",
+    projectId: "equipment-borrow-1303c",
+    storageBucket: "equipment-borrow-1303c.firebasestorage.app",
+    messagingSenderId: "433020378004",
+    appId: "1:433020378004:web:d574cf9e4c7fafa4034d81",
+    measurementId: "G-MFWPB1GBKZ"
   };
 
   const FIREBASE_VERSION = '12.19.0';
 
-  // ============================================================
-  // LocalStorage Keys
-  // ============================================================
-
   const KEYS = {
-    equipment: 'equipment',
-    equipmentData: 'equipment_data',
-    history: 'borrow_history',
     currentUser: 'equipment_current_user',
     loggedIn: 'isLoggedIn',
     userEmail: 'userEmail',
@@ -33,205 +26,37 @@
     userRole: 'userRole'
   };
 
-  // ============================================================
-  // Default Equipment
-  // ============================================================
-
-  const DEFAULT_EQUIPMENT = [
-    {
-      id: 'EQ001',
-      name: 'Projector Epson EB-X05',
-      category: 'เครื่องฉาย',
-      icon: 'projector',
-      total: 10,
-      available: 10,
-      status: 'available',
-      borrower: ''
-    },
-    {
-      id: 'EQ002',
-      name: 'กล้อง Nikon D5600',
-      category: 'กล้องถ่ายภาพ',
-      icon: 'camera',
-      total: 5,
-      available: 5,
-      status: 'available',
-      borrower: ''
-    },
-    {
-      id: 'EQ003',
-      name: 'ไมโครโฟนไร้สาย',
-      category: 'เครื่องเสียง',
-      icon: 'mic',
-      total: 8,
-      available: 8,
-      status: 'available',
-      borrower: ''
-    },
-    {
-      id: 'EQ004',
-      name: 'ลำโพง JBL',
-      category: 'เครื่องเสียง',
-      icon: 'speaker',
-      total: 3,
-      available: 3,
-      status: 'available',
-      borrower: ''
-    }
-  ];
-
-  const STATUS_MAP = {
-    'พร้อมใช้งาน': 'available',
-    'กำลังถูกยืม': 'borrowed',
-    'ไม่พร้อมใช้งาน': 'unavailable',
-    available: 'available',
-    borrowed: 'borrowed',
-    unavailable: 'unavailable'
-  };
-
   let db = null;
   let auth = null;
-  let firebaseReadyPromise = null;
+  let isFirebaseInitializing = false;
 
   // ============================================================
-  // Utility Functions
+  // Helpers
   // ============================================================
-
-  function qs(selector, root = document) {
-    return root.querySelector(selector);
-  }
-
-  function qsa(selector, root = document) {
-    return Array.from(root.querySelectorAll(selector));
-  }
-
-  function escapeHtml(value) {
-    return String(value ?? '').replace(
-      /[&<>'"]/g,
-      c => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        "'": '&#39;',
-        '"': '&quot;'
-      }[c])
-    );
-  }
-
-  function parseJSON(key, fallback) {
-    try {
-      const value = localStorage.getItem(key);
-      return value ? JSON.parse(value) : fallback;
-    } catch (_) {
-      return fallback;
-    }
-  }
 
   function saveJSON(key, value) {
-    localStorage.setItem(key, JSON.stringify(value));
-  }
-
-  function formatDate(value) {
-    if (!value) return '-';
-    const d = new Date(value);
-    if (Number.isNaN(d.getTime())) return value;
-    return d.toLocaleDateString('th-TH', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
-  }
-
-  function formatDateTime(value) {
-    if (!value) return '-';
-    const d = new Date(value);
-    if (Number.isNaN(d.getTime())) return value;
-    return d.toLocaleString('th-TH', {
-      dateStyle: 'short',
-      timeStyle: 'short'
-    });
-  }
-
-  function makeId(prefix) {
-    return (
-      prefix +
-      Date.now().toString(36).toUpperCase() +
-      Math.random().toString(36).slice(2, 5).toUpperCase()
-    );
-  }
-
-  function statusToThai(status) {
-    return (
-      {
-        available: 'พร้อมใช้งาน',
-        borrowed: 'กำลังถูกยืม',
-        unavailable: 'ไม่พร้อมใช้งาน'
-      }[STATUS_MAP[status] || status] ||
-      status ||
-      '-'
-    );
-  }
-
-  function normalizeStatus(status) {
-    return STATUS_MAP[status] || 'available';
-  }
-
-  function getCurrentUser() {
-    return parseJSON(KEYS.currentUser, null);
-  }
-
-  function getEquipmentLocal() {
-    let data = parseJSON(KEYS.equipment, null);
-    if (!Array.isArray(data)) data = parseJSON(KEYS.equipmentData, null);
-    if (!Array.isArray(data)) data = DEFAULT_EQUIPMENT.map(x => ({ ...x }));
-    return data;
-  }
-
-  function saveEquipmentLocal(data) {
-    saveJSON(KEYS.equipment, data);
-    saveJSON(KEYS.equipmentData, data);
-    window.dispatchEvent(new CustomEvent('equipmentDataChanged'));
-  }
-
-  function getHistoryLocal() {
-    const data = parseJSON(KEYS.history, []);
-    return Array.isArray(data) ? data : [];
-  }
-
-  function saveHistoryLocal(data) {
-    saveJSON(KEYS.history, data);
-    window.dispatchEvent(new CustomEvent('historyDataChanged'));
-  }
-
-  function getCurrentUserName() {
-    const current = getCurrentUser();
-    return (
-      localStorage.getItem(KEYS.userName) ||
-      current?.name ||
-      current?.email ||
-      localStorage.getItem(KEYS.userEmail) ||
-      'ผู้ใช้งาน'
-    );
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   function firebaseErrorMessage(error) {
     const code = error?.code || '';
     const map = {
+      'auth/api-key-not-valid': 'API Key ของ Firebase ไม่ถูกต้อง กรุณาตรวจสอบใน Project Settings',
+      'auth/invalid-api-key': 'API Key ของ Firebase ไม่ถูกต้อง',
       'auth/email-already-in-use': 'อีเมลนี้มีบัญชีอยู่แล้ว กรุณาเข้าสู่ระบบ',
       'auth/invalid-email': 'รูปแบบอีเมลไม่ถูกต้อง',
-      'auth/weak-password': 'รหัสผ่านไม่ปลอดภัยเพียงพอ',
+      'auth/weak-password': 'รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร',
       'auth/user-not-found': 'ไม่พบบัญชีผู้ใช้นี้',
       'auth/wrong-password': 'อีเมลหรือรหัสผ่านไม่ถูกต้อง',
       'auth/invalid-credential': 'อีเมลหรือรหัสผ่านไม่ถูกต้อง',
-      'auth/too-many-requests': 'ลองเข้าสู่ระบบหลายครั้งเกินไป กรุณาลองใหม่ภายหลัง',
-      'auth/network-request-failed': 'ไม่สามารถเชื่อมต่ออินเทอร์เน็ตได้'
+      'auth/too-many-requests': 'พยายามเข้าสู่ระบบหลายครั้งเกินไป กรุณาลองใหม่ในภายหลัง'
     };
-    return map[code] || error?.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่';
+    return map[code] || error?.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อระบบ';
   }
-
-  // ============================================================
-  // Async Firebase Script Loader
-  // ============================================================
 
   function loadScript(src) {
     return new Promise((resolve, reject) => {
@@ -252,173 +77,242 @@
         resolve();
       }, { once: true });
 
-      script.addEventListener('error', () => {
-        reject(new Error(`โหลด ${src} ไม่สำเร็จ`));
-      }, { once: true });
-
+      script.addEventListener('error', () => reject(new Error('Load failed')), { once: true });
       document.head.appendChild(script);
     });
   }
 
   async function initFirebase() {
-    if (firebaseReadyPromise) return firebaseReadyPromise;
+    if (window.firebase?.apps?.length) {
+      db = window.firebase.firestore();
+      auth = window.firebase.auth();
+      return true;
+    }
 
-    firebaseReadyPromise = (async () => {
-      if (window.firebase?.apps?.length) {
+    if (isFirebaseInitializing) return false;
+    isFirebaseInitializing = true;
+
+    try {
+      const base = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}`;
+      await loadScript(`${base}/firebase-app-compat.js`);
+      await loadScript(`${base}/firebase-auth-compat.js`);
+      await loadScript(`${base}/firebase-firestore-compat.js`);
+
+      if (window.firebase) {
+        if (!window.firebase.apps.length) {
+          window.firebase.initializeApp(FIREBASE_CONFIG);
+        }
         db = window.firebase.firestore();
         auth = window.firebase.auth();
+        isFirebaseInitializing = false;
         return true;
       }
-
-      const base = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}`;
-
-      try {
-        await loadScript(`${base}/firebase-app-compat.js`);
-        await loadScript(`${base}/firebase-auth-compat.js`);
-        await loadScript(`${base}/firebase-firestore-compat.js`);
-
-        if (window.firebase) {
-          if (!window.firebase.apps.length) {
-            window.firebase.initializeApp(FIREBASE_CONFIG);
-          }
-          db = window.firebase.firestore();
-          auth = window.firebase.auth();
-          return true;
-        }
-      } catch (e) {
-        console.warn('Firebase init deferred/failed:', e);
-      }
-      return false;
-    })();
-
-    return firebaseReadyPromise;
-  }
-
-  async function getUserProfile(user) {
-    if (!user || !db) return null;
-    try {
-      const snap = await db.collection('users').doc(user.uid || user).get();
-      return snap.exists ? snap.data() : null;
     } catch (e) {
-      return null;
+      console.warn('Firebase setup warning:', e);
     }
+
+    isFirebaseInitializing = false;
+    return false;
   }
 
   // ============================================================
-  // Fixed Password Toggle (No Observer Loop)
+  // UI Functionalities
   // ============================================================
 
   function setupPasswordToggle() {
-    qsa('.toggle-password').forEach(button => {
-      if (button.dataset.passwordToggleReady === 'true') return;
-
-      const wrapper = button.closest('.password-wrapper') || button.parentElement;
-      const input = wrapper ? wrapper.querySelector('input') : null;
-
-      if (!input) return;
-
-      button.dataset.passwordToggleReady = 'true';
-      button.type = 'button';
-      button.textContent = input.type === 'text' ? 'ซ่อน' : 'แสดง';
+    const buttons = document.querySelectorAll('.toggle-password');
+    buttons.forEach(button => {
+      if (button.dataset.ready === 'true') return;
+      button.dataset.ready = 'true';
 
       button.addEventListener('click', event => {
         event.preventDefault();
         event.stopPropagation();
-        const showing = input.type === 'text';
-        input.type = showing ? 'password' : 'text';
-        button.textContent = showing ? 'แสดง' : 'ซ่อน';
+
+        const wrapper = button.closest('.password-wrapper') || button.parentElement;
+        const input = wrapper ? wrapper.querySelector('input') : null;
+        if (!input) return;
+
+        const isPassword = input.type === 'password';
+        input.type = isPassword ? 'text' : 'password';
+        button.textContent = isPassword ? 'ซ่อน' : 'แสดง';
       });
     });
   }
 
-  // ============================================================
-  // Login Role UI
-  // ============================================================
-
-  function updateLoginRoleUI() {
-    const roleSelect = qs('#loginRole');
-    const adminCodeGroup = qs('#adminCodeGroup');
-    const adminCode = qs('#adminCode');
+  function setupRoleUI() {
+    const roleSelect = document.getElementById('loginRole');
+    const adminCodeGroup = document.getElementById('adminCodeGroup');
+    const adminCode = document.getElementById('adminCode');
 
     if (!roleSelect || !adminCodeGroup) return;
 
-    const isAdmin = roleSelect.value === 'admin';
-    adminCodeGroup.style.display = isAdmin ? 'block' : 'none';
+    const update = () => {
+      const isAdmin = roleSelect.value === 'admin';
+      adminCodeGroup.style.display = isAdmin ? 'block' : 'none';
+      if (adminCode) {
+        adminCode.required = isAdmin;
+        if (!isAdmin) adminCode.value = '';
+      }
+    };
 
-    if (adminCode) {
-      adminCode.required = isAdmin;
-      if (!isAdmin) adminCode.value = '';
-    }
+    roleSelect.addEventListener('change', update);
+    update();
+  }
+
+  function loadRememberedData() {
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const rememberMe = document.getElementById('rememberMe');
+
+    const savedEmail = localStorage.getItem('rememberedEmail');
+    const savedPassword = localStorage.getItem('rememberedPassword');
+
+    if (emailInput && savedEmail) emailInput.value = savedEmail;
+    if (passwordInput && savedPassword) passwordInput.value = savedPassword;
+    if (rememberMe && savedEmail) rememberMe.checked = true;
   }
 
   // ============================================================
-  // Login Implementation
+  // Register Feature (ลงทะเบียนแล้วสลับไปหน้าเข้าสู่ระบบอัตโนมัติ)
   // ============================================================
 
-  function setupLogin() {
-    const form = qs('#loginForm');
-    if (!form || form.dataset.loginBound === 'true') return;
-    form.dataset.loginBound = 'true';
-
-    const loginRole = qs('#loginRole');
-    const adminCode = qs('#adminCode');
-    const emailInput = qs('#email');
-    const passwordInput = qs('#password');
-    const rememberMe = qs('#rememberMe');
-    const ADMIN_CODE = '24236';
-
-    if (loginRole) {
-      loginRole.addEventListener('change', updateLoginRoleUI);
-      updateLoginRoleUI();
-    }
+  function setupRegisterForm() {
+    const form = document.getElementById('registerForm');
+    if (!form || form.dataset.bound === 'true') return;
+    form.dataset.bound = 'true';
 
     form.addEventListener('submit', async event => {
       event.preventDefault();
 
+      const nameInput = document.getElementById('name');
+      const emailInput = document.getElementById('email');
+      const passwordInput = document.getElementById('password');
+      const confirmPasswordInput = document.getElementById('confirmPassword');
+      const roleInputs = Array.from(document.querySelectorAll('input[name="userRole"]'));
+
+      const name = nameInput?.value?.trim() || '';
       const email = emailInput?.value?.trim() || '';
       const password = passwordInput?.value || '';
-      const selectedRole = loginRole?.value || 'user';
+      const confirmPassword = confirmPasswordInput?.value || '';
+      const selectedRole = roleInputs.find(i => i.checked)?.value || 'user';
 
-      if (!email) {
-        alert('กรุณากรอกอีเมล');
-        emailInput?.focus();
+      if (!name || !email || !password) {
+        alert('กรุณากรอกข้อมูลให้ครบถ้วน');
         return;
       }
 
-      if (!password) {
-        alert('กรุณากรอกรหัสผ่าน');
-        passwordInput?.focus();
+      if (password !== confirmPassword) {
+        alert('รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน');
+        return;
+      }
+
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const originalText = submitBtn ? submitBtn.textContent : '';
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'กำลังลงทะเบียน...';
+      }
+
+      try {
+        const ready = await initFirebase();
+        if (!ready || !auth || !db) {
+          throw new Error('ไม่สามารถเชื่อมต่อระบบยืนยันตัวตนได้');
+        }
+
+        const cred = await auth.createUserWithEmailAndPassword(email, password);
+        const user = cred.user;
+
+        try {
+          await user.updateProfile({ displayName: name });
+        } catch (_) {}
+
+        const userData = {
+          uid: user.uid,
+          name,
+          email,
+          role: selectedRole,
+          createdAt: new Date().toISOString()
+        };
+
+        await db.collection('users').doc(user.uid).set(userData, { merge: true });
+        await auth.signOut();
+
+        alert('ลงทะเบียนสำเร็จ! กำลังนำคุณไปยังหน้าเข้าสู่ระบบ...');
+        
+        // นำทางไปยังหน้าเข้าสู่ระบบอัตโนมัติ
+        window.location.href = 'index.html';
+      } catch (err) {
+        alert(firebaseErrorMessage(err));
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+        }
+      }
+    });
+  }
+
+  // ============================================================
+  // Login Feature
+  // ============================================================
+
+  function setupLoginForm() {
+    const form = document.getElementById('loginForm');
+    if (!form || form.dataset.bound === 'true') return;
+    form.dataset.bound = 'true';
+
+    form.addEventListener('submit', async event => {
+      event.preventDefault();
+
+      const emailInput = document.getElementById('email');
+      const passwordInput = document.getElementById('password');
+      const roleSelect = document.getElementById('loginRole');
+      const adminCodeInput = document.getElementById('adminCode');
+      const rememberMe = document.getElementById('rememberMe');
+
+      const email = emailInput?.value?.trim() || '';
+      const password = passwordInput?.value || '';
+      const selectedRole = roleSelect?.value || 'user';
+      const ADMIN_CODE = '24236';
+
+      if (!email || !password) {
+        alert('กรุณากรอกอีเมลและรหัสผ่าน');
         return;
       }
 
       if (selectedRole === 'admin') {
-        const code = adminCode?.value?.trim() || '';
+        const code = adminCodeInput?.value?.trim() || '';
         if (code !== ADMIN_CODE) {
           alert('รหัสผู้ดูแลระบบไม่ถูกต้อง');
-          adminCode?.focus();
           return;
         }
       }
 
-      const submitButton = form.querySelector('button[type="submit"]');
-      const oldText = submitButton?.textContent || 'เข้าสู่ระบบ';
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const originalText = submitBtn ? submitBtn.textContent : '';
 
-      if (submitButton) {
-        submitButton.disabled = true;
-        submitButton.textContent = 'กำลังเข้าสู่ระบบ...';
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'กำลังเข้าสู่ระบบ...';
       }
 
       try {
-        const firebaseOK = await initFirebase();
-
-        if (!firebaseOK || !auth) {
-          // Fallback handling if offline or Firebase failure
-          throw new Error('ไม่สามารถเชื่อมต่อระบบยืนยันตัวตนได้ กรุณาตรวจสอบอินเทอร์เน็ต');
+        const ready = await initFirebase();
+        if (!ready || !auth) {
+          throw new Error('ไม่สามารถเชื่อมต่อระบบยืนยันตัวตนได้');
         }
 
-        const credential = await auth.signInWithEmailAndPassword(email, password);
-        const user = credential.user;
-        const profile = await getUserProfile(user);
+        const cred = await auth.signInWithEmailAndPassword(email, password);
+        const user = cred.user;
+
+        let profile = null;
+        try {
+          const snap = await db.collection('users').doc(user.uid).get();
+          if (snap.exists) profile = snap.data();
+        } catch (_) {}
+
         const actualRole = profile?.role || 'user';
 
         if (selectedRole === 'admin' && actualRole !== 'admin') {
@@ -427,18 +321,17 @@
           return;
         }
 
-        const currentUser = {
+        const currentUserData = {
           uid: user.uid,
           name: profile?.name || user.displayName || email,
           email: user.email || email,
-          role: actualRole,
-          loginAt: new Date().toISOString()
+          role: actualRole
         };
 
-        saveJSON(KEYS.currentUser, currentUser);
+        saveJSON(KEYS.currentUser, currentUserData);
         localStorage.setItem(KEYS.loggedIn, 'true');
         localStorage.setItem(KEYS.userEmail, email);
-        localStorage.setItem(KEYS.userName, currentUser.name);
+        localStorage.setItem(KEYS.userName, currentUserData.name);
         localStorage.setItem(KEYS.firebaseUid, user.uid);
         localStorage.setItem(KEYS.userRole, actualRole);
 
@@ -455,37 +348,32 @@
         } else {
           window.location.href = 'borrow.html';
         }
-      } catch (error) {
-        alert(firebaseErrorMessage(error));
+      } catch (err) {
+        alert(firebaseErrorMessage(err));
       } finally {
-        if (submitButton) {
-          submitButton.disabled = false;
-          submitButton.textContent = oldText;
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
         }
       }
     });
   }
 
   // ============================================================
-  // Initialize Application
+  // App Bootstrapper
   // ============================================================
 
-  function initializeApplication() {
+  function boot() {
     setupPasswordToggle();
-    setupLogin();
-
-    // Fire-and-forget init Firebase background load
-    initFirebase();
+    setupRoleUI();
+    loadRememberedData();
+    setupLoginForm();
+    setupRegisterForm();
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeApplication);
+    document.addEventListener('DOMContentLoaded', boot);
   } else {
-    initializeApplication();
+    boot();
   }
-
-  window.EquipmentBorrowSystem = {
-    initFirebase
-  };
-
 })();
