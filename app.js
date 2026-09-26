@@ -7753,28 +7753,6 @@ function initializeEquipmentData() {
 
     return equipment;
 }
-  function initializeEquipmentData() {
-    let equipment =
-      loadEquipment();
-
-    if (
-      !Array.isArray(equipment)
-    ) {
-      equipment = [];
-    }
-
-    equipment =
-      equipment.map(
-        normalizeAdminEquipmentForStorage
-      );
-
-    saveEquipmentToLocal(
-      equipment
-    );
-
-    return equipment;
-  }
-
 
   /* =========================================================
      REGISTER / LOGIN PAGE INIT
