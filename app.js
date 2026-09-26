@@ -7767,6 +7767,7 @@
       refreshDashboardData();
 
       renderAdminNotifications();
+      setupForgotPassword();
 
       if (
         getCurrentPage() ===
