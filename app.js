@@ -203,7 +203,6 @@
       });
     });
 
-    // คลิกจุดอื่นนอกเมนูเพื่อปิด Dropdown
     document.addEventListener('click', () => {
       document.querySelectorAll('.nav-dropdown').forEach(dropdown => {
         dropdown.classList.remove('active');
@@ -421,7 +420,6 @@
         navbar.innerHTML = `
           <a href="dashboard.html" class="nav-item active"><i data-lucide="layout-dashboard"></i> <span>Dashboard</span></a>
           
-          <!-- Dropdown สำหรับประเภทอุปกรณ์ -->
           <div class="nav-dropdown">
             <button type="button" class="nav-dropdown-btn">
               <i data-lucide="package-search"></i> 
@@ -453,7 +451,6 @@
         navbar.innerHTML = `
           <a href="dashboard.html" class="nav-item active"><i data-lucide="layout-dashboard"></i> <span>Dashboard</span></a>
           
-          <!-- Dropdown สำหรับประเภทอุปกรณ์ของผู้ใช้ทั่วไป -->
           <div class="nav-dropdown">
             <button type="button" class="nav-dropdown-btn">
               <i data-lucide="package-search"></i> 
@@ -479,7 +476,6 @@
       renderUserDashboardData(currentUser);
     }
 
-    // ผูก Event ให้กับ Dropdown ปุ่มกด
     setupDropdownToggle();
 
     if (window.lucide) lucide.createIcons();
@@ -492,7 +488,6 @@
   function renderAdminDashboardData() {
     const equipmentList = getEquipmentLocal();
 
-    // Helper คำนวณสถิติตามหมวดหมู่
     function calculateStats(categoryName) {
       const items = equipmentList.filter(item => {
         const cat = String(item.category || '').trim();
@@ -521,7 +516,6 @@
       return { total, available, borrowed, unavailable };
     }
 
-    // อัปเดตข้อมูลลงบน UI
     function updateCategoryUI(prefix, stats) {
       const totalElem = document.getElementById(`total${prefix}`);
       const availElem = document.getElementById(`avail${prefix}`);
@@ -534,13 +528,8 @@
       if (unavailElem) unavailElem.textContent = stats.unavailable;
     }
 
-    // 1. อัปเดตข้อมูลแถว "ครุภัณฑ์"
     updateCategoryUI('Building', calculateStats('ครุภัณฑ์'));
-
-    // 2. อัปเดตข้อมูลแถว "วัสดุ"
     updateCategoryUI('Material', calculateStats('วัสดุ'));
-
-    // 3. อัปเดตข้อมูลแถว "อุปกรณ์"
     updateCategoryUI('Device', calculateStats('อุปกรณ์'));
   }
 
@@ -584,7 +573,161 @@
     `).join('');
   }
 
-  // Helper สำหรับปุ่มย้ายหน้า
+  // ============================================================
+  // EQUIPMENT PAGE RENDER & BORROW SYSTEM
+  // ============================================================
+
+  function initEquipmentPage() {
+    const gridContainer = document.getElementById('equipmentGridContainer');
+    if (!gridContainer) return;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const selectedCategory = urlParams.get('category') || '';
+
+    const pageTitle = document.getElementById('categoryPageTitle');
+    const categoryFilter = document.getElementById('categorySelectFilter');
+
+    if (selectedCategory) {
+      if (pageTitle) pageTitle.textContent = `รายการ${selectedCategory}`;
+      if (categoryFilter) categoryFilter.value = selectedCategory;
+    }
+
+    renderEquipmentGrid(selectedCategory, '');
+
+    const searchInput = document.getElementById('equipmentSearchInput');
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        renderEquipmentGrid(categoryFilter ? categoryFilter.value : '', e.target.value.trim());
+      });
+    }
+
+    if (categoryFilter) {
+      categoryFilter.addEventListener('change', (e) => {
+        const cat = e.target.value;
+        if (pageTitle) pageTitle.textContent = cat ? `รายการ${cat}` : 'รายการทั้งหมด';
+        renderEquipmentGrid(cat, searchInput ? searchInput.value.trim() : '');
+      });
+    }
+
+    setupBorrowFormSubmit();
+  }
+
+  function renderEquipmentGrid(category, searchKeyword) {
+    const container = document.getElementById('equipmentGridContainer');
+    if (!container) return;
+
+    const allEquipment = getEquipmentLocal();
+
+    const filtered = allEquipment.filter(item => {
+      const matchCategory = !category || item.category === category;
+      const matchSearch = !searchKeyword || 
+        (item.name && item.name.toLowerCase().includes(searchKeyword.toLowerCase())) ||
+        (item.id && item.id.toLowerCase().includes(searchKeyword.toLowerCase()));
+      
+      return matchCategory && matchSearch;
+    });
+
+    if (filtered.length === 0) {
+      container.innerHTML = `
+        <div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: #6b7280;">
+          ไม่พบรายการอุปกรณ์ในหมวดหมู่นี้
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = filtered.map(item => {
+      const isAvailable = (item.available || 0) > 0 && item.status !== 'unavailable';
+
+      return `
+        <div class="equipment-card" style="background: #fff; border-radius: 12px; padding: 1.25rem; border: 1px solid #e5e7eb; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+              <span style="font-size: 0.8rem; background: #f3f4f6; color: #374151; padding: 2px 8px; border-radius: 4px;">${item.category || 'ทั่วไป'}</span>
+              <span style="font-size: 0.85rem; font-weight: 600; color: ${isAvailable ? '#10b981' : '#ef4444'};">
+                ${isAvailable ? 'พร้อมเบิก' : 'ไม่พร้อมใช้งาน'}
+              </span>
+            </div>
+            <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">${item.name}</h3>
+            <p style="font-size: 0.875rem; color: #6b7280; margin-bottom: 1rem;">คงเหลือพร้อมใช้: <strong>${item.available || 0}</strong> / ${item.total || 0}</p>
+          </div>
+
+          <button type="button" 
+            onclick="openBorrowModal('${item.id}', '${item.name}', ${item.available || 0})"
+            ${!isAvailable ? 'disabled' : ''}
+            style="width: 100%; padding: 0.6rem; border: none; border-radius: 8px; font-weight: 600; cursor: ${isAvailable ? 'pointer' : 'not-allowed'}; background: ${isAvailable ? '#10b981' : '#d1d5db'}; color: white;">
+            ${isAvailable ? 'กดเบิก/ยืมสิ่งนี้' : 'สินค้าหมด'}
+          </button>
+        </div>
+      `;
+    }).join('');
+
+    if (window.lucide) lucide.createIcons();
+  }
+
+  window.openBorrowModal = function(id, name, maxAvail) {
+    const modal = document.getElementById('borrowModal');
+    if (!modal) return;
+
+    document.getElementById('modalEquipmentId').value = id;
+    document.getElementById('modalEquipmentName').value = name;
+    
+    const qtyInput = document.getElementById('modalBorrowQuantity');
+    qtyInput.max = maxAvail;
+    qtyInput.value = 1;
+    
+    document.getElementById('modalMaxAvailable').textContent = `*(เบิกได้สูงสุด ${maxAvail} ชิ้น)`;
+    document.getElementById('modalBorrowReason').value = '';
+
+    modal.style.display = 'flex';
+  };
+
+  window.closeBorrowModal = function() {
+    const modal = document.getElementById('borrowModal');
+    if (modal) modal.style.display = 'none';
+  };
+
+  function setupBorrowFormSubmit() {
+    const form = document.getElementById('borrowRequestForm');
+    if (!form || form.dataset.bound === 'true') return;
+    form.dataset.bound = 'true';
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {
+        name: 'ผู้ใช้งานระบบ',
+        email: 'user@example.com'
+      };
+
+      const eqId = document.getElementById('modalEquipmentId').value;
+      const eqName = document.getElementById('modalEquipmentName').value;
+      const qty = parseInt(document.getElementById('modalBorrowQuantity').value) || 1;
+      const reason = document.getElementById('modalBorrowReason').value.trim();
+
+      const userRequests = JSON.parse(localStorage.getItem('user_requests')) || [];
+      const newRequest = {
+        id: 'REQ' + Date.now().toString().slice(-6),
+        equipmentId: eqId,
+        equipmentName: eqName,
+        quantity: qty,
+        reason: reason,
+        userName: currentUser.name,
+        userEmail: currentUser.email,
+        requestDate: new Date().toLocaleDateString('th-TH'),
+        type: 'ยืม',
+        status: 'pending'
+      };
+
+      userRequests.unshift(newRequest);
+      localStorage.setItem('user_requests', JSON.stringify(userRequests));
+
+      alert('ส่งคำขอเบิก/ยืมเรียบร้อยแล้ว! กรุณารอการอนุมัติจากผู้ดูแลระบบ');
+      closeBorrowModal();
+
+      window.location.reload();
+    });
+  }
+
   window.viewCategory = function(categoryName) {
     window.location.href = `equipment.html?category=${encodeURIComponent(categoryName)}`;
   };
@@ -600,6 +743,7 @@
     setupLoginForm();
     setupRegisterForm();
     initDashboardByRole();
+    initEquipmentPage();
   }
 
   if (document.readyState === 'loading') {
