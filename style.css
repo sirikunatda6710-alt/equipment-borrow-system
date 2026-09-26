@@ -1915,3 +1915,21 @@ tr:hover td {
   justify-content: center;
   z-index: 2000;
 }
+/* ซ่อน Modal เป็นค่าเริ่มต้น */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+}
+
+/* แสดง Modal เมื่อมีคลาส .active */
+.modal.active {
+  display: flex !important;
+}
