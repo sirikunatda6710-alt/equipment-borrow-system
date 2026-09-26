@@ -83,107 +83,110 @@
             <!-- =================================================
                  1. ADMIN DASHBOARD VIEW
             ================================================== -->
-            <div id="adminDashboardView" class="dashboard-view" style="display: none;">
-                
-                <section class="dashboard-heading">
-                    <h1>Dashboard ผู้ดูแลระบบ</h1>
-                    <p>ภาพรวมสถานะรายการอุปกรณ์และการอนุมัติคำขอในระบบ</p>
-                </section>
+            <!-- =================================================
+     ADMIN DASHBOARD VIEW
+================================================== -->
+<div id="adminDashboardView" class="dashboard-view">
 
-                <!-- Stats Overview -->
-                <section class="stats-container">
-                    <div class="stat-card">
-                        <div class="stat-icon"><i data-lucide="package"></i></div>
-                        <h3>อุปกรณ์ทั้งหมด</h3>
-                        <p id="adminTotalItems" class="stat-number">0</p>
-                        <span>รายการ</span>
-                    </div>
+    <section class="dashboard-heading">
+        <h1>Dashboard ผู้ดูแลระบบ</h1>
+        <p>ภาพรวมสถานะและจำนวณแยกตามประเภทสิ่งของในระบบ</p>
+    </section>
 
-                    <div class="stat-card">
-                        <div class="stat-icon"><i data-lucide="circle-check"></i></div>
-                        <h3>พร้อมใช้งาน</h3>
-                        <p id="adminAvailableItems" class="stat-number">0</p>
-                        <span>รายการ</span>
-                    </div>
-
-                    <div class="stat-card borrowed-card">
-                        <div class="stat-icon"><i data-lucide="clipboard-list"></i></div>
-                        <h3>กำลังถูกยืม</h3>
-                        <p id="adminBorrowedItems" class="stat-number">0</p>
-                        <span>รายการ</span>
-                    </div>
-
-                    <div class="stat-card pending-card">
-                        <div class="stat-icon"><i data-lucide="clock"></i></div>
-                        <h3>รออนุมัติการยืม-คืน</h3>
-                        <p id="adminPendingRequests" class="stat-number">0</p>
-                        <span>คำขอ</span>
-                    </div>
-                </section>
-
-                <!-- 3 Main Categories Section -->
-                <section class="category-section">
-                    <h2>หมวดหมู่รายการในระบบ</h2>
-                    <div class="category-grid">
-                        
-                        <!-- ครุภัณฑ์ -->
-                        <div class="category-card" onclick="viewCategory('ครุภัณฑ์')">
-                            <div class="category-icon"><i data-lucide="building-2"></i></div>
-                            <h3>ครุภัณฑ์</h3>
-                            <p>รายการครุภัณฑ์ถาวรทั้งหมด</p>
-                            <div class="category-stat-num" id="countBuilding">0 รายการ</div>
-                        </div>
-
-                        <!-- วัสดุ -->
-                        <div class="category-card" onclick="viewCategory('วัสดุ')">
-                            <div class="category-icon"><i data-lucide="boxes"></i></div>
-                            <h3>วัสดุ</h3>
-                            <p>รายการวัสดุสิ้นเปลืองและคลังวัสดุ</p>
-                            <div class="category-stat-num" id="countMaterial">0 รายการ</div>
-                        </div>
-
-                        <!-- อุปกรณ์ -->
-                        <div class="category-card" onclick="viewCategory('อุปกรณ์')">
-                            <div class="category-icon"><i data-lucide="wrench"></i></div>
-                            <h3>อุปกรณ์</h3>
-                            <p>อุปกรณ์เครื่องมือช่างและสื่อการเรียน</p>
-                            <div class="category-stat-num" id="countDevice">0 รายการ</div>
-                        </div>
-
-                    </div>
-                </section>
-
-                <!-- Pending Approvals Action Table -->
-                <section class="table-container">
-                    <div class="table-top">
-                        <div class="table-title">
-                            <div class="table-title-icon"><i data-lucide="check-square"></i></div>
-                            <div>
-                                <h2>รายการรอการอนุมัติ (ยืม-คืน)</h2>
-                                <p>อนุมัติหรือปฏิเสธคำขอจากผู้ใช้งานทั่วไป</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="table-responsive">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>ผู้ทำรายการ</th>
-                                    <th>อุปกรณ์</th>
-                                    <th>ประเภทคำขอ</th>
-                                    <th>วันที่ส่งคำขอ</th>
-                                    <th>สถานะ</th>
-                                    <th>จัดการ</th>
-                                </tr>
-                            </thead>
-                            <tbody id="adminPendingTable">
-                                <!-- JS Dynamic Render -->
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
+    <!-- SECTION 1: ครุภัณฑ์ -->
+    <section class="category-block">
+        <h2 class="category-title">🏢 ครุภัณฑ์</h2>
+        <div class="stats-container">
+            <div class="stat-card">
+                <div class="stat-icon"><i data-lucide="building-2"></i></div>
+                <h3>ครุภัณฑ์ทั้งหมด</h3>
+                <p id="totalBuilding" class="stat-number">0</p>
+                <span>รายการ</span>
             </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i data-lucide="circle-check"></i></div>
+                <h3>พร้อมใช้งาน</h3>
+                <p id="availBuilding" class="stat-number">0</p>
+                <span>รายการ</span>
+            </div>
+            <div class="stat-card borrowed-card">
+                <div class="stat-icon"><i data-lucide="clipboard-list"></i></div>
+                <h3>กำลังถูกยืม</h3>
+                <p id="borrowedBuilding" class="stat-number">0</p>
+                <span>รายการ</span>
+            </div>
+            <div class="stat-card unavailable-card">
+                <div class="stat-icon"><i data-lucide="circle-x"></i></div>
+                <h3>ไม่พร้อมใช้งาน</h3>
+                <p id="unavailBuilding" class="stat-number">0</p>
+                <span>รายการ</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 2: วัสดุ -->
+    <section class="category-block">
+        <h2 class="category-title">📦 วัสดุ</h2>
+        <div class="stats-container">
+            <div class="stat-card">
+                <div class="stat-icon"><i data-lucide="boxes"></i></div>
+                <h3>วัสดุทั้งหมด</h3>
+                <p id="totalMaterial" class="stat-number">0</p>
+                <span>รายการ</span>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i data-lucide="circle-check"></i></div>
+                <h3>พร้อมใช้งาน</h3>
+                <p id="availMaterial" class="stat-number">0</p>
+                <span>รายการ</span>
+            </div>
+            <div class="stat-card borrowed-card">
+                <div class="stat-icon"><i data-lucide="clipboard-list"></i></div>
+                <h3>กำลังถูกยืม</h3>
+                <p id="borrowedMaterial" class="stat-number">0</p>
+                <span>รายการ</span>
+            </div>
+            <div class="stat-card unavailable-card">
+                <div class="stat-icon"><i data-lucide="circle-x"></i></div>
+                <h3>ไม่พร้อมใช้งาน</h3>
+                <p id="unavailMaterial" class="stat-number">0</p>
+                <span>รายการ</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 3: อุปกรณ์ -->
+    <section class="category-block">
+        <h2 class="category-title">🔧 อุปกรณ์</h2>
+        <div class="stats-container">
+            <div class="stat-card">
+                <div class="stat-icon"><i data-lucide="package"></i></div>
+                <h3>อุปกรณ์ทั้งหมด</h3>
+                <p id="totalDevice" class="stat-number">0</p>
+                <span>รายการ</span>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i data-lucide="circle-check"></i></div>
+                <h3>พร้อมใช้งาน</h3>
+                <p id="availDevice" class="stat-number">0</p>
+                <span>รายการ</span>
+            </div>
+            <div class="stat-card borrowed-card">
+                <div class="stat-icon"><i data-lucide="clipboard-list"></i></div>
+                <h3>กำลังถูกยืม</h3>
+                <p id="borrowedDevice" class="stat-number">0</p>
+                <span>รายการ</span>
+            </div>
+            <div class="stat-card unavailable-card">
+                <div class="stat-icon"><i data-lucide="circle-x"></i></div>
+                <h3>ไม่พร้อมใช้งาน</h3>
+                <p id="unavailDevice" class="stat-number">0</p>
+                <span>รายการ</span>
+            </div>
+        </div>
+    </section>
+
+</div>
 
 
             <!-- =================================================
