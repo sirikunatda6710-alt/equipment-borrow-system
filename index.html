@@ -1,105 +1,177 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>เข้าสู่ระบบ | ระบบยืม-คืนอุปกรณ์</title>
 
-    <link rel="stylesheet" href="style.css">
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
 </head>
+
 
 <body class="login-page">
 
     <div class="login-container">
 
+        <!-- ============================= -->
         <!-- LOGO -->
+        <!-- ============================= -->
+
         <div class="login-logo">
+
             <img
                 src="https://img2.pic.in.th/007-med-msu.md.webp"
                 alt="โลโก้คณะ"
             >
+
         </div>
 
 
+        <!-- ============================= -->
         <!-- TITLE -->
-        <h1>เข้าสู่ระบบ</h1>
+        <!-- ============================= -->
+
+        <h1>
+            เข้าสู่ระบบ
+        </h1>
 
         <p class="login-subtitle">
             เข้าสู่ระบบเพื่อใช้งานระบบยืม-คืนอุปกรณ์
         </p>
 
 
+        <!-- ============================= -->
         <!-- LOGIN FORM -->
+        <!-- ============================= -->
+
         <form
             id="loginForm"
             class="login-form"
         >
 
             <!-- ประเภทผู้ใช้งาน -->
+
             <div class="form-group">
-  <label for="loginRole">
-    ประเภทผู้ใช้งาน
-  </label>
 
-  <select id="loginRole" name="role">
-    <option value="user">
-      ผู้ใช้งานทั่วไป
-    </option>
+                <label for="loginRole">
+                    ประเภทผู้ใช้งาน
+                </label>
 
-    <option value="admin">
-      ผู้ดูแลระบบ
-    </option>
-  </select>
-</div>
-
-<div
-  id="adminCodeGroup"
-  class="form-group"
-  style="display: none;"
->
-  <label for="adminCode">
-    รหัสผู้ดูแลระบบ
-  </label>
-
-  <div class="password-wrapper">
-
-    <input
-      type="password"
-      id="adminCode"
-      name="adminCode"
-      inputmode="numeric"
-      maxlength="5"
-      autocomplete="off"
-      placeholder="กรอกรหัส 5 หลัก"
-    >
-
-    <button
-      type="button"
-      class="toggle-password"
-      data-target="adminCode"
-    >
-      แสดง
-    </button>
-
-  </div>
-</div>
-
-                <small
-                    style="
-                        display: block;
-                        margin-top: 6px;
-                        color: #666;
-                        font-size: 13px;
-                    "
+                <select
+                    id="loginRole"
+                    name="loginRole"
                 >
+
+                    <option value="user">
+                        ผู้ใช้งานทั่วไป
+                    </option>
+
+                    <option value="admin">
+                        ผู้ดูแลระบบ
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- อีเมล -->
+
+            <div class="form-group">
+
+                <label for="email">
+                    อีเมล
+                </label>
+
+                <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="กรอกอีเมลของคุณ"
+                    autocomplete="email"
+                    required
+                >
+
+            </div>
+
+
+            <!-- รหัสผ่าน -->
+
+            <div class="form-group">
+
+                <label for="password">
+                    รหัสผ่าน
+                </label>
+
+                <div class="password-wrapper">
+
+                    <input
+                        id="password"
+                        name="password"
+                        type="password"
+                        placeholder="กรอกรหัสผ่าน"
+                        autocomplete="current-password"
+                        required
+                    >
+
+                    <button
+                        type="button"
+                        class="toggle-password"
+                        data-target="password"
+                    >
+                        แสดง
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- ============================= -->
+            <!-- ADMIN CODE -->
+            <!-- ============================= -->
+
+            <div
+                class="form-group"
+                id="adminCodeGroup"
+                style="display: none;"
+            >
+
+                <label for="adminCode">
+                    รหัสผู้ดูแลระบบ
+                </label>
+
+                <input
+                    id="adminCode"
+                    name="adminCode"
+                    type="password"
+                    inputmode="numeric"
+                    maxlength="5"
+                    pattern="[0-9]{5}"
+                    placeholder="กรอกรหัสผู้ดูแล 5 หลัก"
+                    autocomplete="off"
+                >
+
+                <small>
                     สำหรับผู้ดูแลระบบเท่านั้น
                 </small>
 
             </div>
 
 
+            <!-- ============================= -->
             <!-- REMEMBER -->
+            <!-- ============================= -->
+
             <div class="remember-row">
 
                 <input
@@ -118,7 +190,10 @@
             </div>
 
 
+            <!-- ============================= -->
             <!-- LOGIN BUTTON -->
+            <!-- ============================= -->
+
             <button
                 type="submit"
                 class="login-button"
@@ -127,7 +202,10 @@
             </button>
 
 
+            <!-- ============================= -->
             <!-- FORGOT PASSWORD -->
+            <!-- ============================= -->
+
             <p class="forgot-link">
 
                 <a href="forgot-password.html">
@@ -137,10 +215,14 @@
             </p>
 
 
+            <!-- ============================= -->
             <!-- REGISTER -->
+            <!-- ============================= -->
+
             <p class="register-link">
 
                 ยังไม่มีบัญชี?
+
                 <a href="register.html">
                     ลงทะเบียน
                 </a>
@@ -153,7 +235,9 @@
 
 
     <!-- APP JS -->
+
     <script src="app.js"></script>
 
 </body>
+
 </html>
