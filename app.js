@@ -42,7 +42,6 @@
     }
   }
 
-  // ฟังก์ชันส่วนกลางบันทึกประวัติการทำรายการลง LocalStorage
   window.addSystemLog = function (action, detail) {
     try {
       let history = JSON.parse(localStorage.getItem('system_history')) || [];
@@ -347,26 +346,6 @@
     });
   }
 
-  function setupRoleUI() {
-    const roleSelect = document.getElementById('loginRole');
-    const adminCodeGroup = document.getElementById('adminCodeGroup');
-    const adminCode = document.getElementById('adminCode');
-
-    if (!roleSelect || !adminCodeGroup) return;
-
-    const update = () => {
-      const isAdmin = roleSelect.value === 'admin';
-      adminCodeGroup.style.display = isAdmin ? 'block' : 'none';
-      if (adminCode) {
-        adminCode.required = isAdmin;
-        if (!isAdmin) adminCode.value = '';
-      }
-    };
-
-    roleSelect.addEventListener('change', update);
-    update();
-  }
-
   function loadRememberedData() {
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
@@ -473,7 +452,6 @@
 
         await db.collection('users').doc(user.uid).set(userData, { merge: true });
         
-        // บันทึกลงในรายการรออนุมัติของ Admin
         let pendingUsers = JSON.parse(localStorage.getItem('pending_users')) || [];
         pendingUsers.push({
           id: 'USR' + Date.now().toString().slice(-4),
@@ -501,7 +479,7 @@
   }
 
   // ============================================================
-  // Login Feature
+  // Login Feature (ตรวจสอบสิทธิ์จาก Firestore Database โดยตรง)
   // ============================================================
 
   function setupLoginForm() {
@@ -514,26 +492,14 @@
 
       const emailInput = document.getElementById('email');
       const passwordInput = document.getElementById('password');
-      const roleSelect = document.getElementById('loginRole');
-      const adminCodeInput = document.getElementById('adminCode');
       const rememberMe = document.getElementById('rememberMe');
 
       const email = emailInput?.value?.trim() || '';
       const password = passwordInput?.value || '';
-      const selectedRole = roleSelect?.value || 'user';
-      const ADMIN_CODE = '24236';
 
       if (!email || !password) {
         alert('กรุณากรอกอีเมลและรหัสผ่าน');
         return;
-      }
-
-      if (selectedRole === 'admin') {
-        const code = adminCodeInput?.value?.trim() || '';
-        if (code !== ADMIN_CODE) {
-          alert('รหัสผู้ดูแลระบบไม่ถูกต้อง');
-          return;
-        }
       }
 
       const submitBtn = form.querySelector('button[type="submit"]');
@@ -557,15 +523,11 @@
         try {
           const snap = await db.collection('users').doc(user.uid).get();
           if (snap.exists) profile = snap.data();
-        } catch (_) {}
+        } catch (e) {
+          console.error("Error fetching profile:", e);
+        }
 
         const actualRole = profile?.role || 'user';
-
-        if (selectedRole === 'admin' && actualRole !== 'admin') {
-          await auth.signOut();
-          alert('บัญชีนี้ไม่มีสิทธิ์เป็นผู้ดูแลระบบ');
-          return;
-        }
 
         const currentUserData = {
           uid: user.uid,
@@ -967,7 +929,6 @@
   function boot() {
     setupProfileModal();
     setupPasswordToggle();
-    setupRoleUI();
     loadRememberedData();
     setupLoginForm();
     setupRegisterForm();
