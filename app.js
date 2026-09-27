@@ -31,7 +31,7 @@
   let isFirebaseInitializing = false;
 
   // ============================================================
-  // Helpers
+  // Helpers & Mock Data
   // ============================================================
 
   function saveJSON(key, value) {
@@ -42,13 +42,79 @@
     }
   }
 
+  // ดึงข้อมูลอุปกรณ์ (หากในระบบยังไม่มีข้อมูล จะใส่ตัวอย่างเครื่องเสียงให้ทันที)
   function getEquipmentLocal() {
     try {
       const data = localStorage.getItem('equipment');
-      return data ? JSON.parse(data) : [];
+      if (data && JSON.parse(data).length > 0) {
+        return JSON.parse(data);
+      }
     } catch (e) {
-      return [];
+      console.error(e);
     }
+
+    // ตัวอย่างรายการสิ่งของหมวดเครื่องเสียงและอุปกรณ์อื่นๆ
+    const mockEquipment = [
+      {
+        id: "AUDIO-001",
+        name: "ชุดลำโพงเคลื่อนย้ายพร้อมไมค์ไร้สาย (Portble Speaker)",
+        category: "อุปกรณ์",
+        total: 5,
+        available: 3,
+        status: "available"
+      },
+      {
+        id: "AUDIO-002",
+        name: "ไมโครโฟนไร้สายคู่ (Wireless Microphone Set)",
+        category: "อุปกรณ์",
+        total: 8,
+        available: 6,
+        status: "available"
+      },
+      {
+        id: "AUDIO-003",
+        name: "เครื่องผสมสัญญาณเสียง มิกเซอร์ 8 ช่อง (Audio Mixer)",
+        category: "อุปกรณ์",
+        total: 3,
+        available: 2,
+        status: "available"
+      },
+      {
+        id: "AUDIO-004",
+        name: "ขาตั้งไมโครโฟนแบบตั้งพื้น",
+        category: "อุปกรณ์",
+        total: 10,
+        available: 10,
+        status: "available"
+      },
+      {
+        id: "AUDIO-005",
+        name: "ลำโพงบลูทูธพกพาสำหรับห้องประชุมเล็ก",
+        category: "อุปกรณ์",
+        total: 4,
+        available: 0,
+        status: "unavailable"
+      },
+      {
+        id: "BUILD-001",
+        name: "โต๊ะพับอเนกประสงค์ขาเหล็ก",
+        category: "ครุภัณฑ์",
+        total: 15,
+        available: 12,
+        status: "available"
+      },
+      {
+        id: "MAT-001",
+        name: "สายสัญญาณเสียง AUX 3.5mm ถึง RCA (3 เมตร)",
+        category: "วัสดุ",
+        total: 20,
+        available: 18,
+        status: "available"
+      }
+    ];
+
+    saveJSON('equipment', mockEquipment);
+    return mockEquipment;
   }
 
   function firebaseErrorMessage(error) {
@@ -125,7 +191,7 @@
   }
 
   // ============================================================
-  // Profile Modal Handler (ซ่อนเป็นค่าเริ่มต้น และควบคุมการเปิด-ปิด)
+  // Profile Modal Handler
   // ============================================================
 
   function setupProfileModal() {
@@ -137,11 +203,9 @@
 
     if (!profileModal) return;
 
-    // ซ่อน Modal เป็นค่าเริ่มต้น
     profileModal.style.display = 'none';
     profileModal.classList.remove('active');
 
-    // เปิด Modal เมื่อกดปุ่มโปรไฟล์
     if (profileBtn && profileBtn.dataset.bound !== 'true') {
       profileBtn.dataset.bound = 'true';
       profileBtn.addEventListener('click', () => {
@@ -152,7 +216,6 @@
       });
     }
 
-    // ปิด Modal เมื่อกดปุ่มกากบาท
     if (closeBtn && closeBtn.dataset.bound !== 'true') {
       closeBtn.dataset.bound = 'true';
       closeBtn.addEventListener('click', () => {
@@ -161,7 +224,6 @@
       });
     }
 
-    // บันทึกการแก้ไขชื่อผู้ใช้งาน
     if (saveBtn && saveBtn.dataset.bound !== 'true') {
       saveBtn.dataset.bound = 'true';
       saveBtn.addEventListener('click', () => {
@@ -472,26 +534,28 @@
 
     if (userNameElem) userNameElem.textContent = currentUser.name;
 
+    // Dropdown Navigation HTML
+    const dropdownNavHTML = `
+      <div class="nav-dropdown">
+        <button type="button" class="nav-dropdown-btn">
+          <i data-lucide="package-search"></i> 
+          <span>รายการอุปกรณ์</span>
+          <i data-lucide="chevron-down" class="dropdown-icon"></i>
+        </button>
+        <div class="nav-dropdown-content">
+          <a href="equipment.html?category=ครุภัณฑ์">🏢 ครุภัณฑ์</a>
+          <a href="equipment.html?category=วัสดุ">📦 วัสดุ</a>
+          <a href="equipment.html?category=อุปกรณ์">🔊 อุปกรณ์ (เครื่องเสียง)</a>
+        </div>
+      </div>`;
+
     if (currentUser.role === 'admin') {
       if (roleBadge) roleBadge.textContent = 'ผู้ดูแลระบบ (Admin)';
       
       if (navbar) {
         navbar.innerHTML = `
           <a href="dashboard.html" class="nav-item active"><i data-lucide="layout-dashboard"></i> <span>Dashboard</span></a>
-          
-          <div class="nav-dropdown">
-            <button type="button" class="nav-dropdown-btn">
-              <i data-lucide="package-search"></i> 
-              <span>รายการอุปกรณ์</span>
-              <i data-lucide="chevron-down" class="dropdown-icon"></i>
-            </button>
-            <div class="nav-dropdown-content">
-              <a href="equipment.html?category=ครุภัณฑ์">🏢 ครุภัณฑ์</a>
-              <a href="equipment.html?category=วัสดุ">📦 วัสดุ</a>
-              <a href="equipment.html?category=อุปกรณ์">🔧 อุปกรณ์ / เครื่องเสียง</a>
-            </div>
-          </div>
-
+          ${dropdownNavHTML}
           <a href="admin-management.html" class="nav-item"><i data-lucide="settings"></i> <span>จัดการสิ่งของ</span></a>
           <a href="admin-approvals.html" class="nav-item"><i data-lucide="check-square"></i> <span>อนุมัติยืม-คืน</span></a>
           <a href="history.html" class="nav-item"><i data-lucide="history"></i> <span>ประวัติระบบ</span></a>
@@ -509,20 +573,7 @@
       if (navbar) {
         navbar.innerHTML = `
           <a href="dashboard.html" class="nav-item active"><i data-lucide="layout-dashboard"></i> <span>Dashboard</span></a>
-          
-          <div class="nav-dropdown">
-            <button type="button" class="nav-dropdown-btn">
-              <i data-lucide="package-search"></i> 
-              <span>รายการอุปกรณ์</span>
-              <i data-lucide="chevron-down" class="dropdown-icon"></i>
-            </button>
-            <div class="nav-dropdown-content">
-              <a href="equipment.html?category=ครุภัณฑ์">🏢 ครุภัณฑ์</a>
-              <a href="equipment.html?category=วัสดุ">📦 วัสดุ</a>
-              <a href="equipment.html?category=อุปกรณ์">🔧 อุปกรณ์ / เครื่องเสียง</a>
-            </div>
-          </div>
-
+          ${dropdownNavHTML}
           <a href="borrow.html" class="nav-item"><i data-lucide="clipboard-list"></i> <span>รายการยืม</span></a>
           <a href="return.html" class="nav-item"><i data-lucide="undo-2"></i> <span>คืนอุปกรณ์</span></a>
           <a href="history.html" class="nav-item"><i data-lucide="history"></i> <span>ประวัติยืม-คืน</span></a>
@@ -541,7 +592,7 @@
   }
 
   // ============================================================
-  // ADMIN DASHBOARD RENDER (คำนวณแยก 3 หมวดหมู่)
+  // ADMIN DASHBOARD RENDER
   // ============================================================
 
   function renderAdminDashboardData() {
@@ -701,20 +752,20 @@
         <div class="equipment-card" style="background: #fff; border-radius: 12px; padding: 1.25rem; border: 1px solid #e5e7eb; display: flex; flex-direction: column; justify-content: space-between;">
           <div>
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
-              <span style="font-size: 0.8rem; background: #f3f4f6; color: #374151; padding: 2px 8px; border-radius: 4px;">${item.category || 'ทั่วไป'}</span>
+              <span style="font-size: 0.8rem; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-weight: 600;">${item.category || 'อุปกรณ์'}</span>
               <span style="font-size: 0.85rem; font-weight: 600; color: ${isAvailable ? '#10b981' : '#ef4444'};">
                 ${isAvailable ? 'พร้อมเบิก' : 'ไม่พร้อมใช้งาน'}
               </span>
             </div>
-            <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">${item.name}</h3>
-            <p style="font-size: 0.875rem; color: #6b7280; margin-bottom: 1rem;">คงเหลือพร้อมใช้: <strong>${item.available || 0}</strong> / ${item.total || 0}</p>
+            <h3 style="font-size: 1.05rem; margin-bottom: 0.5rem; color: #1f2937;">${item.name}</h3>
+            <p style="font-size: 0.85rem; color: #6b7280; margin-bottom: 1rem;">คงเหลือพร้อมใช้: <strong>${item.available || 0}</strong> / ${item.total || 0}</p>
           </div>
 
           <button type="button" 
             onclick="openBorrowModal('${item.id}', '${item.name}', ${item.available || 0})"
             ${!isAvailable ? 'disabled' : ''}
             style="width: 100%; padding: 0.6rem; border: none; border-radius: 8px; font-weight: 600; cursor: ${isAvailable ? 'pointer' : 'not-allowed'}; background: ${isAvailable ? '#10b981' : '#d1d5db'}; color: white;">
-            ${isAvailable ? 'กดเบิก/ยืมสิ่งนี้' : 'สินค้าหมด'}
+            ${isAvailable ? 'กดเบิก/ยืมสิ่งนี้' : 'สินค้าหมด / ไม่พร้อมยืม'}
           </button>
         </div>
       `;
