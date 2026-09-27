@@ -31,7 +31,7 @@
   let isFirebaseInitializing = false;
 
   // ============================================================
-  // Helpers & Global Log System
+  // Helpers & Global System Logs
   // ============================================================
 
   function saveJSON(key, value) {
@@ -42,14 +42,17 @@
     }
   }
 
+  // 🟢 ฟังก์ชันบันทึกกิจกรรมของ Admin ลงใน system_history
   window.addSystemLog = function (action, detail) {
     try {
       let history = JSON.parse(localStorage.getItem('system_history')) || [];
       const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
+      const adminName = currentUser.name || localStorage.getItem('userName') || 'ผู้ดูแลระบบ';
+      
       history.unshift({
         action: action,
         detail: detail,
-        adminName: currentUser.name || localStorage.getItem('userName') || 'ผู้ดูแลระบบ',
+        adminName: adminName,
         date: new Date().toLocaleString('th-TH')
       });
       localStorage.setItem('system_history', JSON.stringify(history));
@@ -137,7 +140,7 @@
   }
 
   // ============================================================
-  // Profile & Logout Handler
+  // Profile & Logout
   // ============================================================
 
   function setupProfileModal() {
@@ -250,7 +253,7 @@
   }
 
   // ============================================================
-  // Login Feature
+  // Login Form
   // ============================================================
 
   function setupLoginForm() {
@@ -307,7 +310,7 @@
   }
 
   // ============================================================
-  // ROLE-BASED DASHBOARD & NAVBAR RENDER
+  // Dashboard & Navbar
   // ============================================================
 
   function initDashboardByRole() {
@@ -435,7 +438,7 @@
   }
 
   // ============================================================
-  // GLOBAL ADMIN APPROVAL HELPER (บันทึกชื่อ Admin ผู้อนุมัติ)
+  // Global Admin Operations (บันทึกผู้อนุมัติ + บันทึก Log)
   // ============================================================
 
   window.handleAdminApproval = function(requestId, newStatus) {
@@ -446,17 +449,15 @@
     const idx = requests.findIndex(r => r.id === requestId);
     if (idx !== -1) {
       requests[idx].status = newStatus;
-      // 🟢 บันทึกชื่อ Admin คนที่กดลงใน field approvedBy
-      requests[idx].approvedBy = adminName;
+      requests[idx].approvedBy = adminName; // 🟢 บันทึกชื่อ Admin ผู้อนุมัติ
       
       localStorage.setItem('user_requests', JSON.stringify(requests));
       
-      if (window.addSystemLog) {
-        window.addSystemLog(
-          newStatus === 'approved' ? 'อนุมัติคำขอ' : 'ปฏิเสธคำขอ',
-          `รายการ ${requests[idx].equipmentName} (${requests[idx].id}) โดย ${adminName}`
-        );
-      }
+      // 🟢 บันทึกเข้า Log กิจกรรม
+      window.addSystemLog(
+        newStatus === 'approved' ? 'อนุมัติคำขอ' : 'ปฏิเสธคำขอ',
+        `คำขอ ${requests[idx].id} (${requests[idx].equipmentName}) โดยแอดมิน ${adminName}`
+      );
       
       alert(`ทำรายการ ${newStatus === 'approved' ? 'อนุมัติ' : 'ปฏิเสธ'} เรียบร้อยแล้ว`);
       window.location.reload();
@@ -464,7 +465,7 @@
   };
 
   // ============================================================
-  // EQUIPMENT PAGE RENDER & BORROW SYSTEM
+  // Equipment Page & Borrow Form
   // ============================================================
 
   function initEquipmentPage() {
@@ -594,10 +595,6 @@
       window.location.reload();
     });
   }
-
-  // ============================================================
-  // App Bootstrapper
-  // ============================================================
 
   function boot() {
     setupProfileModal();
