@@ -95,9 +95,6 @@
             const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
             const allRequests = JSON.parse(localStorage.getItem('user_requests')) || [];
 
-            // 🟢 กรองดึงเฉพาะรายการที่ยังต้องคืนอยู่เท่านั้น:
-            // 1. กำลังถือครองยืมอยู่ (type === 'ยืม' && status === 'approved')
-            // 2. อยู่ระหว่างรอแอดมินตรวจสอบการคืน (type === 'คืน' && status === 'pending')
             const activeItems = allRequests.filter(r => 
                 (r.userEmail === currentUser.email || r.userName === currentUser.name) &&
                 ((r.type === 'ยืม' && r.status === 'approved') || (r.type === 'คืน' && r.status === 'pending'))
