@@ -42,7 +42,6 @@
     }
   }
 
-  // ฟังก์ชันส่วนกลางบันทึกประวัติการทำรายการลง LocalStorage
   window.addSystemLog = function (action, detail) {
     try {
       let history = JSON.parse(localStorage.getItem('system_history')) || [];
@@ -473,7 +472,6 @@
 
         await db.collection('users').doc(user.uid).set(userData, { merge: true });
         
-        // บันทึกลงในรายการรออนุมัติของ Admin
         let pendingUsers = JSON.parse(localStorage.getItem('pending_users')) || [];
         pendingUsers.push({
           id: 'USR' + Date.now().toString().slice(-4),
@@ -501,7 +499,7 @@
   }
 
   // ============================================================
-  // Login Feature
+  // Login Feature (ระบบยืนยันสิทธิ์เข้มงวดด้วย Firestore DB)
   // ============================================================
 
   function setupLoginForm() {
@@ -553,18 +551,26 @@
         const cred = await auth.signInWithEmailAndPassword(email, password);
         const user = cred.user;
 
+        // ดึงสิทธิ์ที่แท้จริงจากฐานข้อมูล Firestore
         let profile = null;
         try {
           const snap = await db.collection('users').doc(user.uid).get();
           if (snap.exists) profile = snap.data();
-        } catch (_) {}
+        } catch (e) {
+          console.error(e);
+        }
 
         const actualRole = profile?.role || 'user';
 
+        // 🛑 ตรวจสอบความถูกต้องของสิทธิ์ (Strict Role Verification)
         if (selectedRole === 'admin' && actualRole !== 'admin') {
           await auth.signOut();
-          alert('บัญชีนี้ไม่มีสิทธิ์เป็นผู้ดูแลระบบ');
+          alert('❌ การเข้าถึงถูกปฏิเสธ: บัญชีนี้ไม่มีสิทธิ์เป็นผู้ดูแลระบบ');
           return;
+        }
+
+        if (selectedRole === 'user' && actualRole === 'admin') {
+          alert('⚠️ บัญชีนี้เป็นสิทธิ์ผู้ดูแลระบบ ระบบจะนำคุณไปยังหน้า Admin Dashboard');
         }
 
         const currentUserData = {
