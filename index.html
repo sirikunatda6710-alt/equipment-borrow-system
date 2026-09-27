@@ -6,208 +6,59 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>เข้าสู่ระบบ | ระบบยืม-คืนอุปกรณ์</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        /* จัดโครงสร้างให้อยู่กึ่งกลางหน้าจออย่างสมบูรณ์ */
-        body.login-body {
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: #2e7d32;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-        }
-
-        .login-card {
-            background: #ffffff;
-            width: 100%;
-            max-width: 420px;
-            padding: 2.25rem;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-            box-sizing: border-box;
-        }
-
-        .login-header {
-            text-align: center;
-            margin-bottom: 1.25rem;
-        }
-
-        .login-logo {
-            width: 70px;
-            height: 70px;
-            object-fit: contain;
-            margin-bottom: 0.5rem;
-        }
-
-        .login-header h2 {
-            margin: 0 0 0.25rem 0;
-            color: #1b5e20;
-            font-size: 1.75rem;
-            font-weight: 700;
-        }
-
-        .login-header p {
-            margin: 0;
-            color: #6b7280;
-            font-size: 0.88rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.15rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.4rem;
-            font-weight: 600;
-            color: #374151;
-            font-size: 0.9rem;
-        }
-
-        .form-group input[type="email"],
-        .form-group input[type="text"],
-        .form-group select,
-        .password-wrapper input[type="password"],
-        .password-wrapper input[type="text"] {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            box-sizing: border-box;
-            outline: none;
-            background-color: #fff;
-            transition: border-color 0.2s ease;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus {
-            border-color: #2e7d32;
-        }
-
-        .password-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-
-        .toggle-password {
-            position: absolute;
-            right: 8px;
-            background: #2e7d32;
-            color: white;
-            border: none;
-            padding: 0.4rem 0.8rem;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: 500;
-        }
-
-        .form-options {
-            display: flex;
-            align-items: center;
-            margin-bottom: 1.25rem;
-            font-size: 0.88rem;
-            color: #374151;
-        }
-
-        .remember-me {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            cursor: pointer;
-        }
-
-        .btn-submit-login {
-            width: 100%;
-            padding: 0.85rem;
-            background-color: #2e7d32;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-
-        .btn-submit-login:hover {
-            background-color: #1b5e20;
-        }
-
-        .form-footer {
-            text-align: center;
-            margin-top: 1.25rem;
-            font-size: 0.9rem;
-        }
-
-        .form-footer a {
-            color: #2e7d32;
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .form-footer p {
-            margin: 0.75rem 0 0 0;
-            color: #6b7280;
-        }
-    </style>
 </head>
 
-<body class="login-body">
-    <div class="login-card">
-        <div class="login-header">
-            <img src="https://img2.pic.in.th/007-med-msu.md.webp" alt="โลโก้คณะ" class="login-logo">
-            <h2>เข้าสู่ระบบ</h2>
-            <p>เข้าสู่ระบบเพื่อใช้งานระบบยืม-คืนอุปกรณ์</p>
+<body class="auth-page">
+
+    <div class="auth-card">
+        <div class="auth-logo">
+            <img src="https://img2.pic.in.th/MED_logo1-1.png" alt="โลโก้คณะ">
         </div>
 
+        <h1 class="auth-title">เข้าสู่ระบบ</h1>
+        <p class="auth-subtitle">ระบบยืม-คืนอุปกรณ์ คณะแพทยศาสตร์</p>
+
         <form id="loginForm">
-            <!-- ดรอปดาวน์เลือกประเภทผู้ใช้งาน -->
-            <div class="form-group">
-                <label for="loginRole">ประเภทผู้ใช้งาน</label>
-                <select id="loginRole" required>
-                    <option value="user">ผู้ใช้งานทั่วไป</option>
-                    <option value="admin">ผู้ดูแลระบบ (Admin)</option>
-                </select>
-            </div>
-
-            <!-- ช่องกรอกรหัสผู้ดูแลระบบ (ซ่อนไว้อยู่ จะแสดงเฉพาะเมื่อเลือก Admin) -->
-            <div class="form-group" id="adminCodeGroup" style="display: none;">
-                <label for="adminCode">รหัสยืนยันผู้ดูแลระบบ (Admin Code)</label>
-                <input type="password" id="adminCode" placeholder="กรอกรหัสผ่านผู้ดูแลระบบ...">
-            </div>
-
             <div class="form-group">
                 <label for="email">อีเมล</label>
-                <input type="email" id="email" required placeholder="กรอกอีเมลของคุณ...">
+                <input type="email" id="email" placeholder="กรอกอีเมลของคุณ" required>
             </div>
 
             <div class="form-group">
                 <label for="password">รหัสผ่าน</label>
                 <div class="password-wrapper">
-                    <input type="password" id="password" required placeholder="กรอกรหัสผ่าน...">
+                    <input type="password" id="password" placeholder="กรอกรหัสผ่านของคุณ" required>
                     <button type="button" class="toggle-password">แสดง</button>
                 </div>
+            </div>
+
+            <div class="form-group">
+                <label for="loginRole">สิทธิ์เข้าใช้งาน</label>
+                <select id="loginRole" class="form-select">
+                    <option value="user">ผู้ใช้งานทั่วไป</option>
+                    <option value="admin">ผู้ดูแลระบบ (Admin)</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="adminCodeGroup" style="display: none;">
+                <label for="adminCode">รหัสยืนยันผู้ดูแลระบบ</label>
+                <input type="password" id="adminCode" placeholder="กรอกรหัส Admin (24236)">
             </div>
 
             <div class="form-options">
                 <label class="remember-me">
                     <input type="checkbox" id="rememberMe">
-                    <span>จดจำรหัสผ่านและอีเมลของฉัน</span>
+                    <span>จดจำการเข้าสู่ระบบ</span>
                 </label>
+                <a href="forgot-password.html" class="link-btn">ลืมรหัสผ่าน?</a>
             </div>
 
-            <button type="submit" class="btn-submit-login">เข้าสู่ระบบ</button>
-
-            <div class="form-footer">
-                <a href="forgot-password.html">ลืมรหัสผ่าน?</a>
-                <p>ยังไม่มีบัญชี? <a href="register.html">ลงทะเบียน</a></p>
-            </div>
+            <button type="submit" class="btn btn-primary btn-block">เข้าสู่ระบบ</button>
         </form>
+
+        <div class="auth-footer" style="margin-top: 1.25rem; text-align: center;">
+            <p style="font-size: 0.875rem; color: #6b7280;">ยังไม่มีบัญชีใช่หรือไม่? <a href="register.html" class="link-btn" style="font-weight: 600;">สมัครสมาชิก</a></p>
+        </div>
     </div>
 
     <script src="app.js"></script>
