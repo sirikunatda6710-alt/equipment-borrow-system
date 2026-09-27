@@ -4,198 +4,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>ลงทะเบียน | ระบบยืม-คืนอุปกรณ์</title>
-
+    <title>สมัครสมาชิก | ระบบยืม-คืนอุปกรณ์</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
-<body class="login-page">
+<body class="auth-page">
 
-    <div class="login-container">
-
-        <!-- โลโก้ -->
-        <div class="login-logo">
-            <img
-                src="https://img2.pic.in.th/007-med-msu.md.webp"
-                alt="โลโก้คณะ"
-            >
+    <div class="auth-card">
+        <div class="auth-logo">
+            <img src="https://img2.pic.in.th/MED_logo1-1.png" alt="โลโก้คณะ">
         </div>
 
-        <!-- หัวข้อ -->
-        <h1>ลงทะเบียน</h1>
+        <h1 class="auth-title">สมัครสมาชิก</h1>
+        <p class="auth-subtitle">สร้างบัญชีผู้ใช้สำหรับระบบยืม-คืนอุปกรณ์</p>
 
-        <p class="login-subtitle">
-            สร้างบัญชีเพื่อใช้งานระบบยืม-คืนอุปกรณ์
-        </p>
-
-        <!-- แบบฟอร์มลงทะเบียน -->
-        <form id="registerForm" class="login-form">
-
-            <!-- ชื่อ-นามสกุล -->
-            <label for="name">
-                ชื่อ-นามสกุล
-            </label>
-
-            <input
-                id="name"
-                type="text"
-                required
-                placeholder="กรอกชื่อ-นามสกุล"
-            >
-
-            <!-- อีเมล -->
-            <label for="email">
-                อีเมล
-            </label>
-
-            <input
-                id="email"
-                type="email"
-                required
-                placeholder="กรอกอีเมล"
-            >
-
-            <!-- ประเภทผู้ใช้งาน -->
+        <form id="registerForm">
             <div class="form-group">
+                <label for="regName">ชื่อ - นามสกุล</label>
+                <input type="text" id="regName" placeholder="กรอกชื่อ-นามสกุล" required>
+            </div>
 
-                <label>
-                    ประเภทผู้ใช้งาน
-                </label>
+            <div class="form-group">
+                <label for="regEmail">อีเมล</label>
+                <input type="email" id="regEmail" placeholder="กรอกอีเมลของคุณ" required>
+            </div>
 
-                <div class="role-options">
-
-                    <label class="role-option">
-                        <input
-                            type="radio"
-                            name="userRole"
-                            value="user"
-                            checked
-                        >
-                        <span>ผู้ใช้งานทั่วไป</span>
-                    </label>
-
-                    <label class="role-option">
-                        <input
-                            type="radio"
-                            name="userRole"
-                            value="admin"
-                        >
-                        <span>ผู้ดูแลระบบ</span>
-                    </label>
-
+            <div class="form-group">
+                <label for="regPassword">รหัสผ่าน</label>
+                <div class="password-wrapper">
+                    <input type="password" id="regPassword" placeholder="อย่างน้อย 6 ตัวอักษร" required minlength="6">
+                    <button type="button" class="toggle-password">แสดง</button>
                 </div>
-
             </div>
 
-            <!-- รหัสผ่าน -->
-            <label for="password">
-                รหัสผ่าน
-            </label>
-
-            <div class="password-wrapper">
-
-                <input
-                    id="password"
-                    type="password"
-                    required
-                    placeholder="สร้างรหัสผ่าน"
-                >
-
-                <button
-                    type="button"
-                    class="toggle-password"
-                    data-target="password"
-                >
-                    แสดง
-                </button>
-
-            </div>
-
-            <!-- เงื่อนไขรหัสผ่าน -->
-            <div class="password-rules">
-
-                <p>
-                    <b>รหัสผ่านต้องมี:</b>
-                </p>
-
-                <p
-                    id="ruleLength"
-                    class="rule-invalid"
-                >
-                    อย่างน้อย 8 ตัวอักษร
-                </p>
-
-                <p
-                    id="ruleUppercase"
-                    class="rule-invalid"
-                >
-                    ตัวอักษรภาษาอังกฤษพิมพ์ใหญ่
-                </p>
-
-                <p
-                    id="ruleLowercase"
-                    class="rule-invalid"
-                >
-                    ตัวอักษรภาษาอังกฤษพิมพ์เล็ก
-                </p>
-
-                <p
-                    id="ruleNumber"
-                    class="rule-invalid"
-                >
-                    ตัวเลขอย่างน้อย 1 ตัว
-                </p>
-
-            </div>
-
-            <!-- ยืนยันรหัสผ่าน -->
-            <label for="confirmPassword">
-                ยืนยันรหัสผ่าน
-            </label>
-
-            <div class="password-wrapper">
-
-                <input
-                    id="confirmPassword"
-                    type="password"
-                    required
-                    placeholder="กรอกอีกครั้ง"
-                >
-
-                <button
-                    type="button"
-                    class="toggle-password"
-                    data-target="confirmPassword"
-                >
-                    แสดง
-                </button>
-
-            </div>
-
-            <!-- ปุ่มลงทะเบียน -->
-            <button
-                type="submit"
-                class="login-button"
-            >
-                ลงทะเบียน
-            </button>
-
-            <!-- กลับเข้าสู่ระบบ -->
-            <p class="register-link">
-                มีบัญชีแล้ว?
-                <a href="index.html">
-                    เข้าสู่ระบบ
-                </a>
-            </p>
-
+            <button type="submit" class="btn btn-primary btn-block">ยืนยันการสมัครสมาชิก</button>
         </form>
 
+        <div class="auth-footer" style="margin-top: 1.25rem; text-align: center;">
+            <p style="font-size: 0.875rem; color: #6b7280;">มีบัญชีอยู่แล้ว? <a href="index.html" class="link-btn" style="font-weight: 600;">เข้าสู่ระบบ</a></p>
+        </div>
     </div>
 
-    <!-- JavaScript -->
     <script src="app.js"></script>
-
 </body>
 
 </html>
