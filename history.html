@@ -4,8 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ประวัติระบบ | ระบบยืม-คืนอุปกรณ์</title>
+    <title>ประวัติยืม-คืน | ระบบยืม-คืนอุปกรณ์</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .status-badge-approved { background: #d1fae5; color: #059669; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 0.85rem; }
+        .status-badge-pending { background: #fef3c7; color: #d97706; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 0.85rem; }
+        .status-badge-rejected { background: #fee2e2; color: #dc2626; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 0.85rem; }
+    </style>
 </head>
 
 <body>
@@ -13,27 +18,22 @@
         <!-- Header -->
         <header class="header">
             <div class="brand">
-                <div class="header-logo">
-                    <img src="https://img2.pic.in.th/007-med-msu.md.webp" alt="โลโก้คณะ">
-                </div>
+                <div class="header-logo"><img src="https://img2.pic.in.th/007-med-msu.md.webp" alt="โลโก้คณะ"></div>
                 <div class="brand-text">
                     <h2>ระบบยืม-คืนอุปกรณ์</h2>
-                    <p id="systemRoleText">ส่วนผู้ดูแลระบบ (Admin)</p>
+                    <p id="systemRoleText">ส่วนผู้ใช้งานทั่วไป</p>
                 </div>
             </div>
-
             <div class="header-actions">
                 <button type="button" id="profileButton" class="profile-button">
                     <i data-lucide="circle-user-round"></i>
                     <div class="profile-info">
-                        <span class="profile-label" id="userRoleBadge">ผู้ดูแลระบบ</span>
-                        <span id="userName" class="profile-name">ผู้ดูแลระบบ</span>
+                        <span class="profile-label" id="userRoleBadge">ผู้ใช้งานทั่วไป</span>
+                        <span id="userName" class="profile-name">ผู้ใช้งาน</span>
                     </div>
                 </button>
-
                 <button type="button" id="logoutButton" class="logout-button">
-                    <i data-lucide="log-out"></i>
-                    <span>ออกจากระบบ</span>
+                    <i data-lucide="log-out"></i><span>ออกจากระบบ</span>
                 </button>
             </div>
         </header>
@@ -43,36 +43,33 @@
 
         <!-- Main Content -->
         <main class="main-content">
-            <section class="dashboard-heading" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                <div>
-                    <h1>📜 ประวัติการใช้งานระบบ</h1>
-                    <p>บันทึกประวัติการจัดการอุปกรณ์ การอนุมัติยืม-คืน และการอนุมัติผู้ใช้งาน</p>
-                </div>
-                <button onclick="clearHistoryLog()" style="padding: 0.5rem 1rem; background: #ef4444; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">
-                    ล้างประวัติทั้งหมด
-                </button>
+            <section class="dashboard-heading">
+                <h1>📜 ประวัติการทำรายการยืม-คืนของฉัน</h1>
+                <p>ตรวจสอบประวัติการยืม-คืนอุปกรณ์ทั้งหมด พร้อมชื่อผู้ดูแลระบบผู้อนุมัติรายการ</p>
             </section>
 
-            <!-- ตารางประวัติ -->
-            <section class="table-container" style="margin-top: 1rem;">
+            <section class="table-container" style="margin-top: 1.5rem;">
                 <div class="table-responsive">
                     <table>
                         <thead>
                             <tr>
-                                <th>วัน-เวลา</th>
-                                <th>การกระทำ / กิจกรรม</th>
-                                <th>รายละเอียด</th>
-                                <th>ผู้ดำเนินการ (Admin)</th>
+                                <th>รหัสรายการ</th>
+                                <th>ชื่ออุปกรณ์</th>
+                                <th>ประเภทคำขอ</th>
+                                <th>จำนวน</th>
+                                <th>วันที่ทำรายการ</th>
+                                <th>สถานะ</th>
+                                <th>แอดมินผู้อนุมัติ/ดำเนินการ</th>
                             </tr>
                         </thead>
-                        <tbody id="historyTableBody"></tbody>
+                        <tbody id="userHistoryTable"></tbody>
                     </table>
                 </div>
             </section>
         </main>
     </div>
 
-    <!-- Modals -->
+    <!-- Modal ข้อมูลผู้ใช้งาน -->
     <div id="profileModal" class="modal" style="display: none;">
         <div class="modal-content profile-modal">
             <button type="button" class="modal-close" id="closeProfileModal">×</button>
@@ -89,45 +86,39 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            renderHistoryTable();
+            renderUserHistory();
         });
 
-        function getHistoryLogs() {
-            try {
-                return JSON.parse(localStorage.getItem('system_history')) || [
-                    { action: 'เพิ่มอุปกรณ์ใหม่', detail: 'เพิ่มอุปกรณ์ EQ-CAM-001 (กล้อง DSLR Canon EOS 80D)', adminName: 'ภูพงศ์ ทรงศิริ', date: '27/9/2569 16:30:00' },
-                    { action: 'อนุมัติคำขอ', detail: 'อนุมัติ คำขอ ยืม ชุดลำโพงเคลื่อนย้าย (1 ชิ้น) ของ สมชาย สายเรียน', adminName: 'ภูพงศ์ ทรงศิริ', date: '27/9/2569 17:10:00' }
-                ];
-            } catch (e) {
-                return [];
-            }
-        }
+        function renderUserHistory() {
+            const table = document.getElementById('userHistoryTable');
+            const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
+            const allRequests = JSON.parse(localStorage.getItem('user_requests')) || [];
 
-        function renderHistoryTable() {
-            const table = document.getElementById('historyTableBody');
-            const logs = getHistoryLogs();
+            // กรองประวัติเฉพาะของตนเอง
+            const myHistory = allRequests.filter(r => r.userEmail === currentUser.email || r.userName === currentUser.name);
 
-            if (logs.length === 0) {
-                table.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 2.5rem; color: #6b7280;">ยังไม่มีประวัติการบันทึกกิจกรรมในระบบ</td></tr>`;
+            if (myHistory.length === 0) {
+                table.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 2.5rem; color: #6b7280;">คุณยังไม่มีประวัติการยืม-คืนอุปกรณ์ในระบบ</td></tr>`;
                 return;
             }
 
-            table.innerHTML = logs.map(log => `
+            table.innerHTML = myHistory.map(item => `
                 <tr>
-                    <td style="white-space: nowrap;">${log.date}</td>
-                    <td><span style="background:#f3f4f6; color:#1f2937; padding:2px 8px; border-radius:4px; font-size:0.85rem; font-weight:600;">${log.action}</span></td>
-                    <td>${log.detail}</td>
-                    <td><strong>${log.adminName || 'ผู้ดูแลระบบ'}</strong></td>
+                    <td><strong>${item.id}</strong></td>
+                    <td>${item.equipmentName}</td>
+                    <td><span style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-size:0.8rem; font-weight:600;">${item.type || 'ยืม'}</span></td>
+                    <td>${item.quantity || 1}</td>
+                    <td>${item.requestDate}</td>
+                    <td>
+                        <span class="status-badge-${item.status}">
+                            ${item.status === 'pending' ? 'รออนุมัติ' : item.status === 'approved' ? 'อนุมัติสำเร็จ' : 'ถูกปฏิเสธ'}
+                        </span>
+                    </td>
+                    <td><strong>${item.approvedBy || (item.status === 'pending' ? '-' : 'ผู้ดูแลระบบ')}</strong></td>
                 </tr>
             `).join('');
 
             if (window.lucide) lucide.createIcons();
-        }
-
-        function clearHistoryLog() {
-            if (!confirm('คุณแน่ใจหรือไม่ว่าต้องการล้างประวัติการทำรายการทั้งหมด?')) return;
-            localStorage.removeItem('system_history');
-            renderHistoryTable();
         }
     </script>
 </body>
