@@ -308,46 +308,6 @@
   }
 
   // ============================================================
-  // Register Feature
-  // ============================================================
-
-  function setupRegisterForm() {
-    const form = document.getElementById('registerForm');
-    if (!form || form.dataset.bound === 'true') return;
-    form.dataset.bound = 'true';
-
-    form.addEventListener('submit', async event => {
-      event.preventDefault();
-      const name = document.getElementById('regName')?.value?.trim() || '';
-      const email = document.getElementById('regEmail')?.value?.trim() || '';
-      const password = document.getElementById('regPassword')?.value || '';
-
-      if (!name || !email || !password) { alert('กรุณากรอกข้อมูลให้ครบถ้วน'); return; }
-
-      try {
-        const ready = await initFirebase();
-        if (!ready || !auth) throw new Error('ไม่สามารถเชื่อมต่อระบบยืนยันตัวตนได้');
-
-        const cred = await auth.createUserWithEmailAndPassword(email, password);
-        const user = cred.user;
-
-        if (db) {
-          await db.collection('users').doc(user.uid).set({
-            name: name,
-            email: email,
-            role: 'user',
-            createdAt: new Date()
-          });
-        }
-
-        alert('สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ');
-        window.location.href = 'index.html';
-
-      } catch (err) { alert(firebaseErrorMessage(err)); }
-    });
-  }
-
-  // ============================================================
   // Forgot Password Feature
   // ============================================================
 
@@ -381,7 +341,6 @@
     try { setupRoleUI(); } catch (e) {}
     try { loadRememberedData(); } catch (e) {}
     try { setupLoginForm(); } catch (e) {}
-    try { setupRegisterForm(); } catch (e) {}
     try { setupForgotPasswordForm(); } catch (e) {}
     try { setupProfileModal(); } catch (e) {}
     if (window.lucide) { try { lucide.createIcons(); } catch (e) {} }
