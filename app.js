@@ -1,10 +1,6 @@
 (function () {
   'use strict';
 
-  // ============================================================
-  // Configuration
-  // ============================================================
-
   const FIREBASE_CONFIG = {
     apiKey: "AIzaSyC3JRPuC-2LCs8nqiLy_LKvi72NyLLd7_U",
     authDomain: "equipment-borrow-1303c.firebaseapp.com",
@@ -29,10 +25,6 @@
   let db = null;
   let auth = null;
   let isFirebaseInitializing = false;
-
-  // ============================================================
-  // Helpers & Global Log System
-  // ============================================================
 
   function saveJSON(key, value) {
     try {
@@ -60,122 +52,27 @@
 
   function getEquipmentLocal() {
     const mockEquipment = [
-      // --- หมวด 1: ครุภัณฑ์ ---
-      {
-        id: "EQ-BUILD-001",
-        name: "โปรเจกเตอร์ความละเอียดสูง (HD Projector)",
-        category: "ครุภัณฑ์",
-        total: 5,
-        available: 4,
-        status: "available"
-      },
-      {
-        id: "EQ-BUILD-002",
-        name: "จอรับภาพแบบขาตั้ง 100 นิ้ว",
-        category: "ครุภัณฑ์",
-        total: 4,
-        available: 4,
-        status: "available"
-      },
-      {
-        id: "EQ-BUILD-003",
-        name: "โต๊ะพับอเนกประสงค์หน้าขาว",
-        category: "ครุภัณฑ์",
-        total: 12,
-        available: 10,
-        status: "available"
-      },
-
-      // --- หมวด 2: วัสดุ ---
-      {
-        id: "EQ-MAT-001",
-        name: "ปลั๊กพ่วงสายยาว 10 เมตร (4 ช่อง)",
-        category: "วัสดุ",
-        total: 15,
-        available: 12,
-        status: "available"
-      },
-      {
-        id: "EQ-MAT-002",
-        name: "สายแปลง HDMI to VGA",
-        category: "วัสดุ",
-        total: 10,
-        available: 8,
-        status: "available"
-      },
-
-      // --- หมวด 3: อุปกรณ์ (เครื่องเสียง) ---
-      {
-        id: "EQ-AUDIO-001",
-        name: "ชุดลำโพงเคลื่อนย้ายพร้อมไมค์ไร้สาย (Portable Speaker)",
-        category: "อุปกรณ์",
-        total: 5,
-        available: 3,
-        status: "available"
-      },
-      {
-        id: "EQ-AUDIO-002",
-        name: "ไมโครโฟนไร้สายคู่ (Wireless Microphone Set)",
-        category: "อุปกรณ์",
-        total: 8,
-        available: 6,
-        status: "available"
-      },
-      {
-        id: "EQ-AUDIO-003",
-        name: "เครื่องผสมสัญญาณเสียง มิกเซอร์ 8 ช่อง",
-        category: "อุปกรณ์",
-        total: 3,
-        available: 2,
-        status: "available"
-      },
-
-      // --- หมวด 4: บันทึกภาพ ---
-      {
-        id: "EQ-CAM-001",
-        name: "กล้องถ่ายภาพ DSLR Canon EOS 80D พร้อมเลนส์ Kit",
-        category: "บันทึกภาพ",
-        total: 4,
-        available: 2,
-        status: "available"
-      },
-      {
-        id: "EQ-CAM-002",
-        name: "ขาตั้งกล้องอลูมิเนียม พร้อมหัวแพน (Tripod)",
-        category: "บันทึกภาพ",
-        total: 6,
-        available: 5,
-        status: "available"
-      },
-      {
-        id: "EQ-CAM-003",
-        name: "ชุดไฟต่อเนื่องสตูดิโอ (Softbox Light Set)",
-        category: "บันทึกภาพ",
-        total: 3,
-        available: 3,
-        status: "available"
-      },
-      {
-        id: "EQ-CAM-004",
-        name: "กล้องวิดีโอ 4K Sony Handycam",
-        category: "บันทึกภาพ",
-        total: 3,
-        available: 1,
-        status: "available"
-      }
+      { id: "EQ-BUILD-001", name: "โปรเจกเตอร์ความละเอียดสูง (HD Projector)", category: "ครุภัณฑ์", total: 5, available: 4, status: "available" },
+      { id: "EQ-BUILD-002", name: "จอรับภาพแบบขาตั้ง 100 นิ้ว", category: "ครุภัณฑ์", total: 4, available: 4, status: "available" },
+      { id: "EQ-BUILD-003", name: "โต๊ะพับอเนกประสงค์หน้าขาว", category: "ครุภัณฑ์", total: 12, available: 10, status: "available" },
+      { id: "EQ-MAT-001", name: "ปลั๊กพ่วงสายยาว 10 เมตร (4 ช่อง)", category: "วัสดุ", total: 15, available: 12, status: "available" },
+      { id: "EQ-MAT-002", name: "สายแปลง HDMI to VGA", category: "วัสดุ", total: 10, available: 8, status: "available" },
+      { id: "EQ-AUDIO-001", name: "ชุดลำโพงเคลื่อนย้ายพร้อมไมค์ไร้สาย (Portable Speaker)", category: "อุปกรณ์", total: 5, available: 3, status: "available" },
+      { id: "EQ-AUDIO-002", name: "ไมโครโฟนไร้สายคู่ (Wireless Microphone Set)", category: "อุปกรณ์", total: 8, available: 6, status: "available" },
+      { id: "EQ-AUDIO-003", name: "เครื่องผสมสัญญาณเสียง มิกเซอร์ 8 ช่อง", category: "อุปกรณ์", total: 3, available: 2, status: "available" },
+      { id: "EQ-CAM-001", name: "กล้องถ่ายภาพ DSLR Canon EOS 80D พร้อมเลนส์ Kit", category: "บันทึกภาพ", total: 4, available: 2, status: "available" },
+      { id: "EQ-CAM-002", name: "ขาตั้งกล้องอลูมิเนียม พร้อมหัวแพน (Tripod)", category: "บันทึกภาพ", total: 6, available: 5, status: "available" },
+      { id: "EQ-CAM-003", name: "ชุดไฟต่อเนื่องสตูดิโอ (Softbox Light Set)", category: "บันทึกภาพ", total: 3, available: 3, status: "available" },
+      { id: "EQ-CAM-004", name: "กล้องวิดีโอ 4K Sony Handycam", category: "บันทึกภาพ", total: 3, available: 1, status: "available" }
     ];
 
     try {
       const data = localStorage.getItem('equipment');
       if (data) {
         const parsed = JSON.parse(data);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
-        }
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
-    } catch (e) {
-      console.error(e);
-    }
+    } catch (e) { console.error(e); }
 
     saveJSON('equipment', mockEquipment);
     return mockEquipment;
@@ -184,15 +81,12 @@
   function firebaseErrorMessage(error) {
     const code = error?.code || '';
     const map = {
-      'auth/api-key-not-valid': 'API Key ของ Firebase ไม่ถูกต้อง กรุณาตรวจสอบใน Project Settings',
-      'auth/invalid-api-key': 'API Key ของ Firebase ไม่ถูกต้อง',
-      'auth/email-already-in-use': 'อีเมลนี้มีบัญชีอยู่แล้ว กรุณาเข้าสู่ระบบ',
+      'auth/api-key-not-valid': 'API Key ของ Firebase ไม่ถูกต้อง',
+      'auth/email-already-in-use': 'อีเมลนี้มีบัญชีอยู่แล้ว',
       'auth/invalid-email': 'รูปแบบอีเมลไม่ถูกต้อง',
       'auth/weak-password': 'รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร',
       'auth/user-not-found': 'ไม่พบบัญชีผู้ใช้นี้',
-      'auth/wrong-password': 'อีเมลหรือรหัสผ่านไม่ถูกต้อง',
-      'auth/invalid-credential': 'อีเมลหรือรหัสผ่านไม่ถูกต้อง',
-      'auth/too-many-requests': 'พยายามเข้าสู่ระบบหลายครั้งเกินไป กรุณาลองใหม่ในภายหลัง'
+      'auth/wrong-password': 'อีเมลหรือรหัสผ่านไม่ถูกต้อง'
     };
     return map[code] || error?.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อระบบ';
   }
@@ -206,16 +100,9 @@
         existing.addEventListener('error', reject, { once: true });
         return;
       }
-
       const script = document.createElement('script');
-      script.src = src;
-      script.async = true;
-
-      script.addEventListener('load', () => {
-        script.dataset.loaded = 'true';
-        resolve();
-      }, { once: true });
-
+      script.src = src; script.async = true;
+      script.addEventListener('load', () => { script.dataset.loaded = 'true'; resolve(); }, { once: true });
       script.addEventListener('error', () => reject(new Error('Load failed')), { once: true });
       document.head.appendChild(script);
     });
@@ -223,40 +110,23 @@
 
   async function initFirebase() {
     if (window.firebase?.apps?.length) {
-      db = window.firebase.firestore();
-      auth = window.firebase.auth();
-      return true;
+      db = window.firebase.firestore(); auth = window.firebase.auth(); return true;
     }
-
     if (isFirebaseInitializing) return false;
     isFirebaseInitializing = true;
-
     try {
       const base = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}`;
       await loadScript(`${base}/firebase-app-compat.js`);
       await loadScript(`${base}/firebase-auth-compat.js`);
       await loadScript(`${base}/firebase-firestore-compat.js`);
-
       if (window.firebase) {
-        if (!window.firebase.apps.length) {
-          window.firebase.initializeApp(FIREBASE_CONFIG);
-        }
-        db = window.firebase.firestore();
-        auth = window.firebase.auth();
-        isFirebaseInitializing = false;
-        return true;
+        if (!window.firebase.apps.length) window.firebase.initializeApp(FIREBASE_CONFIG);
+        db = window.firebase.firestore(); auth = window.firebase.auth();
+        isFirebaseInitializing = false; return true;
       }
-    } catch (e) {
-      console.warn('Firebase setup warning:', e);
-    }
-
-    isFirebaseInitializing = false;
-    return false;
+    } catch (e) { console.warn('Firebase init warning:', e); }
+    isFirebaseInitializing = false; return false;
   }
-
-  // ============================================================
-  // Profile & Logout Handler
-  // ============================================================
 
   function setupProfileModal() {
     const profileBtn = document.getElementById('profileButton');
@@ -278,9 +148,7 @@
     }
 
     if (!profileModal) return;
-
     profileModal.style.display = 'none';
-    profileModal.classList.remove('active');
 
     if (profileBtn && profileBtn.dataset.bound !== 'true') {
       profileBtn.dataset.bound = 'true';
@@ -288,16 +156,12 @@
         const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
         if (nameInput) nameInput.value = currentUser.name || '';
         profileModal.style.display = 'flex';
-        profileModal.classList.add('active');
       });
     }
 
     if (closeBtn && closeBtn.dataset.bound !== 'true') {
       closeBtn.dataset.bound = 'true';
-      closeBtn.addEventListener('click', () => {
-        profileModal.style.display = 'none';
-        profileModal.classList.remove('active');
-      });
+      closeBtn.addEventListener('click', () => { profileModal.style.display = 'none'; });
     }
 
     if (saveBtn && saveBtn.dataset.bound !== 'true') {
@@ -309,36 +173,24 @@
           currentUser.name = newName;
           saveJSON('equipment_current_user', currentUser);
           localStorage.setItem('userName', newName);
-
           const userNameElem = document.getElementById('userName');
           if (userNameElem) userNameElem.textContent = newName;
-
           alert('บันทึกข้อมูลชื่อเรียบร้อยแล้ว');
         }
         profileModal.style.display = 'none';
-        profileModal.classList.remove('active');
       });
     }
   }
 
-  // ============================================================
-  // UI Functionalities
-  // ============================================================
-
   function setupPasswordToggle() {
-    const buttons = document.querySelectorAll('.toggle-password');
-    buttons.forEach(button => {
+    document.querySelectorAll('.toggle-password').forEach(button => {
       if (button.dataset.ready === 'true') return;
       button.dataset.ready = 'true';
-
       button.addEventListener('click', event => {
         event.preventDefault();
-        event.stopPropagation();
-
         const wrapper = button.closest('.password-wrapper') || button.parentElement;
         const input = wrapper ? wrapper.querySelector('input') : null;
         if (!input) return;
-
         const isPassword = input.type === 'password';
         input.type = isPassword ? 'text' : 'password';
         button.textContent = isPassword ? 'ซ่อน' : 'แสดง';
@@ -350,157 +202,40 @@
     const roleSelect = document.getElementById('loginRole');
     const adminCodeGroup = document.getElementById('adminCodeGroup');
     const adminCode = document.getElementById('adminCode');
-
     if (!roleSelect || !adminCodeGroup) return;
-
     const update = () => {
       const isAdmin = roleSelect.value === 'admin';
       adminCodeGroup.style.display = isAdmin ? 'block' : 'none';
-      if (adminCode) {
-        adminCode.required = isAdmin;
-        if (!isAdmin) adminCode.value = '';
-      }
+      if (adminCode) { adminCode.required = isAdmin; if (!isAdmin) adminCode.value = ''; }
     };
-
-    roleSelect.addEventListener('change', update);
-    update();
+    roleSelect.addEventListener('change', update); update();
   }
 
   function loadRememberedData() {
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
     const rememberMe = document.getElementById('rememberMe');
-
     const savedEmail = localStorage.getItem('rememberedEmail');
     const savedPassword = localStorage.getItem('rememberedPassword');
-
     if (emailInput && savedEmail) emailInput.value = savedEmail;
     if (passwordInput && savedPassword) passwordInput.value = savedPassword;
     if (rememberMe && savedEmail) rememberMe.checked = true;
   }
 
-  // ============================================================
-  // Dropdown Navigation Handler
-  // ============================================================
-
   function setupDropdownToggle() {
-    const dropdownBtns = document.querySelectorAll('.nav-dropdown-btn');
-
-    dropdownBtns.forEach(btn => {
+    document.querySelectorAll('.nav-dropdown-btn').forEach(btn => {
       if (btn.dataset.bound === 'true') return;
       btn.dataset.bound = 'true';
-
       btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+        e.preventDefault(); e.stopPropagation();
         const dropdown = btn.closest('.nav-dropdown');
-        if (dropdown) {
-          dropdown.classList.toggle('active');
-        }
+        if (dropdown) dropdown.classList.toggle('active');
       });
     });
-
     document.addEventListener('click', () => {
-      document.querySelectorAll('.nav-dropdown').forEach(dropdown => {
-        dropdown.classList.remove('active');
-      });
+      document.querySelectorAll('.nav-dropdown').forEach(dropdown => dropdown.classList.remove('active'));
     });
   }
-
-  // ============================================================
-  // Register Feature
-  // ============================================================
-
-  function setupRegisterForm() {
-    const form = document.getElementById('registerForm');
-    if (!form || form.dataset.bound === 'true') return;
-    form.dataset.bound = 'true';
-
-    form.addEventListener('submit', async event => {
-      event.preventDefault();
-
-      const nameInput = document.getElementById('name');
-      const emailInput = document.getElementById('email');
-      const passwordInput = document.getElementById('password');
-      const confirmPasswordInput = document.getElementById('confirmPassword');
-      const roleInputs = Array.from(document.querySelectorAll('input[name="userRole"]'));
-
-      const name = nameInput?.value?.trim() || '';
-      const email = emailInput?.value?.trim() || '';
-      const password = passwordInput?.value || '';
-      const confirmPassword = confirmPasswordInput?.value || '';
-      const selectedRole = roleInputs.find(i => i.checked)?.value || 'user';
-
-      if (!name || !email || !password) {
-        alert('กรุณากรอกข้อมูลให้ครบถ้วน');
-        return;
-      }
-
-      if (password !== confirmPassword) {
-        alert('รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน');
-        return;
-      }
-
-      const submitBtn = form.querySelector('button[type="submit"]');
-      const originalText = submitBtn ? submitBtn.textContent : '';
-
-      if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'กำลังลงทะเบียน...';
-      }
-
-      try {
-        const ready = await initFirebase();
-        if (!ready || !auth || !db) {
-          throw new Error('ไม่สามารถเชื่อมต่อระบบยืนยันตัวตนได้');
-        }
-
-        const cred = await auth.createUserWithEmailAndPassword(email, password);
-        const user = cred.user;
-
-        try {
-          await user.updateProfile({ displayName: name });
-        } catch (_) {}
-
-        const userData = {
-          uid: user.uid,
-          name,
-          email,
-          role: selectedRole,
-          createdAt: new Date().toISOString()
-        };
-
-        await db.collection('users').doc(user.uid).set(userData, { merge: true });
-        
-        let pendingUsers = JSON.parse(localStorage.getItem('pending_users')) || [];
-        pendingUsers.push({
-          id: 'USR' + Date.now().toString().slice(-4),
-          name: name,
-          email: email,
-          role: selectedRole,
-          date: new Date().toLocaleDateString('th-TH'),
-          status: 'pending'
-        });
-        localStorage.setItem('pending_users', JSON.stringify(pendingUsers));
-
-        await auth.signOut();
-
-        alert('ลงทะเบียนสำเร็จ! กรุณารอการอนุมัติจากผู้ดูแลระบบก่อนเข้าใช้งาน');
-        window.location.href = 'index.html';
-      } catch (err) {
-        alert(firebaseErrorMessage(err));
-      } finally {
-        if (submitBtn) {
-          submitBtn.disabled = false;
-          submitBtn.textContent = originalText;
-        }
-      }
-    });
-  }
-
-  // ============================================================
-  // Login Feature (ระบบยืนยันสิทธิ์เข้มงวดด้วย Firestore DB)
-  // ============================================================
 
   function setupLoginForm() {
     const form = document.getElementById('loginForm');
@@ -509,68 +244,31 @@
 
     form.addEventListener('submit', async event => {
       event.preventDefault();
-
-      const emailInput = document.getElementById('email');
-      const passwordInput = document.getElementById('password');
-      const roleSelect = document.getElementById('loginRole');
+      const email = document.getElementById('email')?.value?.trim() || '';
+      const password = document.getElementById('password')?.value || '';
+      const selectedRole = document.getElementById('loginRole')?.value || 'user';
       const adminCodeInput = document.getElementById('adminCode');
-      const rememberMe = document.getElementById('rememberMe');
 
-      const email = emailInput?.value?.trim() || '';
-      const password = passwordInput?.value || '';
-      const selectedRole = roleSelect?.value || 'user';
-      const ADMIN_CODE = '24236';
-
-      if (!email || !password) {
-        alert('กรุณากรอกอีเมลและรหัสผ่าน');
-        return;
-      }
-
-      if (selectedRole === 'admin') {
-        const code = adminCodeInput?.value?.trim() || '';
-        if (code !== ADMIN_CODE) {
-          alert('รหัสผู้ดูแลระบบไม่ถูกต้อง');
-          return;
-        }
-      }
-
-      const submitBtn = form.querySelector('button[type="submit"]');
-      const originalText = submitBtn ? submitBtn.textContent : '';
-
-      if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'กำลังเข้าสู่ระบบ...';
+      if (!email || !password) { alert('กรุณากรอกอีเมลและรหัสผ่าน'); return; }
+      if (selectedRole === 'admin' && adminCodeInput?.value?.trim() !== '24236') {
+        alert('รหัสผู้ดูแลระบบไม่ถูกต้อง'); return;
       }
 
       try {
         const ready = await initFirebase();
-        if (!ready || !auth) {
-          throw new Error('ไม่สามารถเชื่อมต่อระบบยืนยันตัวตนได้');
-        }
-
+        if (!ready || !auth) throw new Error('ไม่สามารถเชื่อมต่อระบบยืนยันตัวตนได้');
         const cred = await auth.signInWithEmailAndPassword(email, password);
         const user = cred.user;
-
-        // ดึงสิทธิ์ที่แท้จริงจากฐานข้อมูล Firestore
         let profile = null;
         try {
           const snap = await db.collection('users').doc(user.uid).get();
           if (snap.exists) profile = snap.data();
-        } catch (e) {
-          console.error(e);
-        }
+        } catch (e) {}
 
         const actualRole = profile?.role || 'user';
-
-        // 🛑 ตรวจสอบความถูกต้องของสิทธิ์ (Strict Role Verification)
         if (selectedRole === 'admin' && actualRole !== 'admin') {
           await auth.signOut();
-          alert('❌ การเข้าถึงถูกปฏิเสธ: บัญชีนี้ไม่มีสิทธิ์เป็นผู้ดูแลระบบ');
-          return;
-        }
-
-        if (selectedRole === 'user' && actualRole === 'admin') {
-          alert('⚠️ บัญชีนี้เป็นสิทธิ์ผู้ดูแลระบบ ระบบจะนำคุณไปยังหน้า Admin Dashboard');
+          alert('❌ การเข้าถึงถูกปฏิเสธ: บัญชีนี้ไม่มีสิทธิ์เป็นผู้ดูแลระบบ'); return;
         }
 
         const currentUserData = {
@@ -584,52 +282,26 @@
         localStorage.setItem(KEYS.loggedIn, 'true');
         localStorage.setItem(KEYS.userEmail, email);
         localStorage.setItem(KEYS.userName, currentUserData.name);
-        localStorage.setItem(KEYS.firebaseUid, user.uid);
         localStorage.setItem(KEYS.userRole, actualRole);
 
-        if (rememberMe?.checked) {
-          localStorage.setItem('rememberedEmail', email);
-          localStorage.setItem('rememberedPassword', password);
-        } else {
-          localStorage.removeItem('rememberedEmail');
-          localStorage.removeItem('rememberedPassword');
-        }
-
-        if (actualRole === 'admin') {
-          window.location.href = 'dashboard.html';
-        } else {
-          window.location.href = 'borrow.html';
-        }
-      } catch (err) {
-        alert(firebaseErrorMessage(err));
-      } finally {
-        if (submitBtn) {
-          submitBtn.disabled = false;
-          submitBtn.textContent = originalText;
-        }
-      }
+        window.location.href = actualRole === 'admin' ? 'dashboard.html' : 'borrow.html';
+      } catch (err) { alert(firebaseErrorMessage(err)); }
     });
   }
 
   // ============================================================
-  // ROLE-BASED DASHBOARD RENDER LOGIC
+  // NAVBAR & DASHBOARD SETUP (เอารายการยืมออกแล้ว)[cite: 13, 14]
   // ============================================================
 
   function initDashboardByRole() {
     const adminView = document.getElementById('adminDashboardView');
     const userView = document.getElementById('userDashboardView');
-
-    const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {
-      name: 'ผู้ใช้งานระบบ',
-      role: 'user'
-    };
-
+    const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || { name: 'ผู้ใช้งานระบบ', role: 'user' };
     const roleBadge = document.getElementById('userRoleBadge');
     const userNameElem = document.getElementById('userName');
     const navbar = document.getElementById('mainNavbar');
 
     if (userNameElem) userNameElem.textContent = currentUser.name;
-
     const currentPage = window.location.pathname.split('/').pop() || 'dashboard.html';
 
     const dropdownNavHTML = `
@@ -649,7 +321,6 @@
 
     if (currentUser.role === 'admin') {
       if (roleBadge) roleBadge.textContent = 'ผู้ดูแลระบบ (Admin)';
-      
       if (navbar) {
         navbar.innerHTML = `
           <a href="dashboard.html" class="nav-item ${currentPage === 'dashboard.html' ? 'active' : ''}"><i data-lucide="layout-dashboard"></i> <span>Dashboard</span></a>
@@ -659,81 +330,48 @@
           <a href="history.html" class="nav-item ${currentPage === 'history.html' ? 'active' : ''}"><i data-lucide="history"></i> <span>ประวัติระบบ</span></a>
         `;
       }
-
       if (adminView) adminView.style.display = 'block';
       if (userView) userView.style.display = 'none';
-
       renderAdminDashboardData();
-
     } else {
       if (roleBadge) roleBadge.textContent = 'ผู้ใช้งานทั่วไป';
-
+      // 🟢 ตัดเมนู "รายการยืม" ออก เหลือ 4 เมนู[cite: 13, 14]
       if (navbar) {
         navbar.innerHTML = `
           <a href="dashboard.html" class="nav-item ${currentPage === 'dashboard.html' ? 'active' : ''}"><i data-lucide="layout-dashboard"></i> <span>Dashboard</span></a>
           ${dropdownNavHTML}
-          <a href="borrow.html" class="nav-item ${currentPage === 'borrow.html' ? 'active' : ''}"><i data-lucide="clipboard-list"></i> <span>รายการยืม</span></a>
           <a href="return.html" class="nav-item ${currentPage === 'return.html' ? 'active' : ''}"><i data-lucide="undo-2"></i> <span>คืนอุปกรณ์</span></a>
           <a href="history.html" class="nav-item ${currentPage === 'history.html' ? 'active' : ''}"><i data-lucide="history"></i> <span>ประวัติยืม-คืน</span></a>
         `;
       }
-
       if (adminView) adminView.style.display = 'none';
       if (userView) userView.style.display = 'block';
-
       renderUserDashboardData(currentUser);
     }
 
     setupDropdownToggle();
-
     if (window.lucide) lucide.createIcons();
   }
 
-  // ============================================================
-  // ADMIN DASHBOARD RENDER
-  // ============================================================
-
   function renderAdminDashboardData() {
     const equipmentList = getEquipmentLocal();
-
     function calculateStats(categoryName) {
-      const items = equipmentList.filter(item => {
-        const cat = String(item.category || '').trim();
-        return cat === categoryName;
-      });
-
-      let total = 0;
-      let available = 0;
-      let borrowed = 0;
-      let unavailable = 0;
-
+      const items = equipmentList.filter(item => String(item.category || '').trim() === categoryName);
+      let total = 0, available = 0, borrowed = 0, unavailable = 0;
       items.forEach(item => {
-        const itemTotal = Number(item.total || 0);
-        const itemAvail = Number(item.available || 0);
-
-        total += itemTotal;
-        available += itemAvail;
-
-        if (item.status === 'unavailable') {
-          unavailable += Math.max(0, itemTotal - itemAvail);
-        } else {
-          borrowed += Math.max(0, itemTotal - itemAvail);
-        }
+        const itemTotal = Number(item.total || 0), itemAvail = Number(item.available || 0);
+        total += itemTotal; available += itemAvail;
+        if (item.status === 'unavailable') unavailable += Math.max(0, itemTotal - itemAvail);
+        else borrowed += Math.max(0, itemTotal - itemAvail);
       });
-
       return { total, available, borrowed, unavailable };
     }
 
     function updateCategoryUI(prefix, stats) {
-      const totalElem = document.getElementById(`total${prefix}`);
-      const availElem = document.getElementById(`avail${prefix}`);
-      const borrowedElem = document.getElementById(`borrowed${prefix}`);
-      const unavailElem = document.getElementById(`unavail${prefix}`);
-
-      if (totalElem) totalElem.textContent = stats.total;
-      if (availElem) availElem.textContent = stats.available;
-      if (borrowedElem) borrowedElem.textContent = stats.borrowed;
-      if (unavailElem) unavailElem.textContent = stats.unavailable;
+      if (document.getElementById(`total${prefix}`)) document.getElementById(`total${prefix}`).textContent = stats.total;
+      if (document.getElementById(`avail${prefix}`)) document.getElementById(`avail${prefix}`).textContent = stats.available;
+      if (document.getElementById(`borrowed${prefix}`)) document.getElementById(`borrowed${prefix}`).textContent = stats.borrowed;
+      if (document.getElementById(`unavail${prefix}`)) document.getElementById(`unavail${prefix}`).textContent = stats.unavailable;
     }
 
     updateCategoryUI('Building', calculateStats('ครุภัณฑ์'));
@@ -742,75 +380,50 @@
     updateCategoryUI('Camera', calculateStats('บันทึกภาพ'));
   }
 
-  // ============================================================
-  // USER DASHBOARD RENDER
-  // ============================================================
-
   function renderUserDashboardData(user) {
     const userRequests = JSON.parse(localStorage.getItem('user_requests')) || [];
     const myRequests = userRequests.filter(r => r.userEmail === user.email || r.userName === user.name);
 
-    const activeBorrows = myRequests.filter(r => r.status === 'approved' && r.type === 'ยืม');
+    const activeBorrows = myRequests.filter(r => r.status === 'approved' && (r.type === 'ยืม' || r.type === 'รอคืน'));
     const pendingRequests = myRequests.filter(r => r.status === 'pending');
 
-    const activeElem = document.getElementById('userActiveBorrowCount');
-    const pendingElem = document.getElementById('userPendingCount');
-    const historyElem = document.getElementById('userTotalHistoryCount');
-
-    if (activeElem) activeElem.textContent = activeBorrows.length;
-    if (pendingElem) pendingElem.textContent = pendingRequests.length;
-    if (historyElem) historyElem.textContent = myRequests.length;
+    if (document.getElementById('userActiveBorrowCount')) document.getElementById('userActiveBorrowCount').textContent = activeBorrows.length;
+    if (document.getElementById('userPendingCount')) document.getElementById('userPendingCount').textContent = pendingRequests.length;
+    if (document.getElementById('userTotalHistoryCount')) document.getElementById('userTotalHistoryCount').textContent = myRequests.length;
 
     const tableBody = document.getElementById('userBorrowTable');
     if (!tableBody) return;
 
     if (myRequests.length === 0) {
-      tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;">ยังไม่มีประวัติหรือรายการยืมอุปกรณ์</td></tr>`;
+      tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;">ยังไม่มีประวัติการทำรายการยืม-คืนอุปกรณ์</td></tr>`;
       return;
     }
 
     tableBody.innerHTML = myRequests.map(req => `
       <tr>
-        <td>${req.id}</td>
+        <td><strong>${req.id}</strong></td>
         <td>${req.equipmentName}</td>
         <td>${req.requestDate}</td>
-        <td><span class="status-${req.status}">${req.status === 'pending' ? 'รอผู้ดูแลอนุมัติ' : req.status === 'approved' ? 'อนุมัติแล้ว' : 'ปฏิเสธ'}</span></td>
         <td>
-          ${req.status === 'approved' && req.type === 'ยืม' ? `<button onclick="requestReturn('${req.id}')" class="btn btn-sm">ส่งคำขอคืน</button>` : '-'}
+          <span style="padding: 2px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 600; 
+            background: ${req.status === 'pending' ? '#fef3c7' : req.status === 'approved' ? '#d1fae5' : '#fee2e2'};
+            color: ${req.status === 'pending' ? '#d97706' : req.status === 'approved' ? '#059669' : '#dc2626'};">
+            ${req.status === 'pending' ? 'รอผู้ดูแลอนุมัติ' : req.status === 'approved' ? 'อนุมัติแล้ว' : 'ปฏิเสธ'}
+          </span>
+        </td>
+        <td>
+          ${req.status === 'approved' && req.type === 'ยืม' ? `<a href="return.html" class="btn btn-sm" style="background:#10b981; color:white; padding:4px 8px; border-radius:4px; text-decoration:none;">ไปหน้าคืนอุปกรณ์</a>` : '-'}
         </td>
       </tr>
     `).join('');
   }
-
-  window.requestReturn = function(reqId) {
-    let requests = JSON.parse(localStorage.getItem('user_requests')) || [];
-    const idx = requests.findIndex(r => r.id === reqId);
-    if (idx !== -1) {
-      requests[idx].type = 'คืน';
-      requests[idx].status = 'pending';
-      requests[idx].requestDate = new Date().toLocaleDateString('th-TH');
-      localStorage.setItem('user_requests', JSON.stringify(requests));
-      alert('ส่งคำขอคืนเรียบร้อยแล้ว กรุณารอผู้ดูแลระบบอนุมัติ');
-      window.location.reload();
-    }
-  };
-
-  // ============================================================
-  // EQUIPMENT PAGE RENDER & BORROW SYSTEM
-  // ============================================================
 
   function initEquipmentPage() {
     const gridContainer = document.getElementById('equipmentGridContainer');
     if (!gridContainer) return;
 
     const urlParams = new URLSearchParams(window.location.search);
-    let selectedCategory = urlParams.get('category') || '';
-    
-    try {
-      selectedCategory = decodeURIComponent(selectedCategory).trim();
-    } catch (e) {
-      console.error(e);
-    }
+    let selectedCategory = decodeURIComponent(urlParams.get('category') || '').trim();
 
     const pageTitle = document.getElementById('categoryPageTitle');
     const categoryFilter = document.getElementById('categorySelectFilter');
@@ -845,50 +458,32 @@
     if (!container) return;
 
     const allEquipment = getEquipmentLocal();
-
     const filtered = allEquipment.filter(item => {
       const itemCat = String(item.category || '').trim();
       const filterCat = String(category || '').trim();
-
-      const matchCategory = !filterCat || 
-        itemCat === filterCat || 
-        (filterCat.includes('อุปกรณ์') && itemCat.includes('อุปกรณ์'));
-
-      const matchSearch = !searchKeyword || 
-        (item.name && item.name.toLowerCase().includes(searchKeyword.toLowerCase())) ||
-        (item.id && item.id.toLowerCase().includes(searchKeyword.toLowerCase()));
-      
+      const matchCategory = !filterCat || itemCat === filterCat || (filterCat.includes('อุปกรณ์') && itemCat.includes('อุปกรณ์'));
+      const matchSearch = !searchKeyword || (item.name && item.name.toLowerCase().includes(searchKeyword.toLowerCase())) || (item.id && item.id.toLowerCase().includes(searchKeyword.toLowerCase()));
       return matchCategory && matchSearch;
     });
 
     if (filtered.length === 0) {
-      container.innerHTML = `
-        <div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: #6b7280;">
-          ไม่พบรายการอุปกรณ์ในหมวดหมู่นี้
-        </div>`;
+      container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: #6b7280;">ไม่พบรายการอุปกรณ์ในหมวดหมู่นี้</div>`;
       return;
     }
 
     container.innerHTML = filtered.map(item => {
       const isAvailable = (item.available || 0) > 0 && item.status !== 'unavailable';
-
       return `
         <div class="equipment-card" style="background: #fff; border-radius: 12px; padding: 1.25rem; border: 1px solid #e5e7eb; display: flex; flex-direction: column; justify-content: space-between;">
           <div>
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
               <span style="font-size: 0.8rem; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-weight: 600;">${item.category || 'อุปกรณ์'}</span>
-              <span style="font-size: 0.85rem; font-weight: 600; color: ${isAvailable ? '#10b981' : '#ef4444'};">
-                ${isAvailable ? 'พร้อมเบิก' : 'ไม่พร้อมใช้งาน'}
-              </span>
+              <span style="font-size: 0.85rem; font-weight: 600; color: ${isAvailable ? '#10b981' : '#ef4444'};">${isAvailable ? 'พร้อมเบิก' : 'ไม่พร้อมใช้งาน'}</span>
             </div>
             <h3 style="font-size: 1.05rem; margin-bottom: 0.5rem; color: #1f2937;">${item.name}</h3>
             <p style="font-size: 0.85rem; color: #6b7280; margin-bottom: 1rem;">คงเหลือพร้อมใช้: <strong>${item.available || 0}</strong> / ${item.total || 0}</p>
           </div>
-
-          <button type="button" 
-            onclick="openBorrowModal('${item.id}', '${item.name}', ${item.available || 0})"
-            ${!isAvailable ? 'disabled' : ''}
-            style="width: 100%; padding: 0.6rem; border: none; border-radius: 8px; font-weight: 600; cursor: ${isAvailable ? 'pointer' : 'not-allowed'}; background: ${isAvailable ? '#10b981' : '#d1d5db'}; color: white;">
+          <button type="button" onclick="openBorrowModal('${item.id}', '${item.name}', ${item.available || 0})" ${!isAvailable ? 'disabled' : ''} style="width: 100%; padding: 0.6rem; border: none; border-radius: 8px; font-weight: 600; cursor: ${isAvailable ? 'pointer' : 'not-allowed'}; background: ${isAvailable ? '#10b981' : '#d1d5db'}; color: white;">
             ${isAvailable ? 'กดเบิก/ยืมสิ่งนี้' : 'สินค้าหมด / ไม่พร้อมยืม'}
           </button>
         </div>
@@ -901,17 +496,12 @@
   window.openBorrowModal = function(id, name, maxAvail) {
     const modal = document.getElementById('borrowModal');
     if (!modal) return;
-
     document.getElementById('modalEquipmentId').value = id;
     document.getElementById('modalEquipmentName').value = name;
-    
     const qtyInput = document.getElementById('modalBorrowQuantity');
-    qtyInput.max = maxAvail;
-    qtyInput.value = 1;
-    
+    qtyInput.max = maxAvail; qtyInput.value = 1;
     document.getElementById('modalMaxAvailable').textContent = `*(เบิกได้สูงสุด ${maxAvail} ชิ้น)`;
     document.getElementById('modalBorrowReason').value = '';
-
     modal.style.display = 'flex';
   };
 
@@ -927,12 +517,7 @@
 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
-
-      const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {
-        name: 'ผู้ใช้งานระบบ',
-        email: 'user@example.com'
-      };
-
+      const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || { name: 'ผู้ใช้งานระบบ', email: 'user@example.com' };
       const eqId = document.getElementById('modalEquipmentId').value;
       const eqName = document.getElementById('modalEquipmentName').value;
       const qty = parseInt(document.getElementById('modalBorrowQuantity').value) || 1;
@@ -949,26 +534,17 @@
         userEmail: currentUser.email,
         requestDate: new Date().toLocaleDateString('th-TH'),
         type: 'ยืม',
-        status: 'pending'
+        status: 'pending',
+        approvedBy: '-' // ยังไม่มีแอดมินอนุมัติ
       };
 
       userRequests.unshift(newRequest);
       localStorage.setItem('user_requests', JSON.stringify(userRequests));
-
       alert('ส่งคำขอเบิก/ยืมเรียบร้อยแล้ว! กรุณารอการอนุมัติจากผู้ดูแลระบบ');
       closeBorrowModal();
-
       window.location.reload();
     });
   }
-
-  window.viewCategory = function(categoryName) {
-    window.location.href = `equipment.html?category=${encodeURIComponent(categoryName)}`;
-  };
-
-  // ============================================================
-  // App Bootstrapper
-  // ============================================================
 
   function boot() {
     setupProfileModal();
@@ -976,14 +552,10 @@
     setupRoleUI();
     loadRememberedData();
     setupLoginForm();
-    setupRegisterForm();
     initDashboardByRole();
     initEquipmentPage();
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', boot);
-  } else {
-    boot();
-  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
 })();
