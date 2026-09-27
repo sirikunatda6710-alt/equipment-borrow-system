@@ -31,7 +31,7 @@
   let isFirebaseInitializing = false;
 
   // ============================================================
-  // Helpers & Mock Data (เพิ่มข้อมูลตัวอย่างครบทุกหมวดหมู่)
+  // Helpers & Mock Data
   // ============================================================
 
   function saveJSON(key, value) {
@@ -43,7 +43,6 @@
   }
 
   function getEquipmentLocal() {
-    // รายการตัวอย่างสำหรับทดสอบระบบแยกตามประเภท
     const mockEquipment = [
       // --- หมวด 1: ครุภัณฑ์ ---
       {
@@ -70,14 +69,6 @@
         available: 10,
         status: "available"
       },
-      {
-        id: "EQ-BUILD-004",
-        name: "เก้าอี้พลาสติกเบาะนวม",
-        category: "ครุภัณฑ์",
-        total: 50,
-        available: 45,
-        status: "available"
-      },
 
       // --- หมวด 2: วัสดุ ---
       {
@@ -96,27 +87,11 @@
         available: 8,
         status: "available"
       },
-      {
-        id: "EQ-MAT-003",
-        name: "สายสัญญาณเสียง AUX 3.5mm ถึง RCA (3 เมตร)",
-        category: "วัสดุ",
-        total: 20,
-        available: 18,
-        status: "available"
-      },
-      {
-        id: "EQ-MAT-004",
-        name: "ถ่านชาร์จ AA 1.2V (แพ็ค 4 ก้อน)",
-        category: "วัสดุ",
-        total: 30,
-        available: 25,
-        status: "available"
-      },
 
-      // --- หมวด 3: อุปกรณ์ (เครื่องเสียง / สื่อเรียนรู้) ---
+      // --- หมวด 3: อุปกรณ์ (เครื่องเสียง) ---
       {
         id: "EQ-AUDIO-001",
-        name: "ชุดลำโพงเคลื่อนย้ายพร้อมไมค์ไร้สาย",
+        name: "ชุดลำโพงเคลื่อนย้ายพร้อมไมค์ไร้สาย (Portable Speaker)",
         category: "อุปกรณ์",
         total: 5,
         available: 3,
@@ -124,7 +99,7 @@
       },
       {
         id: "EQ-AUDIO-002",
-        name: "ไมโครโฟนไร้สายคู่ (Wireless Microphone)",
+        name: "ไมโครโฟนไร้สายคู่ (Wireless Microphone Set)",
         category: "อุปกรณ์",
         total: 8,
         available: 6,
@@ -138,21 +113,31 @@
         available: 2,
         status: "available"
       },
+
+      // --- หมวด 4: บันทึกภาพ ---
       {
-        id: "EQ-AUDIO-004",
-        name: "ขาตั้งไมโครโฟนแบบตั้งพื้น",
-        category: "อุปกรณ์",
-        total: 10,
-        available: 10,
+        id: "EQ-CAM-001",
+        name: "กล้องถ่ายภาพ DSLR Canon EOS 80D พร้อมเลนส์ Kit",
+        category: "บันทึกภาพ",
+        total: 4,
+        available: 2,
         status: "available"
       },
       {
-        id: "EQ-AUDIO-005",
-        name: "ลำโพงบลูทูธพกพาสำหรับห้องประชุมเล็ก",
-        category: "อุปกรณ์",
-        total: 4,
-        available: 0,
-        status: "unavailable"
+        id: "EQ-CAM-002",
+        name: "ขาตั้งกล้องอลูมิเนียม พร้อมหัวแพน (Tripod)",
+        category: "บันทึกภาพ",
+        total: 6,
+        available: 5,
+        status: "available"
+      },
+      {
+        id: "EQ-CAM-003",
+        name: "ชุดไฟต่อเนื่องสตูดิโอ (Softbox Light Set)",
+        category: "บันทึกภาพ",
+        total: 3,
+        available: 3,
+        status: "available"
       }
     ];
 
@@ -168,7 +153,6 @@
       console.error(e);
     }
 
-    // หากไม่มีข้อมูลใน LocalStorage ให้บันทึกชุด Mock Data นี้ลงไป
     saveJSON('equipment', mockEquipment);
     return mockEquipment;
   }
@@ -600,7 +584,8 @@
         <div class="nav-dropdown-content">
           <a href="equipment.html?category=ครุภัณฑ์">🏢 ครุภัณฑ์</a>
           <a href="equipment.html?category=วัสดุ">📦 วัสดุ</a>
-          <a href="equipment.html?category=อุปกรณ์">🔊 อุปกรณ์ (เครื่องเสียง)</a>
+          <a href="equipment.html?category=อุปกรณ์">🔊 อุปกรณ์ / เครื่องเสียง</a>
+          <a href="equipment.html?category=บันทึกภาพ">📷 อุปกรณ์บันทึกภาพ</a>
         </div>
       </div>`;
 
@@ -696,6 +681,7 @@
     updateCategoryUI('Building', calculateStats('ครุภัณฑ์'));
     updateCategoryUI('Material', calculateStats('วัสดุ'));
     updateCategoryUI('Device', calculateStats('อุปกรณ์'));
+    updateCategoryUI('Camera', calculateStats('บันทึกภาพ'));
   }
 
   // ============================================================
@@ -739,7 +725,7 @@
   }
 
   // ============================================================
-  // EQUIPMENT PAGE RENDER & BORROW SYSTEM (รองรับการกรองหมวดหมู่สมบูรณ์)
+  // EQUIPMENT PAGE RENDER & BORROW SYSTEM
   // ============================================================
 
   function initEquipmentPage() {
@@ -793,7 +779,6 @@
       const itemCat = String(item.category || '').trim();
       const filterCat = String(category || '').trim();
 
-      // เทียบยืดหยุ่น ยอมรับข้อความหมวดหมู่ตรงหรือมีคำว่าอุปกรณ์
       const matchCategory = !filterCat || 
         itemCat === filterCat || 
         (filterCat.includes('อุปกรณ์') && itemCat.includes('อุปกรณ์'));
