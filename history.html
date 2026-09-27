@@ -72,6 +72,18 @@
         </main>
     </div>
 
+    <!-- Modals -->
+    <div id="profileModal" class="modal" style="display: none;">
+        <div class="modal-content profile-modal">
+            <button type="button" class="modal-close" id="closeProfileModal">×</button>
+            <h2>ข้อมูลผู้ใช้งาน</h2>
+            <div class="profile-modal-icon"><i data-lucide="circle-user-round"></i></div>
+            <label for="editUserName">ชื่อผู้ใช้งาน</label>
+            <input id="editUserName" placeholder="กรอกชื่อผู้ใช้งาน...">
+            <button type="button" id="saveProfileButton" class="save-profile-button">บันทึกข้อมูล</button>
+        </div>
+    </div>
+
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="app.js"></script>
 
@@ -83,8 +95,8 @@
         function getHistoryLogs() {
             try {
                 return JSON.parse(localStorage.getItem('system_history')) || [
-                    { action: 'เพิ่มอุปกรณ์ใหม่', detail: 'เพิ่มอุปกรณ์ EQ-CAM-001 (กล้อง DSLR)', adminName: 'ภูพงศ์ ทรงศิริ', date: '27/9/2569 16:30:00' },
-                    { action: 'อนุมัติคำขอ', detail: 'อนุมัติ คำขอ ยืม ชุดลำโพงเคลื่อนย้าย (1 ชิ้น) ของ ผู้ใช้งานทั่วไป', adminName: 'ภูพงศ์ ทรงศิริ', date: '27/9/2569 17:10:00' }
+                    { action: 'เพิ่มอุปกรณ์ใหม่', detail: 'เพิ่มอุปกรณ์ EQ-CAM-001 (กล้อง DSLR Canon EOS 80D)', adminName: 'ภูพงศ์ ทรงศิริ', date: '27/9/2569 16:30:00' },
+                    { action: 'อนุมัติคำขอ', detail: 'อนุมัติ คำขอ ยืม ชุดลำโพงเคลื่อนย้าย (1 ชิ้น) ของ สมชาย สายเรียน', adminName: 'ภูพงศ์ ทรงศิริ', date: '27/9/2569 17:10:00' }
                 ];
             } catch (e) {
                 return [];
