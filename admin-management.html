@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>จัดการสิ่งของ | ระบบยืม-คืนอุปกรณ์</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- =====================================================
+             Header
+        ====================================================== -->
+        <header class="header">
+            <div class="brand">
+                <div class="header-logo">
+                    <img src="https://img2.pic.in.th/007-med-msu.md.webp" alt="โลโก้คณะ">
+                </div>
+                <div class="brand-text">
+                    <h2>ระบบยืม-คืนอุปกรณ์</h2>
+                    <p id="systemRoleText">ส่วนผู้ดูแลระบบ (Admin)</p>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <!-- Notifications -->
+                <div class="notification-wrapper">
+                    <button type="button" id="notificationButton" class="notification-button" title="การแจ้งเตือน">
+                        <span data-lucide="bell"></span>
+                        <span id="notificationCount" class="notification-count" style="display:none;">0</span>
+                    </button>
+                </div>
+
+                <!-- Profile -->
+                <button type="button" id="profileButton" class="profile-button">
+                    <i data-lucide="circle-user-round"></i>
+                    <div class="profile-info">
+                        <span class="profile-label" id="userRoleBadge">ผู้ดูแลระบบ</span>
+                        <span id="userName" class="profile-name">ผู้ดูแลระบบ</span>
+                    </div>
+                </button>
+
+                <!-- Logout -->
+                <button type="button" id="logoutButton" class="logout-button">
+                    <i data-lucide="log-out"></i>
+                    <span>ออกจากระบบ</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- =====================================================
+             Navbar (Render Dynamic by JS)
+        ====================================================== -->
+        <nav class="navbar" id="mainNavbar"></nav>
+
+        <!-- =====================================================
+             Main Content
+        ====================================================== -->
+        <main class="main-content">
+            <section class="dashboard-heading" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <h1>⚙️ จัดการสิ่งของในระบบ</h1>
+                    <p>เพิ่ม แก้ไข ลบ และจัดการจำนวนอุปกรณ์ ครุภัณฑ์ และวัสดุทั้งหมด</p>
+                </div>
+                <button type="button" onclick="openAddEquipmentModal()" class="btn btn-primary" style="padding: 0.75rem 1.25rem; background: #10b981; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+                    <i data-lucide="plus-circle"></i> เพิ่มสิ่งของใหม่
+                </button>
+            </section>
+
+            <!-- ตัวกรองหมวดหมู่และช่องค้นหา -->
+            <div class="table-top" style="margin-bottom: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                <div class="header-search" style="flex: 1; min-width: 250px;">
+                    <i data-lucide="search"></i>
+                    <input type="text" id="adminSearchInput" placeholder="ค้นหารหัส หรือ ชื่อสิ่งของ...">
+                </div>
+                <select id="adminCategoryFilter" style="padding: 0.65rem 1rem; border-radius: 8px; border: 1px solid #d1d5db; font-family: inherit; font-size: 0.95rem; background-color: #fff; cursor: pointer;">
+                    <option value="">ทุกหมวดหมู่</option>
+                    <option value="ครุภัณฑ์">🏢 ครุภัณฑ์</option>
+                    <option value="วัสดุ">📦 วัสดุ</option>
+                    <option value="อุปกรณ์">🔊 อุปกรณ์ / เครื่องเสียง</option>
+                </select>
+            </div>
+
+            <!-- ตารางรายการสิ่งของ -->
+            <section class="table-container">
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>รหัสสิ่งของ</th>
+                                <th>ชื่อรายการ</th>
+                                <th>หมวดหมู่</th>
+                                <th>จำนวนทั้งหมด</th>
+                                <th>พร้อมใช้</th>
+                                <th>สถานะ</th>
+                                <th style="text-align: center;">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminEquipmentTable">
+                            <!-- JS จะ Render รายการใส่ตรงนี้ -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- =====================================================
+         Modal ฟอร์ม เพิ่ม/แก้ไข สิ่งของ
+    ====================================================== -->
+    <div id="equipmentModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 500px;">
+            <button type="button" class="modal-close" onclick="closeEquipmentModal()">×</button>
+            <h2 id="modalTitle">เพิ่มสิ่งของใหม่</h2>
+            
+            <form id="equipmentForm" style="margin-top: 1rem;">
+                <input type="hidden" id="itemEditIndex" value="-1">
+
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.3rem; font-weight: 600;">รหัสสิ่งของ (ID):</label>
+                    <input type="text" id="itemCode" required placeholder="เช่น EQ-AUDIO-006" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
+                </div>
+
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.3rem; font-weight: 600;">ชื่อสิ่งของ / อุปกรณ์:</label>
+                    <input type="text" id="itemName" required placeholder="เช่น ชุดลำโพงบลูทูธเคลื่อนย้าย" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
+                </div>
+
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.3rem; font-weight: 600;">หมวดหมู่:</label>
+                    <select id="itemCategory" required style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px; background-color: #fff;">
+                        <option value="ครุภัณฑ์">🏢 ครุภัณฑ์</option>
+                        <option value="วัสดุ">📦 วัสดุ</option>
+                        <option value="อุปกรณ์">🔊 อุปกรณ์ / เครื่องเสียง</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                    <div style="flex: 1;">
+                        <label style="display: block; margin-bottom: 0.3rem; font-weight: 600;">จำนวนทั้งหมด:</label>
+                        <input type="number" id="itemTotal" min="1" value="1" required style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="display: block; margin-bottom: 0.3rem; font-weight: 600;">จำนวนพร้อมใช้:</label>
+                        <input type="number" id="itemAvailable" min="0" value="1" required style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.3rem; font-weight: 600;">สถานะสิ่งของ:</label>
+                    <select id="itemStatus" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px; background-color: #fff;">
+                        <option value="available">พร้อมใช้งาน (Available)</option>
+                        <option value="unavailable">ไม่พร้อมใช้งาน / ชำรุด (Unavailable)</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; background: #10b981; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    บันทึกข้อมูล
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- =====================================================
+         Modal แก้ไขโปรไฟล์ผู้ใช้
+    ====================================================== -->
+    <div id="profileModal" class="modal" style="display: none;">
+        <div class="modal-content profile-modal">
+            <button type="button" class="modal-close" id="closeProfileModal">×</button>
+            <h2>ข้อมูลผู้ใช้งาน</h2>
+            <div class="profile-modal-icon"><i data-lucide="circle-user-round"></i></div>
+            <label for="editUserName">ชื่อผู้ใช้งาน</label>
+            <input id="editUserName" placeholder="กรอกชื่อผู้ใช้งาน...">
+            <button type="button" id="saveProfileButton" class="save-profile-button">บันทึกข้อมูล</button>
+        </div>
+    </div>
+
+    <!-- Script Lucide Icons & App Logic -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="app.js"></script>
+
+    <!-- Script จัดการหน้า Admin Management -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            renderAdminTable();
+
+            // ค้นหาและกรองข้อมูล
+            document.getElementById('adminSearchInput')?.addEventListener('input', renderAdminTable);
+            document.getElementById('adminCategoryFilter')?.addEventListener('change', renderAdminTable);
+
+            // บันทึกฟอร์ม เพิ่ม/แก้ไข
+            document.getElementById('equipmentForm')?.addEventListener('submit', (e) => {
+                e.preventDefault();
+                saveEquipmentItem();
+            });
+        });
+
+        function getEquipmentList() {
+            try {
+                const data = localStorage.getItem('equipment');
+                return data ? JSON.parse(data) : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function renderAdminTable() {
+            const tableBody = document.getElementById('adminEquipmentTable');
+            if (!tableBody) return;
+
+            const searchKw = document.getElementById('adminSearchInput')?.value?.trim().toLowerCase() || '';
+            const catFilter = document.getElementById('adminCategoryFilter')?.value?.trim() || '';
+
+            const list = getEquipmentList();
+
+            const filtered = list.filter(item => {
+                const matchCat = !catFilter || (item.category || '').trim() === catFilter;
+                const matchSearch = !searchKw || 
+                    (item.name && item.name.toLowerCase().includes(searchKw)) ||
+                    (item.id && item.id.toLowerCase().includes(searchKw));
+                return matchCat && matchSearch;
+            });
+
+            if (filtered.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 2rem; color: #6b7280;">ไม่พบข้อมูลสิ่งของในระบบ</td></tr>`;
+                return;
+            }
+
+            tableBody.innerHTML = filtered.map((item, index) => {
+                const isAvail = (item.available || 0) > 0 && item.status !== 'unavailable';
+                return `
+                    <tr>
+                        <td><strong>${item.id}</strong></td>
+                        <td>${item.name}</td>
+                        <td><span style="background: #f3f4f6; padding: 2px 8px; border-radius: 4px; font-size: 0.85rem;">${item.category || 'ทั่วไป'}</span></td>
+                        <td>${item.total || 0}</td>
+                        <td><strong style="color: ${isAvail ? '#10b981' : '#ef4444'};">${item.available || 0}</strong></td>
+                        <td><span style="color: ${isAvail ? '#10b981' : '#ef4444'}; font-weight: 600;">${isAvail ? 'พร้อมใช้' : 'ไม่พร้อมใช้'}</span></td>
+                        <td style="text-align: center;">
+                            <button onclick="editEquipmentItem('${item.id}')" style="background: #f59e0b; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; margin-right: 4px;">แก้ไข</button>
+                            <button onclick="deleteEquipmentItem('${item.id}')" style="background: #ef4444; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">ลบ</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function openAddEquipmentModal() {
+            document.getElementById('modalTitle').textContent = 'เพิ่มสิ่งของใหม่';
+            document.getElementById('itemEditIndex').value = '-1';
+            document.getElementById('itemCode').value = 'EQ-' + Date.now().toString().slice(-4);
+            document.getElementById('itemCode').readOnly = false;
+            document.getElementById('itemName').value = '';
+            document.getElementById('itemCategory').value = 'อุปกรณ์';
+            document.getElementById('itemTotal').value = 1;
+            document.getElementById('itemAvailable').value = 1;
+            document.getElementById('itemStatus').value = 'available';
+
+            document.getElementById('equipmentModal').style.display = 'flex';
+        }
+
+        function closeEquipmentModal() {
+            document.getElementById('equipmentModal').style.display = 'none';
+        }
+
+        function editEquipmentItem(id) {
+            const list = getEquipmentList();
+            const item = list.find(i => i.id === id);
+            if (!item) return;
+
+            document.getElementById('modalTitle').textContent = 'แก้ไขข้อมูลสิ่งของ';
+            document.getElementById('itemEditIndex').value = id;
+            document.getElementById('itemCode').value = item.id;
+            document.getElementById('itemCode').readOnly = true;
+            document.getElementById('itemName').value = item.name;
+            document.getElementById('itemCategory').value = item.category || 'อุปกรณ์';
+            document.getElementById('itemTotal').value = item.total || 0;
+            document.getElementById('itemAvailable').value = item.available || 0;
+            document.getElementById('itemStatus').value = item.status || 'available';
+
+            document.getElementById('equipmentModal').style.display = 'flex';
+        }
+
+        function saveEquipmentItem() {
+            const editId = document.getElementById('itemEditIndex').value;
+            const code = document.getElementById('itemCode').value.trim();
+            const name = document.getElementById('itemName').value.trim();
+            const category = document.getElementById('itemCategory').value;
+            const total = parseInt(document.getElementById('itemTotal').value) || 0;
+            const available = parseInt(document.getElementById('itemAvailable').value) || 0;
+            const status = document.getElementById('itemStatus').value;
+
+            let list = getEquipmentList();
+
+            if (editId === '-1') {
+                // เพิ่มรายการใหม่
+                list.unshift({ id: code, name, category, total, available, status });
+            } else {
+                // แก้ไขรายการเดิม
+                const idx = list.findIndex(i => i.id === editId);
+                if (idx !== -1) {
+                    list[idx] = { id: code, name, category, total, available, status };
+                }
+            }
+
+            localStorage.setItem('equipment', JSON.stringify(list));
+            alert('บันทึกข้อมูลเรียบร้อยแล้ว');
+            closeEquipmentModal();
+            renderAdminTable();
+        }
+
+        function deleteEquipmentItem(id) {
+            if (!confirm(`คุณต้องการลบรายการรหัส ${id} ใช่หรือไม่?`)) return;
+
+            let list = getEquipmentList().filter(i => i.id !== id);
+            localStorage.setItem('equipment', JSON.stringify(list));
+            renderAdminTable();
+        }
+    </script>
+</body>
+
+</html>
