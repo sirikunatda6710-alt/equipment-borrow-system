@@ -31,7 +31,7 @@
   let isFirebaseInitializing = false;
 
   // ============================================================
-  // Helpers & Mock Data
+  // Helpers & Mock Data (เพิ่มข้อมูลตัวอย่างครบทุกหมวดหมู่)
   // ============================================================
 
   function saveJSON(key, value) {
@@ -42,45 +42,104 @@
     }
   }
 
-  // ฟังก์ชันดึงข้อมูลอุปกรณ์ (สร้าง Mock Data อัตโนมัติถ้าไม่มีข้อมูล)
   function getEquipmentLocal() {
-    try {
-      const data = localStorage.getItem('equipment');
-      if (data && JSON.parse(data).length > 0) {
-        return JSON.parse(data);
-      }
-    } catch (e) {
-      console.error(e);
-    }
-
-    // ข้อมูลตัวอย่างหมวดต่างๆ (รวมเครื่องเสียงในหมวด "อุปกรณ์")
+    // รายการตัวอย่างสำหรับทดสอบระบบแยกตามประเภท
     const mockEquipment = [
+      // --- หมวด 1: ครุภัณฑ์ ---
       {
-        id: "AUDIO-001",
-        name: "ชุดลำโพงเคลื่อนย้ายพร้อมไมค์ไร้สาย (Portable Speaker)",
+        id: "EQ-BUILD-001",
+        name: "โปรเจกเตอร์ความละเอียดสูง (HD Projector)",
+        category: "ครุภัณฑ์",
+        total: 5,
+        available: 4,
+        status: "available"
+      },
+      {
+        id: "EQ-BUILD-002",
+        name: "จอรับภาพแบบขาตั้ง 100 นิ้ว",
+        category: "ครุภัณฑ์",
+        total: 4,
+        available: 4,
+        status: "available"
+      },
+      {
+        id: "EQ-BUILD-003",
+        name: "โต๊ะพับอเนกประสงค์หน้าขาว",
+        category: "ครุภัณฑ์",
+        total: 12,
+        available: 10,
+        status: "available"
+      },
+      {
+        id: "EQ-BUILD-004",
+        name: "เก้าอี้พลาสติกเบาะนวม",
+        category: "ครุภัณฑ์",
+        total: 50,
+        available: 45,
+        status: "available"
+      },
+
+      // --- หมวด 2: วัสดุ ---
+      {
+        id: "EQ-MAT-001",
+        name: "ปลั๊กพ่วงสายยาว 10 เมตร (4 ช่อง)",
+        category: "วัสดุ",
+        total: 15,
+        available: 12,
+        status: "available"
+      },
+      {
+        id: "EQ-MAT-002",
+        name: "สายแปลง HDMI to VGA",
+        category: "วัสดุ",
+        total: 10,
+        available: 8,
+        status: "available"
+      },
+      {
+        id: "EQ-MAT-003",
+        name: "สายสัญญาณเสียง AUX 3.5mm ถึง RCA (3 เมตร)",
+        category: "วัสดุ",
+        total: 20,
+        available: 18,
+        status: "available"
+      },
+      {
+        id: "EQ-MAT-004",
+        name: "ถ่านชาร์จ AA 1.2V (แพ็ค 4 ก้อน)",
+        category: "วัสดุ",
+        total: 30,
+        available: 25,
+        status: "available"
+      },
+
+      // --- หมวด 3: อุปกรณ์ (เครื่องเสียง / สื่อเรียนรู้) ---
+      {
+        id: "EQ-AUDIO-001",
+        name: "ชุดลำโพงเคลื่อนย้ายพร้อมไมค์ไร้สาย",
         category: "อุปกรณ์",
         total: 5,
         available: 3,
         status: "available"
       },
       {
-        id: "AUDIO-002",
-        name: "ไมโครโฟนไร้สายคู่ (Wireless Microphone Set)",
+        id: "EQ-AUDIO-002",
+        name: "ไมโครโฟนไร้สายคู่ (Wireless Microphone)",
         category: "อุปกรณ์",
         total: 8,
         available: 6,
         status: "available"
       },
       {
-        id: "AUDIO-003",
-        name: "เครื่องผสมสัญญาณเสียง มิกเซอร์ 8 ช่อง (Audio Mixer)",
+        id: "EQ-AUDIO-003",
+        name: "เครื่องผสมสัญญาณเสียง มิกเซอร์ 8 ช่อง",
         category: "อุปกรณ์",
         total: 3,
         available: 2,
         status: "available"
       },
       {
-        id: "AUDIO-004",
+        id: "EQ-AUDIO-004",
         name: "ขาตั้งไมโครโฟนแบบตั้งพื้น",
         category: "อุปกรณ์",
         total: 10,
@@ -88,31 +147,28 @@
         status: "available"
       },
       {
-        id: "AUDIO-005",
+        id: "EQ-AUDIO-005",
         name: "ลำโพงบลูทูธพกพาสำหรับห้องประชุมเล็ก",
         category: "อุปกรณ์",
         total: 4,
         available: 0,
         status: "unavailable"
-      },
-      {
-        id: "BUILD-001",
-        name: "โต๊ะพับอเนกประสงค์ขาเหล็ก",
-        category: "ครุภัณฑ์",
-        total: 15,
-        available: 12,
-        status: "available"
-      },
-      {
-        id: "MAT-001",
-        name: "สายสัญญาณเสียง AUX 3.5mm ถึง RCA (3 เมตร)",
-        category: "วัสดุ",
-        total: 20,
-        available: 18,
-        status: "available"
       }
     ];
 
+    try {
+      const data = localStorage.getItem('equipment');
+      if (data) {
+        const parsed = JSON.parse(data);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
+    // หากไม่มีข้อมูลใน LocalStorage ให้บันทึกชุด Mock Data นี้ลงไป
     saveJSON('equipment', mockEquipment);
     return mockEquipment;
   }
@@ -683,7 +739,7 @@
   }
 
   // ============================================================
-  // EQUIPMENT PAGE RENDER & BORROW SYSTEM (แก้ไขการ Decode URL)
+  // EQUIPMENT PAGE RENDER & BORROW SYSTEM (รองรับการกรองหมวดหมู่สมบูรณ์)
   // ============================================================
 
   function initEquipmentPage() {
@@ -693,7 +749,6 @@
     const urlParams = new URLSearchParams(window.location.search);
     let selectedCategory = urlParams.get('category') || '';
     
-    // Decode ค่าภาษาไทยจาก URL
     try {
       selectedCategory = decodeURIComponent(selectedCategory).trim();
     } catch (e) {
@@ -735,7 +790,14 @@
     const allEquipment = getEquipmentLocal();
 
     const filtered = allEquipment.filter(item => {
-      const matchCategory = !category || String(item.category || '').trim() === String(category).trim();
+      const itemCat = String(item.category || '').trim();
+      const filterCat = String(category || '').trim();
+
+      // เทียบยืดหยุ่น ยอมรับข้อความหมวดหมู่ตรงหรือมีคำว่าอุปกรณ์
+      const matchCategory = !filterCat || 
+        itemCat === filterCat || 
+        (filterCat.includes('อุปกรณ์') && itemCat.includes('อุปกรณ์'));
+
       const matchSearch = !searchKeyword || 
         (item.name && item.name.toLowerCase().includes(searchKeyword.toLowerCase())) ||
         (item.id && item.id.toLowerCase().includes(searchKeyword.toLowerCase()));
