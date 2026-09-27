@@ -10,7 +10,9 @@
 
 <body>
     <div class="app-container">
-        <!-- Header -->
+        <!-- =====================================================
+             Header
+        ====================================================== -->
         <header class="header">
             <div class="brand">
                 <div class="header-logo">
@@ -45,10 +47,14 @@
             </div>
         </header>
 
-        <!-- Navbar -->
+        <!-- =====================================================
+             Navbar
+        ====================================================== -->
         <nav class="navbar" id="mainNavbar"></nav>
 
-        <!-- Main Content -->
+        <!-- =====================================================
+             Main Content
+        ====================================================== -->
         <main class="main-content">
             <section class="dashboard-heading" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                 <div>
@@ -97,7 +103,9 @@
         </main>
     </div>
 
-    <!-- Modal ฟอร์ม เพิ่ม/แก้ไข สิ่งของ -->
+    <!-- =====================================================
+         Modal ฟอร์ม เพิ่ม/แก้ไข สิ่งของ
+    ====================================================== -->
     <div id="equipmentModal" class="modal" style="display: none;">
         <div class="modal-content" style="max-width: 500px;">
             <button type="button" class="modal-close" onclick="closeEquipmentModal()">×</button>
@@ -152,7 +160,9 @@
         </div>
     </div>
 
-    <!-- Modal แก้ไขโปรไฟล์ผู้ใช้ -->
+    <!-- =====================================================
+         Modal แก้ไขโปรไฟล์ผู้ใช้
+    ====================================================== -->
     <div id="profileModal" class="modal" style="display: none;">
         <div class="modal-content profile-modal">
             <button type="button" class="modal-close" id="closeProfileModal">×</button>
@@ -180,6 +190,7 @@
             });
         });
 
+        // ดึงรายการอุปกรณ์จาก LocalStorage
         function getEquipmentList() {
             try {
                 const data = localStorage.getItem('equipment');
@@ -189,6 +200,23 @@
             }
         }
 
+        // ฟังก์ชันช่วยบันทึกประวัติกิจกรรมของ Admin เข้าสู่ระบบ
+        function addSystemLog(action, detail) {
+            try {
+                let history = JSON.parse(localStorage.getItem('system_history')) || [];
+                history.unshift({
+                    action: action,
+                    detail: detail,
+                    adminName: localStorage.getItem('userName') || 'ผู้ดูแลระบบ',
+                    date: new Date().toLocaleString('th-TH')
+                });
+                localStorage.setItem('system_history', JSON.stringify(history));
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // แสดงผลตารางสิ่งของ
         function renderAdminTable() {
             const tableBody = document.getElementById('adminEquipmentTable');
             if (!tableBody) return;
@@ -232,13 +260,14 @@
             if (window.lucide) lucide.createIcons();
         }
 
+        // เปิด Modal เพิ่มสิ่งของ
         function openAddEquipmentModal() {
             document.getElementById('modalTitle').textContent = 'เพิ่มสิ่งของใหม่';
             document.getElementById('itemEditIndex').value = '-1';
-            document.getElementById('itemCode').value = 'EQ-CAM-' + Date.now().toString().slice(-4);
+            document.getElementById('itemCode').value = 'EQ-ITEM-' + Date.now().toString().slice(-4);
             document.getElementById('itemCode').readOnly = false;
             document.getElementById('itemName').value = '';
-            document.getElementById('itemCategory').value = 'บันทึกภาพ';
+            document.getElementById('itemCategory').value = 'อุปกรณ์';
             document.getElementById('itemTotal').value = 1;
             document.getElementById('itemAvailable').value = 1;
             document.getElementById('itemStatus').value = 'available';
@@ -246,10 +275,12 @@
             document.getElementById('equipmentModal').style.display = 'flex';
         }
 
+        // ปิด Modal
         function closeEquipmentModal() {
             document.getElementById('equipmentModal').style.display = 'none';
         }
 
+        // เปิด Modal แก้ไขสิ่งของ
         function editEquipmentItem(id) {
             const list = getEquipmentList();
             const item = list.find(i => i.id === id);
@@ -268,6 +299,7 @@
             document.getElementById('equipmentModal').style.display = 'flex';
         }
 
+        // บันทึกข้อมูล (เพิ่ม หรือ แก้ไข)
         function saveEquipmentItem() {
             const editId = document.getElementById('itemEditIndex').value;
             const code = document.getElementById('itemCode').value.trim();
@@ -280,11 +312,15 @@
             let list = getEquipmentList();
 
             if (editId === '-1') {
+                // กรณีเพิ่มสิ่งของใหม่
                 list.unshift({ id: code, name, category, total, available, status });
+                addSystemLog('เพิ่มอุปกรณ์ใหม่', `เพิ่มสิ่งของรหัส ${code} (${name}) ในหมวดหมู่ ${category}`);
             } else {
+                // กรณีแก้ไขสิ่งของเดิม
                 const idx = list.findIndex(i => i.id === editId);
                 if (idx !== -1) {
                     list[idx] = { id: code, name, category, total, available, status };
+                    addSystemLog('แก้ไขข้อมูลอุปกรณ์', `แก้ไขรายละเอียดสิ่งของรหัส ${code} (${name})`);
                 }
             }
 
@@ -294,11 +330,16 @@
             renderAdminTable();
         }
 
+        // ลบสิ่งของ
         function deleteEquipmentItem(id) {
             if (!confirm(`คุณต้องการลบรายการรหัส ${id} ใช่หรือไม่?`)) return;
 
-            let list = getEquipmentList().filter(i => i.id !== id);
-            localStorage.setItem('equipment', JSON.stringify(list));
+            const list = getEquipmentList();
+            const deletedItem = list.find(i => i.id === id);
+            const updatedList = list.filter(i => i.id !== id);
+
+            localStorage.setItem('equipment', JSON.stringify(updatedList));
+            addSystemLog('ลบอุปกรณ์', `ลบสิ่งของรหัส ${id} (${deletedItem ? deletedItem.name : ''}) ออกจากระบบ`);
             renderAdminTable();
         }
     </script>
