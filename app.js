@@ -31,7 +31,7 @@
   let isFirebaseInitializing = false;
 
   // ============================================================
-  // Helpers & Mock Data
+  // Helpers & Mock Data (เพิ่มข้อมูลหมวดบันทึกภาพ)
   // ============================================================
 
   function saveJSON(key, value) {
@@ -137,6 +137,14 @@
         category: "บันทึกภาพ",
         total: 3,
         available: 3,
+        status: "available"
+      },
+      {
+        id: "EQ-CAM-004",
+        name: "กล้องวิดีโอ 4K Sony Handycam",
+        category: "บันทึกภาพ",
+        total: 3,
+        available: 1,
         status: "available"
       }
     ];
