@@ -125,6 +125,65 @@
   }
 
   // ============================================================
+  // Profile Modal Handler (ซ่อนเป็นค่าเริ่มต้น และควบคุมการเปิด-ปิด)
+  // ============================================================
+
+  function setupProfileModal() {
+    const profileBtn = document.getElementById('profileButton');
+    const profileModal = document.getElementById('profileModal');
+    const closeBtn = document.getElementById('closeProfileModal');
+    const saveBtn = document.getElementById('saveProfileButton');
+    const nameInput = document.getElementById('editUserName');
+
+    if (!profileModal) return;
+
+    // ซ่อน Modal เป็นค่าเริ่มต้น
+    profileModal.style.display = 'none';
+    profileModal.classList.remove('active');
+
+    // เปิด Modal เมื่อกดปุ่มโปรไฟล์
+    if (profileBtn && profileBtn.dataset.bound !== 'true') {
+      profileBtn.dataset.bound = 'true';
+      profileBtn.addEventListener('click', () => {
+        const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
+        if (nameInput) nameInput.value = currentUser.name || '';
+        profileModal.style.display = 'flex';
+        profileModal.classList.add('active');
+      });
+    }
+
+    // ปิด Modal เมื่อกดปุ่มกากบาท
+    if (closeBtn && closeBtn.dataset.bound !== 'true') {
+      closeBtn.dataset.bound = 'true';
+      closeBtn.addEventListener('click', () => {
+        profileModal.style.display = 'none';
+        profileModal.classList.remove('active');
+      });
+    }
+
+    // บันทึกการแก้ไขชื่อผู้ใช้งาน
+    if (saveBtn && saveBtn.dataset.bound !== 'true') {
+      saveBtn.dataset.bound = 'true';
+      saveBtn.addEventListener('click', () => {
+        const newName = nameInput?.value?.trim();
+        if (newName) {
+          const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
+          currentUser.name = newName;
+          saveJSON('equipment_current_user', currentUser);
+          localStorage.setItem('userName', newName);
+
+          const userNameElem = document.getElementById('userName');
+          if (userNameElem) userNameElem.textContent = newName;
+
+          alert('บันทึกข้อมูลชื่อเรียบร้อยแล้ว');
+        }
+        profileModal.style.display = 'none';
+        profileModal.classList.remove('active');
+      });
+    }
+  }
+
+  // ============================================================
   // UI Functionalities
   // ============================================================
 
@@ -429,7 +488,7 @@
             <div class="nav-dropdown-content">
               <a href="equipment.html?category=ครุภัณฑ์">🏢 ครุภัณฑ์</a>
               <a href="equipment.html?category=วัสดุ">📦 วัสดุ</a>
-              <a href="equipment.html?category=อุปกรณ์">🔧 อุปกรณ์</a>
+              <a href="equipment.html?category=อุปกรณ์">🔧 อุปกรณ์ / เครื่องเสียง</a>
             </div>
           </div>
 
@@ -460,7 +519,7 @@
             <div class="nav-dropdown-content">
               <a href="equipment.html?category=ครุภัณฑ์">🏢 ครุภัณฑ์</a>
               <a href="equipment.html?category=วัสดุ">📦 วัสดุ</a>
-              <a href="equipment.html?category=อุปกรณ์">🔧 อุปกรณ์</a>
+              <a href="equipment.html?category=อุปกรณ์">🔧 อุปกรณ์ / เครื่องเสียง</a>
             </div>
           </div>
 
@@ -737,6 +796,7 @@
   // ============================================================
 
   function boot() {
+    setupProfileModal();
     setupPasswordToggle();
     setupRoleUI();
     loadRememberedData();
