@@ -1,14 +1,18 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>รายการอุปกรณ์ | ระบบยืม-คืนอุปกรณ์</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div class="app-container">
-        <!-- Header -->
+        <!-- =====================================================
+             Header
+        ====================================================== -->
         <header class="header">
             <div class="brand">
                 <div class="header-logo">
@@ -20,6 +24,7 @@
                 </div>
             </div>
             <div class="header-actions">
+                <!-- Profile Button -->
                 <button type="button" id="profileButton" class="profile-button">
                     <i data-lucide="circle-user-round"></i>
                     <div class="profile-info">
@@ -30,10 +35,14 @@
             </div>
         </header>
 
-        <!-- Navbar -->
+        <!-- =====================================================
+             Navbar (Render Dynamic by JS based on Role)
+        ====================================================== -->
         <nav class="navbar" id="mainNavbar"></nav>
 
-        <!-- Main Content -->
+        <!-- =====================================================
+             Main Content
+        ====================================================== -->
         <main class="main-content">
             <section class="dashboard-heading">
                 <h1 id="categoryPageTitle">รายการทั้งหมด</h1>
@@ -50,7 +59,7 @@
                     <option value="">ทุกประเภท</option>
                     <option value="ครุภัณฑ์">🏢 ครุภัณฑ์</option>
                     <option value="วัสดุ">📦 วัสดุ</option>
-                    <option value="อุปกรณ์">🔧 อุปกรณ์</option>
+                    <option value="อุปกรณ์">🔊 อุปกรณ์ / เครื่องเสียง</option>
                 </select>
             </div>
 
@@ -61,7 +70,9 @@
         </main>
     </div>
 
-    <!-- Modal ฟอร์มยืนยันการเบิก/ยืม -->
+    <!-- =====================================================
+         Modal ฟอร์มยืนยันการเบิก/ยืม
+    ====================================================== -->
     <div id="borrowModal" class="modal" style="display: none;">
         <div class="modal-content" style="max-width: 450px;">
             <button type="button" class="modal-close" onclick="closeBorrowModal()">×</button>
@@ -92,7 +103,22 @@
         </div>
     </div>
 
+    <!-- =====================================================
+         Modal แก้ไขโปรไฟล์ผู้ใช้
+    ====================================================== -->
+    <div id="profileModal" class="modal" style="display: none;">
+        <div class="modal-content profile-modal">
+            <button type="button" class="modal-close" id="closeProfileModal">×</button>
+            <h2>ข้อมูลผู้ใช้งาน</h2>
+            <div class="profile-modal-icon"><i data-lucide="circle-user-round"></i></div>
+            <label for="editUserName">ชื่อผู้ใช้งาน</label>
+            <input id="editUserName" placeholder="กรอกชื่อผู้ใช้งาน...">
+            <button type="button" id="saveProfileButton" class="save-profile-button">บันทึกข้อมูล</button>
+        </div>
+    </div>
+
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="app.js"></script>
 </body>
+
 </html>
