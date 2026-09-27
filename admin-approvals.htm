@@ -136,7 +136,7 @@
             <!-- Content 1: อนุมัติยืม-คืน -->
             <div id="borrowApprovalSection">
                 <div class="table-top" style="margin-bottom: 1rem; display: flex; gap: 1rem;">
-                    <select id="borrowStatusFilter" onchange="renderBorrowTable()" style="padding: 0.5rem 1rem; border-radius: 6px; border: 1px solid #d1d5db;">
+                    <select id="borrowStatusFilter" onchange="renderBorrowTable()" style="padding: 0.5rem 1rem; border-radius: 6px; border: 1px solid #d1d5db; background: #fff; cursor: pointer;">
                         <option value="pending">เฉพาะรายการรออนุมัติ</option>
                         <option value="all">รายการทั้งหมด</option>
                         <option value="approved">อนุมัติแล้ว</option>
@@ -189,6 +189,18 @@
         </main>
     </div>
 
+    <!-- Modals -->
+    <div id="profileModal" class="modal" style="display: none;">
+        <div class="modal-content profile-modal">
+            <button type="button" class="modal-close" id="closeProfileModal">×</button>
+            <h2>ข้อมูลผู้ใช้งาน</h2>
+            <div class="profile-modal-icon"><i data-lucide="circle-user-round"></i></div>
+            <label for="editUserName">ชื่อผู้ใช้งาน</label>
+            <input id="editUserName" placeholder="กรอกชื่อผู้ใช้งาน...">
+            <button type="button" id="saveProfileButton" class="save-profile-button">บันทึกข้อมูล</button>
+        </div>
+    </div>
+
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="app.js"></script>
 
@@ -217,9 +229,6 @@
             }
         }
 
-        // ==========================================
-        // 1. จัดการคำขอยืม-คืน
-        // ==========================================
         function getBorrowRequests() {
             try {
                 return JSON.parse(localStorage.getItem('user_requests')) || [];
@@ -280,7 +289,6 @@
             const req = requests[idx];
             req.status = newStatus;
 
-            // หากอนุมัติยืม ให้ตัดจำนวนอุปกรณ์คงเหลือ
             if (newStatus === 'approved') {
                 let eqList = JSON.parse(localStorage.getItem('equipment')) || [];
                 const eqIdx = eqList.findIndex(e => e.id === req.equipmentId || e.name === req.equipmentName);
@@ -296,7 +304,6 @@
 
             localStorage.setItem('user_requests', JSON.stringify(requests));
 
-            // บันทึกลงประวัติระบบ
             addSystemHistory({
                 action: newStatus === 'approved' ? 'อนุมัติคำขอ' : 'ปฏิเสธคำขอ',
                 detail: `${newStatus === 'approved' ? 'อนุมัติ' : 'ปฏิเสธ'} คำขอ ${req.type} ${req.equipmentName} (${req.quantity} ชิ้น) ของ ${req.userName}`,
@@ -308,9 +315,6 @@
             renderBorrowTable();
         }
 
-        // ==========================================
-        // 2. จัดการอนุมัติสมาชิกใหม่
-        // ==========================================
         function getPendingUsers() {
             try {
                 return JSON.parse(localStorage.getItem('pending_users')) || [
@@ -365,7 +369,6 @@
             u.status = newStatus;
             localStorage.setItem('pending_users', JSON.stringify(users));
 
-            // บันทึกลงประวัติระบบ
             addSystemHistory({
                 action: newStatus === 'approved' ? 'อนุมัติสมาชิก' : 'ปฏิเสธสมาชิก',
                 detail: `${newStatus === 'approved' ? 'อนุมัติ' : 'ปฏิเสธ'} บัญชีของ ${u.name} (${u.email})`,
@@ -377,7 +380,6 @@
             renderUserTable();
         }
 
-        // ช่วยเพิ่มประวัติลง LocalStorage
         function addSystemHistory(log) {
             try {
                 let history = JSON.parse(localStorage.getItem('system_history')) || [];
