@@ -31,7 +31,7 @@
   let isFirebaseInitializing = false;
 
   // ============================================================
-  // Helpers & Mock Data (เพิ่มข้อมูลหมวดบันทึกภาพ)
+  // Helpers & Global Log System
   // ============================================================
 
   function saveJSON(key, value) {
@@ -41,6 +41,23 @@
       console.error(e);
     }
   }
+
+  // ฟังก์ชันส่วนกลางบันทึกประวัติการทำรายการลง LocalStorage
+  window.addSystemLog = function (action, detail) {
+    try {
+      let history = JSON.parse(localStorage.getItem('system_history')) || [];
+      const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
+      history.unshift({
+        action: action,
+        detail: detail,
+        adminName: currentUser.name || localStorage.getItem('userName') || 'ผู้ดูแลระบบ',
+        date: new Date().toLocaleString('th-TH')
+      });
+      localStorage.setItem('system_history', JSON.stringify(history));
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   function getEquipmentLocal() {
     const mockEquipment = [
@@ -239,7 +256,7 @@
   }
 
   // ============================================================
-  // Profile Modal Handler
+  // Profile & Logout Handler
   // ============================================================
 
   function setupProfileModal() {
@@ -248,6 +265,18 @@
     const closeBtn = document.getElementById('closeProfileModal');
     const saveBtn = document.getElementById('saveProfileButton');
     const nameInput = document.getElementById('editUserName');
+    const logoutBtn = document.getElementById('logoutButton');
+
+    if (logoutBtn && logoutBtn.dataset.bound !== 'true') {
+      logoutBtn.dataset.bound = 'true';
+      logoutBtn.addEventListener('click', () => {
+        if (confirm('คุณต้องการออกจากระบบใช่หรือไม่?')) {
+          localStorage.removeItem('equipment_current_user');
+          localStorage.setItem('isLoggedIn', 'false');
+          window.location.href = 'index.html';
+        }
+      });
+    }
 
     if (!profileModal) return;
 
@@ -443,9 +472,22 @@
         };
 
         await db.collection('users').doc(user.uid).set(userData, { merge: true });
+        
+        // บันทึกลงในรายการรออนุมัติของ Admin
+        let pendingUsers = JSON.parse(localStorage.getItem('pending_users')) || [];
+        pendingUsers.push({
+          id: 'USR' + Date.now().toString().slice(-4),
+          name: name,
+          email: email,
+          role: selectedRole,
+          date: new Date().toLocaleDateString('th-TH'),
+          status: 'pending'
+        });
+        localStorage.setItem('pending_users', JSON.stringify(pendingUsers));
+
         await auth.signOut();
 
-        alert('ลงทะเบียนสำเร็จ! กำลังนำคุณไปยังหน้าเข้าสู่ระบบ...');
+        alert('ลงทะเบียนสำเร็จ! กรุณารอการอนุมัติจากผู้ดูแลระบบก่อนเข้าใช้งาน');
         window.location.href = 'index.html';
       } catch (err) {
         alert(firebaseErrorMessage(err));
@@ -582,9 +624,11 @@
 
     if (userNameElem) userNameElem.textContent = currentUser.name;
 
+    const currentPage = window.location.pathname.split('/').pop() || 'dashboard.html';
+
     const dropdownNavHTML = `
       <div class="nav-dropdown">
-        <button type="button" class="nav-dropdown-btn">
+        <button type="button" class="nav-dropdown-btn ${currentPage === 'equipment.html' ? 'active' : ''}">
           <i data-lucide="package-search"></i> 
           <span>รายการอุปกรณ์</span>
           <i data-lucide="chevron-down" class="dropdown-icon"></i>
@@ -602,11 +646,11 @@
       
       if (navbar) {
         navbar.innerHTML = `
-          <a href="dashboard.html" class="nav-item active"><i data-lucide="layout-dashboard"></i> <span>Dashboard</span></a>
+          <a href="dashboard.html" class="nav-item ${currentPage === 'dashboard.html' ? 'active' : ''}"><i data-lucide="layout-dashboard"></i> <span>Dashboard</span></a>
           ${dropdownNavHTML}
-          <a href="admin-management.html" class="nav-item"><i data-lucide="settings"></i> <span>จัดการสิ่งของ</span></a>
-          <a href="admin-approvals.html" class="nav-item"><i data-lucide="check-square"></i> <span>อนุมัติยืม-คืน</span></a>
-          <a href="history.html" class="nav-item"><i data-lucide="history"></i> <span>ประวัติระบบ</span></a>
+          <a href="admin-management.html" class="nav-item ${currentPage === 'admin-management.html' ? 'active' : ''}"><i data-lucide="settings"></i> <span>จัดการสิ่งของ</span></a>
+          <a href="admin-approvals.html" class="nav-item ${currentPage === 'admin-approvals.html' ? 'active' : ''}"><i data-lucide="check-square"></i> <span>อนุมัติยืม-คืน</span></a>
+          <a href="history.html" class="nav-item ${currentPage === 'history.html' ? 'active' : ''}"><i data-lucide="history"></i> <span>ประวัติระบบ</span></a>
         `;
       }
 
@@ -620,11 +664,11 @@
 
       if (navbar) {
         navbar.innerHTML = `
-          <a href="dashboard.html" class="nav-item active"><i data-lucide="layout-dashboard"></i> <span>Dashboard</span></a>
+          <a href="dashboard.html" class="nav-item ${currentPage === 'dashboard.html' ? 'active' : ''}"><i data-lucide="layout-dashboard"></i> <span>Dashboard</span></a>
           ${dropdownNavHTML}
-          <a href="borrow.html" class="nav-item"><i data-lucide="clipboard-list"></i> <span>รายการยืม</span></a>
-          <a href="return.html" class="nav-item"><i data-lucide="undo-2"></i> <span>คืนอุปกรณ์</span></a>
-          <a href="history.html" class="nav-item"><i data-lucide="history"></i> <span>ประวัติยืม-คืน</span></a>
+          <a href="borrow.html" class="nav-item ${currentPage === 'borrow.html' ? 'active' : ''}"><i data-lucide="clipboard-list"></i> <span>รายการยืม</span></a>
+          <a href="return.html" class="nav-item ${currentPage === 'return.html' ? 'active' : ''}"><i data-lucide="undo-2"></i> <span>คืนอุปกรณ์</span></a>
+          <a href="history.html" class="nav-item ${currentPage === 'history.html' ? 'active' : ''}"><i data-lucide="history"></i> <span>ประวัติยืม-คืน</span></a>
         `;
       }
 
@@ -731,6 +775,19 @@
       </tr>
     `).join('');
   }
+
+  window.requestReturn = function(reqId) {
+    let requests = JSON.parse(localStorage.getItem('user_requests')) || [];
+    const idx = requests.findIndex(r => r.id === reqId);
+    if (idx !== -1) {
+      requests[idx].type = 'คืน';
+      requests[idx].status = 'pending';
+      requests[idx].requestDate = new Date().toLocaleDateString('th-TH');
+      localStorage.setItem('user_requests', JSON.stringify(requests));
+      alert('ส่งคำขอคืนเรียบร้อยแล้ว กรุณารอผู้ดูแลระบบอนุมัติ');
+      window.location.reload();
+    }
+  };
 
   // ============================================================
   // EQUIPMENT PAGE RENDER & BORROW SYSTEM
