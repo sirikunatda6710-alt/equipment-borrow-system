@@ -10,9 +10,7 @@
 
 <body>
     <div class="app-container">
-        <!-- =====================================================
-             Header
-        ====================================================== -->
+        <!-- Header -->
         <header class="header">
             <div class="brand">
                 <div class="header-logo">
@@ -25,7 +23,6 @@
             </div>
 
             <div class="header-actions">
-                <!-- Notifications -->
                 <div class="notification-wrapper">
                     <button type="button" id="notificationButton" class="notification-button" title="การแจ้งเตือน">
                         <span data-lucide="bell"></span>
@@ -33,7 +30,6 @@
                     </button>
                 </div>
 
-                <!-- Profile -->
                 <button type="button" id="profileButton" class="profile-button">
                     <i data-lucide="circle-user-round"></i>
                     <div class="profile-info">
@@ -42,7 +38,6 @@
                     </div>
                 </button>
 
-                <!-- Logout -->
                 <button type="button" id="logoutButton" class="logout-button">
                     <i data-lucide="log-out"></i>
                     <span>ออกจากระบบ</span>
@@ -50,19 +45,15 @@
             </div>
         </header>
 
-        <!-- =====================================================
-             Navbar (Render Dynamic by JS)
-        ====================================================== -->
+        <!-- Navbar -->
         <nav class="navbar" id="mainNavbar"></nav>
 
-        <!-- =====================================================
-             Main Content
-        ====================================================== -->
+        <!-- Main Content -->
         <main class="main-content">
             <section class="dashboard-heading" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                 <div>
                     <h1>⚙️ จัดการสิ่งของในระบบ</h1>
-                    <p>เพิ่ม แก้ไข ลบ และจัดการจำนวนอุปกรณ์ ครุภัณฑ์ และวัสดุทั้งหมด</p>
+                    <p>เพิ่ม แก้ไข ลบ และจัดการจำนวนอุปกรณ์ ครุภัณฑ์ วัสดุ และอุปกรณ์บันทึกภาพทั้งหมด</p>
                 </div>
                 <button type="button" onclick="openAddEquipmentModal()" class="btn btn-primary" style="padding: 0.75rem 1.25rem; background: #10b981; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
                     <i data-lucide="plus-circle"></i> เพิ่มสิ่งของใหม่
@@ -80,6 +71,7 @@
                     <option value="ครุภัณฑ์">🏢 ครุภัณฑ์</option>
                     <option value="วัสดุ">📦 วัสดุ</option>
                     <option value="อุปกรณ์">🔊 อุปกรณ์ / เครื่องเสียง</option>
+                    <option value="บันทึกภาพ">📷 อุปกรณ์บันทึกภาพ</option>
                 </select>
             </div>
 
@@ -98,18 +90,14 @@
                                 <th style="text-align: center;">จัดการ</th>
                             </tr>
                         </thead>
-                        <tbody id="adminEquipmentTable">
-                            <!-- JS จะ Render รายการใส่ตรงนี้ -->
-                        </tbody>
+                        <tbody id="adminEquipmentTable"></tbody>
                     </table>
                 </div>
             </section>
         </main>
     </div>
 
-    <!-- =====================================================
-         Modal ฟอร์ม เพิ่ม/แก้ไข สิ่งของ
-    ====================================================== -->
+    <!-- Modal ฟอร์ม เพิ่ม/แก้ไข สิ่งของ -->
     <div id="equipmentModal" class="modal" style="display: none;">
         <div class="modal-content" style="max-width: 500px;">
             <button type="button" class="modal-close" onclick="closeEquipmentModal()">×</button>
@@ -120,12 +108,12 @@
 
                 <div style="margin-bottom: 1rem;">
                     <label style="display: block; margin-bottom: 0.3rem; font-weight: 600;">รหัสสิ่งของ (ID):</label>
-                    <input type="text" id="itemCode" required placeholder="เช่น EQ-AUDIO-006" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
+                    <input type="text" id="itemCode" required placeholder="เช่น EQ-CAM-004" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
                 </div>
 
                 <div style="margin-bottom: 1rem;">
                     <label style="display: block; margin-bottom: 0.3rem; font-weight: 600;">ชื่อสิ่งของ / อุปกรณ์:</label>
-                    <input type="text" id="itemName" required placeholder="เช่น ชุดลำโพงบลูทูธเคลื่อนย้าย" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
+                    <input type="text" id="itemName" required placeholder="เช่น กล้องวิดีโอ 4K" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
                 </div>
 
                 <div style="margin-bottom: 1rem;">
@@ -134,6 +122,7 @@
                         <option value="ครุภัณฑ์">🏢 ครุภัณฑ์</option>
                         <option value="วัสดุ">📦 วัสดุ</option>
                         <option value="อุปกรณ์">🔊 อุปกรณ์ / เครื่องเสียง</option>
+                        <option value="บันทึกภาพ">📷 อุปกรณ์บันทึกภาพ</option>
                     </select>
                 </div>
 
@@ -163,9 +152,7 @@
         </div>
     </div>
 
-    <!-- =====================================================
-         Modal แก้ไขโปรไฟล์ผู้ใช้
-    ====================================================== -->
+    <!-- Modal แก้ไขโปรไฟล์ผู้ใช้ -->
     <div id="profileModal" class="modal" style="display: none;">
         <div class="modal-content profile-modal">
             <button type="button" class="modal-close" id="closeProfileModal">×</button>
@@ -177,20 +164,16 @@
         </div>
     </div>
 
-    <!-- Script Lucide Icons & App Logic -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="app.js"></script>
 
-    <!-- Script จัดการหน้า Admin Management -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             renderAdminTable();
 
-            // ค้นหาและกรองข้อมูล
             document.getElementById('adminSearchInput')?.addEventListener('input', renderAdminTable);
             document.getElementById('adminCategoryFilter')?.addEventListener('change', renderAdminTable);
 
-            // บันทึกฟอร์ม เพิ่ม/แก้ไข
             document.getElementById('equipmentForm')?.addEventListener('submit', (e) => {
                 e.preventDefault();
                 saveEquipmentItem();
@@ -228,7 +211,7 @@
                 return;
             }
 
-            tableBody.innerHTML = filtered.map((item, index) => {
+            tableBody.innerHTML = filtered.map((item) => {
                 const isAvail = (item.available || 0) > 0 && item.status !== 'unavailable';
                 return `
                     <tr>
@@ -252,10 +235,10 @@
         function openAddEquipmentModal() {
             document.getElementById('modalTitle').textContent = 'เพิ่มสิ่งของใหม่';
             document.getElementById('itemEditIndex').value = '-1';
-            document.getElementById('itemCode').value = 'EQ-' + Date.now().toString().slice(-4);
+            document.getElementById('itemCode').value = 'EQ-CAM-' + Date.now().toString().slice(-4);
             document.getElementById('itemCode').readOnly = false;
             document.getElementById('itemName').value = '';
-            document.getElementById('itemCategory').value = 'อุปกรณ์';
+            document.getElementById('itemCategory').value = 'บันทึกภาพ';
             document.getElementById('itemTotal').value = 1;
             document.getElementById('itemAvailable').value = 1;
             document.getElementById('itemStatus').value = 'available';
@@ -297,10 +280,8 @@
             let list = getEquipmentList();
 
             if (editId === '-1') {
-                // เพิ่มรายการใหม่
                 list.unshift({ id: code, name, category, total, available, status });
             } else {
-                // แก้ไขรายการเดิม
                 const idx = list.findIndex(i => i.id === editId);
                 if (idx !== -1) {
                     list[idx] = { id: code, name, category, total, available, status };
