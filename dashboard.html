@@ -69,10 +69,10 @@
         </header>
 
         <!-- =====================================================
-             Navigation
+             Navigation (Render Dynamic by JS based on Role)
         ====================================================== -->
         <nav class="navbar" id="mainNavbar">
-            <!-- Render Dynamic by JS based on Role -->
+            <!-- JS จะสร้าง Dropdown และลิงก์เมนูตรงนี้ -->
         </nav>
 
         <!-- =====================================================
@@ -83,111 +83,107 @@
             <!-- =================================================
                  1. ADMIN DASHBOARD VIEW
             ================================================== -->
-            <!-- =================================================
-     ADMIN DASHBOARD VIEW
-================================================== -->
-<div id="adminDashboardView" class="dashboard-view">
+            <div id="adminDashboardView" class="dashboard-view" style="display: none;">
 
-    <section class="dashboard-heading">
-        <h1>Dashboard ผู้ดูแลระบบ</h1>
-        <p>ภาพรวมสถานะและจำนวณแยกตามประเภทสิ่งของในระบบ</p>
-    </section>
+                <section class="dashboard-heading">
+                    <h1>Dashboard ผู้ดูแลระบบ</h1>
+                    <p>ภาพรวมสถานะและจำนวนแยกตามประเภทสิ่งของในระบบ</p>
+                </section>
 
-    <!-- SECTION 1: ครุภัณฑ์ -->
-    <section class="category-block">
-        <h2 class="category-title">🏢 ครุภัณฑ์</h2>
-        <div class="stats-container">
-            <div class="stat-card">
-                <div class="stat-icon"><i data-lucide="building-2"></i></div>
-                <h3>ครุภัณฑ์ทั้งหมด</h3>
-                <p id="totalBuilding" class="stat-number">0</p>
-                <span>รายการ</span>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon"><i data-lucide="circle-check"></i></div>
-                <h3>พร้อมใช้งาน</h3>
-                <p id="availBuilding" class="stat-number">0</p>
-                <span>รายการ</span>
-            </div>
-            <div class="stat-card borrowed-card">
-                <div class="stat-icon"><i data-lucide="clipboard-list"></i></div>
-                <h3>กำลังถูกยืม</h3>
-                <p id="borrowedBuilding" class="stat-number">0</p>
-                <span>รายการ</span>
-            </div>
-            <div class="stat-card unavailable-card">
-                <div class="stat-icon"><i data-lucide="circle-x"></i></div>
-                <h3>ไม่พร้อมใช้งาน</h3>
-                <p id="unavailBuilding" class="stat-number">0</p>
-                <span>รายการ</span>
-            </div>
-        </div>
-    </section>
+                <!-- SECTION 1: ครุภัณฑ์ -->
+                <section class="category-block">
+                    <h2 class="category-title">🏢 ครุภัณฑ์</h2>
+                    <div class="stats-container">
+                        <div class="stat-card">
+                            <div class="stat-icon"><i data-lucide="building-2"></i></div>
+                            <h3>ครุภัณฑ์ทั้งหมด</h3>
+                            <p id="totalBuilding" class="stat-number">0</p>
+                            <span>รายการ</span>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i data-lucide="circle-check"></i></div>
+                            <h3>พร้อมใช้งาน</h3>
+                            <p id="availBuilding" class="stat-number">0</p>
+                            <span>รายการ</span>
+                        </div>
+                        <div class="stat-card borrowed-card">
+                            <div class="stat-icon"><i data-lucide="clipboard-list"></i></div>
+                            <h3>กำลังถูกยืม</h3>
+                            <p id="borrowedBuilding" class="stat-number">0</p>
+                            <span>รายการ</span>
+                        </div>
+                        <div class="stat-card unavailable-card">
+                            <div class="stat-icon"><i data-lucide="circle-x"></i></div>
+                            <h3>ไม่พร้อมใช้งาน</h3>
+                            <p id="unavailBuilding" class="stat-number">0</p>
+                            <span>รายการ</span>
+                        </div>
+                    </div>
+                </section>
 
-    <!-- SECTION 2: วัสดุ -->
-    <section class="category-block">
-        <h2 class="category-title">📦 วัสดุ</h2>
-        <div class="stats-container">
-            <div class="stat-card">
-                <div class="stat-icon"><i data-lucide="boxes"></i></div>
-                <h3>วัสดุทั้งหมด</h3>
-                <p id="totalMaterial" class="stat-number">0</p>
-                <span>รายการ</span>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon"><i data-lucide="circle-check"></i></div>
-                <h3>พร้อมใช้งาน</h3>
-                <p id="availMaterial" class="stat-number">0</p>
-                <span>รายการ</span>
-            </div>
-            <div class="stat-card borrowed-card">
-                <div class="stat-icon"><i data-lucide="clipboard-list"></i></div>
-                <h3>กำลังถูกยืม</h3>
-                <p id="borrowedMaterial" class="stat-number">0</p>
-                <span>รายการ</span>
-            </div>
-            <div class="stat-card unavailable-card">
-                <div class="stat-icon"><i data-lucide="circle-x"></i></div>
-                <h3>ไม่พร้อมใช้งาน</h3>
-                <p id="unavailMaterial" class="stat-number">0</p>
-                <span>รายการ</span>
-            </div>
-        </div>
-    </section>
+                <!-- SECTION 2: วัสดุ -->
+                <section class="category-block">
+                    <h2 class="category-title">📦 วัสดุ</h2>
+                    <div class="stats-container">
+                        <div class="stat-card">
+                            <div class="stat-icon"><i data-lucide="boxes"></i></div>
+                            <h3>วัสดุทั้งหมด</h3>
+                            <p id="totalMaterial" class="stat-number">0</p>
+                            <span>รายการ</span>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i data-lucide="circle-check"></i></div>
+                            <h3>พร้อมใช้งาน</h3>
+                            <p id="availMaterial" class="stat-number">0</p>
+                            <span>รายการ</span>
+                        </div>
+                        <div class="stat-card borrowed-card">
+                            <div class="stat-icon"><i data-lucide="clipboard-list"></i></div>
+                            <h3>กำลังถูกยืม</h3>
+                            <p id="borrowedMaterial" class="stat-number">0</p>
+                            <span>รายการ</span>
+                        </div>
+                        <div class="stat-card unavailable-card">
+                            <div class="stat-icon"><i data-lucide="circle-x"></i></div>
+                            <h3>ไม่พร้อมใช้งาน</h3>
+                            <p id="unavailMaterial" class="stat-number">0</p>
+                            <span>รายการ</span>
+                        </div>
+                    </div>
+                </section>
 
-    <!-- SECTION 3: อุปกรณ์ -->
-    <section class="category-block">
-        <h2 class="category-title">🔧 อุปกรณ์</h2>
-        <div class="stats-container">
-            <div class="stat-card">
-                <div class="stat-icon"><i data-lucide="package"></i></div>
-                <h3>อุปกรณ์ทั้งหมด</h3>
-                <p id="totalDevice" class="stat-number">0</p>
-                <span>รายการ</span>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon"><i data-lucide="circle-check"></i></div>
-                <h3>พร้อมใช้งาน</h3>
-                <p id="availDevice" class="stat-number">0</p>
-                <span>รายการ</span>
-            </div>
-            <div class="stat-card borrowed-card">
-                <div class="stat-icon"><i data-lucide="clipboard-list"></i></div>
-                <h3>กำลังถูกยืม</h3>
-                <p id="borrowedDevice" class="stat-number">0</p>
-                <span>รายการ</span>
-            </div>
-            <div class="stat-card unavailable-card">
-                <div class="stat-icon"><i data-lucide="circle-x"></i></div>
-                <h3>ไม่พร้อมใช้งาน</h3>
-                <p id="unavailDevice" class="stat-number">0</p>
-                <span>รายการ</span>
-            </div>
-        </div>
-    </section>
+                <!-- SECTION 3: อุปกรณ์ (รวมเครื่องเสียง) -->
+                <section class="category-block">
+                    <h2 class="category-title">🔧 อุปกรณ์ / เครื่องเสียง</h2>
+                    <div class="stats-container">
+                        <div class="stat-card">
+                            <div class="stat-icon"><i data-lucide="package"></i></div>
+                            <h3>อุปกรณ์ทั้งหมด</h3>
+                            <p id="totalDevice" class="stat-number">0</p>
+                            <span>รายการ</span>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i data-lucide="circle-check"></i></div>
+                            <h3>พร้อมใช้งาน</h3>
+                            <p id="availDevice" class="stat-number">0</p>
+                            <span>รายการ</span>
+                        </div>
+                        <div class="stat-card borrowed-card">
+                            <div class="stat-icon"><i data-lucide="clipboard-list"></i></div>
+                            <h3>กำลังถูกยืม</h3>
+                            <p id="borrowedDevice" class="stat-number">0</p>
+                            <span>รายการ</span>
+                        </div>
+                        <div class="stat-card unavailable-card">
+                            <div class="stat-icon"><i data-lucide="circle-x"></i></div>
+                            <h3>ไม่พร้อมใช้งาน</h3>
+                            <p id="unavailDevice" class="stat-number">0</p>
+                            <span>รายการ</span>
+                        </div>
+                    </div>
+                </section>
 
-</div>
-
+            </div>
 
             <!-- =================================================
                  2. USER DASHBOARD VIEW
@@ -233,7 +229,7 @@
                                 <p>รายการที่กำลังยืมอยู่และรายการที่รออนุมัติ</p>
                             </div>
                         </div>
-                        <a href="borrow.html" class="view-all-button">ยืมอุปกรณ์เพิ่ม +</a>
+                        <a href="equipment.html" class="view-all-button">ยืมอุปกรณ์เพิ่ม +</a>
                     </div>
 
                     <div class="table-responsive">
@@ -258,14 +254,14 @@
         </main>
     </div>
 
-    <!-- Modals -->
-    <div id="profileModal" class="modal">
+    <!-- Modals (ปิดการแสดงผลไว้เป็นค่าเริ่มต้นเพื่อไม่ให้เด้งค้าง) -->
+    <div id="profileModal" class="modal" style="display: none;">
         <div class="modal-content profile-modal">
             <button type="button" class="modal-close" id="closeProfileModal">×</button>
             <h2>ข้อมูลผู้ใช้งาน</h2>
             <div class="profile-modal-icon"><i data-lucide="circle-user-round"></i></div>
             <label for="editUserName">ชื่อผู้ใช้งาน</label>
-            <input id="editUserName">
+            <input id="editUserName" placeholder="กรอกชื่อผู้ใช้งาน...">
             <button type="button" id="saveProfileButton" class="save-profile-button">บันทึกข้อมูล</button>
         </div>
     </div>
@@ -273,4 +269,5 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="app.js"></script>
 </body>
+
 </html>
