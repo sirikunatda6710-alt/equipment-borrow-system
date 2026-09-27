@@ -10,9 +10,7 @@
 
 <body>
     <div class="app-container">
-        <!-- =====================================================
-             Header
-        ====================================================== -->
+        <!-- Header -->
         <header class="header">
             <div class="brand">
                 <div class="header-logo">
@@ -24,7 +22,6 @@
                 </div>
             </div>
             <div class="header-actions">
-                <!-- Profile Button -->
                 <button type="button" id="profileButton" class="profile-button">
                     <i data-lucide="circle-user-round"></i>
                     <div class="profile-info">
@@ -35,14 +32,10 @@
             </div>
         </header>
 
-        <!-- =====================================================
-             Navbar (Render Dynamic by JS based on Role)
-        ====================================================== -->
+        <!-- Navbar -->
         <nav class="navbar" id="mainNavbar"></nav>
 
-        <!-- =====================================================
-             Main Content
-        ====================================================== -->
+        <!-- Main Content -->
         <main class="main-content">
             <section class="dashboard-heading">
                 <h1 id="categoryPageTitle">รายการทั้งหมด</h1>
@@ -60,19 +53,16 @@
                     <option value="ครุภัณฑ์">🏢 ครุภัณฑ์</option>
                     <option value="วัสดุ">📦 วัสดุ</option>
                     <option value="อุปกรณ์">🔊 อุปกรณ์ / เครื่องเสียง</option>
+                    <option value="บันทึกภาพ">📷 อุปกรณ์บันทึกภาพ</option>
                 </select>
             </div>
 
             <!-- การ์ดรายการสิ่งของ -->
-            <div id="equipmentGridContainer" class="equipment-grid">
-                <!-- JS จะ Render รายการการ์ดใส่ตรงนี้ -->
-            </div>
+            <div id="equipmentGridContainer" class="equipment-grid"></div>
         </main>
     </div>
 
-    <!-- =====================================================
-         Modal ฟอร์มยืนยันการเบิก/ยืม
-    ====================================================== -->
+    <!-- Modal ฟอร์มยืนยันการเบิก/ยืม -->
     <div id="borrowModal" class="modal" style="display: none;">
         <div class="modal-content" style="max-width: 450px;">
             <button type="button" class="modal-close" onclick="closeBorrowModal()">×</button>
@@ -103,9 +93,7 @@
         </div>
     </div>
 
-    <!-- =====================================================
-         Modal แก้ไขโปรไฟล์ผู้ใช้
-    ====================================================== -->
+    <!-- Modal แก้ไขโปรไฟล์ผู้ใช้ -->
     <div id="profileModal" class="modal" style="display: none;">
         <div class="modal-content profile-modal">
             <button type="button" class="modal-close" id="closeProfileModal">×</button>
@@ -117,7 +105,6 @@
         </div>
     </div>
 
-    <!-- Script Lucide Icons & App Logic -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="app.js"></script>
 </body>
