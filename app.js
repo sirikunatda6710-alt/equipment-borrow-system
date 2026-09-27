@@ -284,14 +284,12 @@
         localStorage.setItem(KEYS.userName, currentUserData.name);
         localStorage.setItem(KEYS.userRole, actualRole);
 
-        window.location.href = actualRole === 'admin' ? 'dashboard.html' : 'borrow.html';
+        // 🟢 แก้ไขตรงนี้: ทุก Role จะวิ่งไปที่ dashboard.html เสมอ (เพื่อป้องกันปัญหา 404)
+        window.location.href = 'dashboard.html';
+
       } catch (err) { alert(firebaseErrorMessage(err)); }
     });
   }
-
-  // ============================================================
-  // NAVBAR & DASHBOARD SETUP (เอารายการยืมออกแล้ว)[cite: 13, 14]
-  // ============================================================
 
   function initDashboardByRole() {
     const adminView = document.getElementById('adminDashboardView');
@@ -335,7 +333,6 @@
       renderAdminDashboardData();
     } else {
       if (roleBadge) roleBadge.textContent = 'ผู้ใช้งานทั่วไป';
-      // 🟢 ตัดเมนู "รายการยืม" ออก เหลือ 4 เมนู[cite: 13, 14]
       if (navbar) {
         navbar.innerHTML = `
           <a href="dashboard.html" class="nav-item ${currentPage === 'dashboard.html' ? 'active' : ''}"><i data-lucide="layout-dashboard"></i> <span>Dashboard</span></a>
@@ -535,7 +532,7 @@
         requestDate: new Date().toLocaleDateString('th-TH'),
         type: 'ยืม',
         status: 'pending',
-        approvedBy: '-' // ยังไม่มีแอดมินอนุมัติ
+        approvedBy: '-'
       };
 
       userRequests.unshift(newRequest);
