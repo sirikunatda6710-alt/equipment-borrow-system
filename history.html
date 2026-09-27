@@ -72,7 +72,7 @@
                 </div>
             </div>
 
-            <!-- ตารางที่ 2: บันทึกกิจกรรมระบบของแอดมิน -->
+            <!-- ตารางที่ 2: บันทึกกิจกรรมระบบของแอดมิน (แสดงเฉพาะ Admin) -->
             <div class="section-card" id="adminLogSection" style="display: none;">
                 <h2><i data-lucide="shield-alert"></i> บันทึกกิจกรรมการจัดการอุปกรณ์ของแอดมิน (System Activity Logs)</h2>
                 <div class="table-responsive">
@@ -116,6 +116,7 @@
             const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
             const isAdmin = currentUser.role === 'admin';
 
+            // 1. Render ตารางประวัติการยืม-คืน
             const reqTable = document.getElementById('requestHistoryTable');
             const allRequests = JSON.parse(localStorage.getItem('user_requests')) || [];
             
@@ -144,6 +145,7 @@
                 `).join('');
             }
 
+            // 2. Render ตาราง System Logs (แสดงเฉพาะเมื่อเป็น Admin)
             if (isAdmin) {
                 const logSection = document.getElementById('adminLogSection');
                 const logTable = document.getElementById('systemLogTable');
