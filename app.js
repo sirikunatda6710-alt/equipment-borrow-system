@@ -42,7 +42,7 @@
     }
   }
 
-  // ดึงข้อมูลอุปกรณ์ (หากในระบบยังไม่มีข้อมูล จะใส่ตัวอย่างเครื่องเสียงให้ทันที)
+  // ฟังก์ชันดึงข้อมูลอุปกรณ์ (สร้าง Mock Data อัตโนมัติถ้าไม่มีข้อมูล)
   function getEquipmentLocal() {
     try {
       const data = localStorage.getItem('equipment');
@@ -53,11 +53,11 @@
       console.error(e);
     }
 
-    // ตัวอย่างรายการสิ่งของหมวดเครื่องเสียงและอุปกรณ์อื่นๆ
+    // ข้อมูลตัวอย่างหมวดต่างๆ (รวมเครื่องเสียงในหมวด "อุปกรณ์")
     const mockEquipment = [
       {
         id: "AUDIO-001",
-        name: "ชุดลำโพงเคลื่อนย้ายพร้อมไมค์ไร้สาย (Portble Speaker)",
+        name: "ชุดลำโพงเคลื่อนย้ายพร้อมไมค์ไร้สาย (Portable Speaker)",
         category: "อุปกรณ์",
         total: 5,
         available: 3,
@@ -534,7 +534,6 @@
 
     if (userNameElem) userNameElem.textContent = currentUser.name;
 
-    // Dropdown Navigation HTML
     const dropdownNavHTML = `
       <div class="nav-dropdown">
         <button type="button" class="nav-dropdown-btn">
@@ -684,7 +683,7 @@
   }
 
   // ============================================================
-  // EQUIPMENT PAGE RENDER & BORROW SYSTEM
+  // EQUIPMENT PAGE RENDER & BORROW SYSTEM (แก้ไขการ Decode URL)
   // ============================================================
 
   function initEquipmentPage() {
@@ -692,7 +691,14 @@
     if (!gridContainer) return;
 
     const urlParams = new URLSearchParams(window.location.search);
-    const selectedCategory = urlParams.get('category') || '';
+    let selectedCategory = urlParams.get('category') || '';
+    
+    // Decode ค่าภาษาไทยจาก URL
+    try {
+      selectedCategory = decodeURIComponent(selectedCategory).trim();
+    } catch (e) {
+      console.error(e);
+    }
 
     const pageTitle = document.getElementById('categoryPageTitle');
     const categoryFilter = document.getElementById('categorySelectFilter');
@@ -729,7 +735,7 @@
     const allEquipment = getEquipmentLocal();
 
     const filtered = allEquipment.filter(item => {
-      const matchCategory = !category || item.category === category;
+      const matchCategory = !category || String(item.category || '').trim() === String(category).trim();
       const matchSearch = !searchKeyword || 
         (item.name && item.name.toLowerCase().includes(searchKeyword.toLowerCase())) ||
         (item.id && item.id.toLowerCase().includes(searchKeyword.toLowerCase()));
