@@ -453,7 +453,7 @@
   }
 
   // ============================================================
-  // Login Form (ตรวจสอบสิทธิ์จาก Database ป้องกันการปลอมสิทธิ์)
+  // Login Form (เข้มงวดการตรวจสอบสิทธิ์แบบ 2 ทาง ป้องกันข้ามสาย)
   // ============================================================
 
   function setupLoginForm() {
@@ -466,19 +466,25 @@
       const email = document.getElementById('email')?.value?.trim() || '';
       const password = document.getElementById('password')?.value || '';
       const selectedRole = document.getElementById('loginRole')?.value || 'user';
+      const adminCodeInput = document.getElementById('adminCode');
 
       if (!email || !password) { alert('กรุณากรอกอีเมลและรหัสผ่าน'); return; }
+
+      // 🔒 1. หากเลือกโหมดผู้ดูแลระบบ ต้องตรวจรหัสยืนยัน Admin Code ก่อน
+      if (selectedRole === 'admin' && adminCodeInput?.value?.trim() !== '24236') {
+        alert('❌ รหัสยืนยันผู้ดูแลระบบไม่ถูกต้อง'); return;
+      }
 
       try {
         const ready = await initFirebase();
         if (!ready || !auth) throw new Error('ไม่สามารถเชื่อมต่อระบบยืนยันตัวตนได้');
 
-        // 🔒 1. ยืนยันตัวตนด้วย Firebase Auth
+        // 🔒 2. ล็อกอินผ่าน Firebase Auth
         const cred = await auth.signInWithEmailAndPassword(email, password);
         const user = cred.user;
         let profile = null;
 
-        // 🔒 2. ดึงสิทธิ์ที่แท้จริงจาก Firestore Database
+        // 🔒 3. ดึงบทบาทจริงจาก Firestore Database
         try {
           const snap = await db.collection('users').doc(user.uid).get();
           if (snap.exists) profile = snap.data();
@@ -488,10 +494,16 @@
 
         const actualRole = profile?.role || 'user';
 
-        // 🔒 3. ป้องกันผู้ใช้นำบัญชีทั่วไปมาเลือกเข้าใช้งานในฐานะผู้ดูแลระบบ
+        // 🔒 4.Strict Role Authorization Validation (ป้องกันทั้งข้ามไป Admin และข้ามมา User)
         if (selectedRole === 'admin' && actualRole !== 'admin') {
           await auth.signOut();
-          alert('❌ การเข้าถึงถูกปฏิเสธ: บัญชีของคุณไม่มีสิทธิ์เป็นผู้ดูแลระบบ (Admin)');
+          alert('❌ การเข้าถึงถูกปฏิเสธ: บัญชีนี้เป็นผู้ใช้งานทั่วไป ไม่มีสิทธิ์เข้าใช้งานระบบในฐานะ Admin');
+          return;
+        }
+
+        if (selectedRole === 'user' && actualRole === 'admin') {
+          await auth.signOut();
+          alert('❌ การเข้าถึงถูกปฏิเสธ: บัญชีของคุณเป็นสิทธิ์ผู้ดูแลระบบ (Admin) กรุณาเลือกประเภทการเข้าสู่ระบบเป็น "ผู้ดูแลระบบ" และกรอกรหัสยืนยันให้ถูกต้อง');
           return;
         }
 
@@ -515,7 +527,7 @@
   }
 
   // ============================================================
-  // Register Form (กำหนดสิทธิ์เริ่มต้นเป็น 'user' เท่านั้น)
+  // Register Form (บังคับสิทธิ์เป็น 'user' และตรวจกฎรหัสผ่าน 4 ข้อ)
   // ============================================================
 
   function setupRegisterForm() {
@@ -598,7 +610,7 @@
         const cred = await auth.createUserWithEmailAndPassword(email, password);
         const user = cred.user;
 
-        // 🔒 บันทึกข้อมูลสิทธิ์เป็น 'user' (ผู้ใช้งานทั่วไป) โดยอัตโนมัติ เพื่อความปลอดภัย
+        // 🔒 บันทึกข้อมูลสิทธิ์เป็น 'user' (ผู้ใช้งานทั่วไป) โดยอัตโนมัติ ห้ามเปลี่ยนแปลงฝั่ง Client
         if (db) {
           await db.collection('users').doc(user.uid).set({
             name: name,
