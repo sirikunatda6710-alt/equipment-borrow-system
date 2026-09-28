@@ -48,7 +48,7 @@
   }
 
   // ============================================================
-  // Audio Alert System (ระบบเสียงแจ้งเตือน)
+  // Audio Alert System
   // ============================================================
 
   function playNotificationSound() {
@@ -60,7 +60,7 @@
       const gain = ctx.createGain();
 
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(880, ctx.currentTime); // เสียงโน้ต A5
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
       gain.gain.setValueAtTime(0.1, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.5);
 
@@ -70,7 +70,7 @@
       osc.start();
       osc.stop(ctx.currentTime + 0.5);
     } catch (e) {
-      console.log('Audio Context error or user interaction required');
+      console.log('Audio Context error');
     }
   }
 
@@ -139,7 +139,7 @@
       'auth/email-already-in-use': 'อีเมลนี้มีบัญชีอยู่แล้ว',
       'auth/invalid-email': 'รูปแบบอีเมลไม่ถูกต้อง',
       'auth/weak-password': 'รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร',
-      'auth/user-not-found': 'ไม่พบบัญชีผู้ใช้นี้',
+      'auth/user-not-found': 'ไม่พบบัญชีผู้ใช้ที่มีอีเมลนี้ในระบบ',
       'auth/wrong-password': 'อีเมลหรือรหัสผ่านไม่ถูกต้อง'
     };
     return map[code] || error?.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อระบบ';
@@ -296,7 +296,55 @@
   }
 
   // ============================================================
-  // NOTIFICATION SYSTEM (ระบบการแจ้งเตือนระดับแอป)
+  // Forgot Password Feature (ส่งลิงก์รีเซ็ตรหัสผ่าน)
+  // ============================================================
+
+  function setupForgotPasswordForm() {
+    const form = document.getElementById('forgotPasswordForm');
+    if (!form || form.dataset.bound === 'true') return;
+    form.dataset.bound = 'true';
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const emailInput = document.getElementById('forgotEmail');
+      const email = emailInput?.value?.trim() || '';
+
+      if (!email) {
+        alert('กรุณากรอกอีเมลของคุณ');
+        return;
+      }
+
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const originalText = submitBtn ? submitBtn.textContent : '';
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'กำลังส่งข้อมูล...';
+      }
+
+      try {
+        const ready = await initFirebase();
+        if (!ready || !auth) throw new Error('ไม่สามารถเชื่อมต่อระบบ Firebase Auth ได้');
+
+        // 🟢 ส่งอีเมลรีเซ็ตรหัสผ่านจริงผ่าน Firebase
+        await auth.sendPasswordResetEmail(email);
+
+        alert(`ระบบได้ส่งลิงก์ตั้งรหัสผ่านใหม่ไปยังอีเมล:\n${email}\n\nกรุณาตรวจสอบในกล่องข้อความ (Inbox) หรือโฟลเดอร์ขยะ (Junk/Spam) ของคุณ`);
+        window.location.href = 'index.html';
+
+      } catch (err) {
+        alert(firebaseErrorMessage(err));
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+        }
+      }
+    });
+  }
+
+  // ============================================================
+  // Notification System
   // ============================================================
 
   function initNotificationSystem() {
@@ -311,11 +359,9 @@
     const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
     const isAdmin = currentUser.role === 'admin';
 
-    // ดึงรายการแจ้งเตือน
     let notifications = [];
 
     if (isAdmin) {
-      // 1. แจ้งเตือนคำขออนุมัติยืม-คืน (Pending)
       const requests = JSON.parse(localStorage.getItem('user_requests')) || [];
       const pendingReqs = requests.filter(r => r.status === 'pending');
       pendingReqs.forEach(req => {
@@ -327,7 +373,6 @@
         });
       });
 
-      // 2. แจ้งเตือนของใกล้หมด / หมด
       const equipment = getEquipmentLocal();
       equipment.forEach(item => {
         const avail = Number(item.available || 0);
@@ -349,7 +394,6 @@
       });
 
     } else {
-      // สำหรับ User: แจ้งเตือนผลการอนุมัติคำขอ
       const requests = JSON.parse(localStorage.getItem('user_requests')) || [];
       const myRequests = requests.filter(r => (r.userEmail === currentUser.email || r.userName === currentUser.name) && r.status !== 'pending');
       
@@ -363,18 +407,16 @@
       });
     }
 
-    // แสดงจำนวนบน Badge
     if (countBadge) {
       if (notifications.length > 0) {
         countBadge.textContent = notifications.length;
         countBadge.style.display = 'inline-block';
-        playNotificationSound(); // เล่นเสียงเตือนสั้นๆ เมื่อมีรายการใหม่
+        playNotificationSound();
       } else {
         countBadge.style.display = 'none';
       }
     }
 
-    // Render รายการใน Panel
     if (notifList) {
       if (notifications.length === 0) {
         notifList.innerHTML = `<div style="padding: 1.5rem; text-align: center; color: #6b7280;">ไม่มีการแจ้งเตือนใหม่ในขณะนี้</div>`;
@@ -388,7 +430,6 @@
       }
     }
 
-    // Toggle เปิด/ปิด Panel เมื่อกดปุ่มกระดิ่ง
     if (notifBtn.dataset.bound !== 'true') {
       notifBtn.dataset.bound = 'true';
       notifBtn.addEventListener('click', (e) => {
@@ -529,7 +570,7 @@
     }
 
     setupDropdownToggle();
-    initNotificationSystem(); // 🟢 เรียกใช้งานระบบแจ้งเตือน
+    initNotificationSystem();
     if (window.lucide) lucide.createIcons();
   }
 
@@ -762,6 +803,7 @@
     setupRoleUI();
     loadRememberedData();
     setupLoginForm();
+    setupForgotPasswordForm(); // 🟢 เพิ่มระบบส่งลิงก์รีเซ็ตรหัสผ่าน
     initDashboardByRole();
     initEquipmentPage();
   }
