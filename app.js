@@ -31,7 +31,7 @@
   let isFirebaseInitializing = false;
 
   // ============================================================
-  // Date & Time Formatter (วัน-เวลา ปัจจุบัน)
+  // Date & Time Formatter
   // ============================================================
 
   function getCurrentDateTimeFormatted() {
@@ -48,7 +48,34 @@
   }
 
   // ============================================================
-  // Helpers & Global System Logs
+  // Audio Alert System (ระบบเสียงแจ้งเตือน)
+  // ============================================================
+
+  function playNotificationSound() {
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, ctx.currentTime); // เสียงโน้ต A5
+      gain.gain.setValueAtTime(0.1, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.5);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start();
+      osc.stop(ctx.currentTime + 0.5);
+    } catch (e) {
+      console.log('Audio Context error or user interaction required');
+    }
+  }
+
+  // ============================================================
+  // Helpers & System Log
   // ============================================================
 
   function saveJSON(key, value) {
@@ -69,7 +96,7 @@
         action: action,
         detail: detail,
         adminName: adminName,
-        date: getCurrentDateTimeFormatted() // 🟢 วันเวลาปัจจุบันแบบสมบูรณ์
+        date: getCurrentDateTimeFormatted()
       });
       localStorage.setItem('system_history', JSON.stringify(history));
     } catch (e) {
@@ -79,10 +106,10 @@
 
   function getEquipmentLocal() {
     const mockEquipment = [
-      { id: "EQ-BUILD-001", name: "โปรเจกเตอร์ความละเอียดสูง (HD Projector)", category: "ครุภัณฑ์", total: 5, available: 4, status: "available" },
+      { id: "EQ-BUILD-001", name: "โปรเจกเตอร์ความละเอียดสูง (HD Projector)", category: "ครุภัณฑ์", total: 5, available: 1, status: "available" },
       { id: "EQ-BUILD-002", name: "จอรับภาพแบบขาตั้ง 100 นิ้ว", category: "ครุภัณฑ์", total: 4, available: 4, status: "available" },
       { id: "EQ-BUILD-003", name: "โต๊ะพับอเนกประสงค์หน้าขาว", category: "ครุภัณฑ์", total: 12, available: 10, status: "available" },
-      { id: "EQ-MAT-001", name: "ปลั๊กพ่วงสายยาว 10 เมตร (4 ช่อง)", category: "วัสดุ", total: 15, available: 12, status: "available" },
+      { id: "EQ-MAT-001", name: "ปลั๊กพ่วงสายยาว 10 เมตร (4 ช่อง)", category: "วัสดุ", total: 15, available: 0, status: "available" },
       { id: "EQ-MAT-002", name: "สายแปลง HDMI to VGA", category: "วัสดุ", total: 10, available: 8, status: "available" },
       { id: "EQ-AUDIO-001", name: "ชุดลำโพงเคลื่อนย้ายพร้อมไมค์ไร้สาย (Portable Speaker)", category: "อุปกรณ์", total: 5, available: 3, status: "available" },
       { id: "EQ-AUDIO-002", name: "ไมโครโฟนไร้สายคู่ (Wireless Microphone Set)", category: "อุปกรณ์", total: 8, available: 6, status: "available" },
@@ -269,6 +296,123 @@
   }
 
   // ============================================================
+  // NOTIFICATION SYSTEM (ระบบการแจ้งเตือนระดับแอป)
+  // ============================================================
+
+  function initNotificationSystem() {
+    const notifBtn = document.getElementById('notificationButton');
+    const notifPanel = document.getElementById('notificationPanel');
+    const closeBtn = document.getElementById('closeNotificationPanel');
+    const countBadge = document.getElementById('notificationCount');
+    const notifList = document.getElementById('notificationList');
+
+    if (!notifBtn || !notifPanel) return;
+
+    const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
+    const isAdmin = currentUser.role === 'admin';
+
+    // ดึงรายการแจ้งเตือน
+    let notifications = [];
+
+    if (isAdmin) {
+      // 1. แจ้งเตือนคำขออนุมัติยืม-คืน (Pending)
+      const requests = JSON.parse(localStorage.getItem('user_requests')) || [];
+      const pendingReqs = requests.filter(r => r.status === 'pending');
+      pendingReqs.forEach(req => {
+        notifications.push({
+          type: 'urgent',
+          title: `🔔 มีคำขอ${req.type}รออนุมัติ`,
+          desc: `${req.userName || 'ผู้ใช้งาน'} ส่งคำขอ${req.type} ${req.equipmentName}`,
+          link: 'admin-approvals.html'
+        });
+      });
+
+      // 2. แจ้งเตือนของใกล้หมด / หมด
+      const equipment = getEquipmentLocal();
+      equipment.forEach(item => {
+        const avail = Number(item.available || 0);
+        if (avail === 0) {
+          notifications.push({
+            type: 'alert',
+            title: `❌ สินค้าหมด: ${item.name}`,
+            desc: `หมวดหมู่ ${item.category} เหลือพร้อมใช้งาน 0 ชิ้น`,
+            link: 'admin-management.html'
+          });
+        } else if (avail <= 2) {
+          notifications.push({
+            type: 'warning',
+            title: `⚠️ สินค้าใกล้หมด: ${item.name}`,
+            desc: `หมวดหมู่ ${item.category} เหลือพร้อมใช้งานเพียง ${avail} ชิ้น`,
+            link: 'admin-management.html'
+          });
+        }
+      });
+
+    } else {
+      // สำหรับ User: แจ้งเตือนผลการอนุมัติคำขอ
+      const requests = JSON.parse(localStorage.getItem('user_requests')) || [];
+      const myRequests = requests.filter(r => (r.userEmail === currentUser.email || r.userName === currentUser.name) && r.status !== 'pending');
+      
+      myRequests.slice(0, 5).forEach(req => {
+        notifications.push({
+          type: req.status === 'approved' ? 'success' : 'alert',
+          title: req.status === 'approved' ? `🟢 คำขอ${req.type}ได้รับการอนุมัติ` : `🔴 คำขอ${req.type}ถูกปฏิเสธ`,
+          desc: `อุปกรณ์: ${req.equipmentName} (${req.requestDate})`,
+          link: req.type === 'ยืม' ? 'return.html' : 'history.html'
+        });
+      });
+    }
+
+    // แสดงจำนวนบน Badge
+    if (countBadge) {
+      if (notifications.length > 0) {
+        countBadge.textContent = notifications.length;
+        countBadge.style.display = 'inline-block';
+        playNotificationSound(); // เล่นเสียงเตือนสั้นๆ เมื่อมีรายการใหม่
+      } else {
+        countBadge.style.display = 'none';
+      }
+    }
+
+    // Render รายการใน Panel
+    if (notifList) {
+      if (notifications.length === 0) {
+        notifList.innerHTML = `<div style="padding: 1.5rem; text-align: center; color: #6b7280;">ไม่มีการแจ้งเตือนใหม่ในขณะนี้</div>`;
+      } else {
+        notifList.innerHTML = notifications.map(n => `
+          <a href="${n.link}" style="display: block; padding: 0.75rem 1rem; border-bottom: 1px solid #f3f4f6; text-decoration: none; color: inherit; transition: background 0.2s;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='transparent'">
+            <div style="font-weight: 600; font-size: 0.9rem; color: #1f2937;">${n.title}</div>
+            <div style="font-size: 0.8rem; color: #6b7280; margin-top: 2px;">${n.desc}</div>
+          </a>
+        `).join('');
+      }
+    }
+
+    // Toggle เปิด/ปิด Panel เมื่อกดปุ่มกระดิ่ง
+    if (notifBtn.dataset.bound !== 'true') {
+      notifBtn.dataset.bound = 'true';
+      notifBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isVisible = notifPanel.style.display === 'block';
+        notifPanel.style.display = isVisible ? 'none' : 'block';
+      });
+    }
+
+    if (closeBtn && closeBtn.dataset.bound !== 'true') {
+      closeBtn.dataset.bound = 'true';
+      closeBtn.addEventListener('click', () => {
+        notifPanel.style.display = 'none';
+      });
+    }
+
+    document.addEventListener('click', (e) => {
+      if (notifPanel && !notifPanel.contains(e.target) && e.target !== notifBtn) {
+        notifPanel.style.display = 'none';
+      }
+    });
+  }
+
+  // ============================================================
   // Login Form
   // ============================================================
 
@@ -385,6 +529,7 @@
     }
 
     setupDropdownToggle();
+    initNotificationSystem(); // 🟢 เรียกใช้งานระบบแจ้งเตือน
     if (window.lucide) lucide.createIcons();
   }
 
@@ -597,7 +742,7 @@
         reason: reason,
         userName: currentUser.name,
         userEmail: currentUser.email,
-        requestDate: getCurrentDateTimeFormatted(), // 🟢 วันเวลาปัจจุบันแบบสมบูรณ์
+        requestDate: getCurrentDateTimeFormatted(),
         type: 'ยืม',
         status: 'pending',
         approvedBy: '-'
