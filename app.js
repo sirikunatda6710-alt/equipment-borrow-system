@@ -346,6 +346,26 @@
     });
   }
 
+  function setupRoleUI() {
+    const roleSelect = document.getElementById('loginRole');
+    const adminCodeGroup = document.getElementById('adminCodeGroup');
+    const adminCode = document.getElementById('adminCode');
+
+    if (!roleSelect || !adminCodeGroup) return;
+
+    const update = () => {
+      const isAdmin = roleSelect.value === 'admin';
+      adminCodeGroup.style.display = isAdmin ? 'block' : 'none';
+      if (adminCode) {
+        adminCode.required = isAdmin;
+        if (!isAdmin) adminCode.value = '';
+      }
+    };
+
+    roleSelect.addEventListener('change', update);
+    update();
+  }
+
   function loadRememberedData() {
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
@@ -479,7 +499,7 @@
   }
 
   // ============================================================
-  // Login Feature (ตรวจสอบสิทธิ์จาก Firestore Database โดยตรง)
+  // Login Feature (ระบบยืนยันสิทธิ์เข้มงวดด้วย Firestore DB)
   // ============================================================
 
   function setupLoginForm() {
@@ -492,14 +512,26 @@
 
       const emailInput = document.getElementById('email');
       const passwordInput = document.getElementById('password');
+      const roleSelect = document.getElementById('loginRole');
+      const adminCodeInput = document.getElementById('adminCode');
       const rememberMe = document.getElementById('rememberMe');
 
       const email = emailInput?.value?.trim() || '';
       const password = passwordInput?.value || '';
+      const selectedRole = roleSelect?.value || 'user';
+      const ADMIN_CODE = '24236';
 
       if (!email || !password) {
         alert('กรุณากรอกอีเมลและรหัสผ่าน');
         return;
+      }
+
+      if (selectedRole === 'admin') {
+        const code = adminCodeInput?.value?.trim() || '';
+        if (code !== ADMIN_CODE) {
+          alert('รหัสผู้ดูแลระบบไม่ถูกต้อง');
+          return;
+        }
       }
 
       const submitBtn = form.querySelector('button[type="submit"]');
@@ -519,15 +551,27 @@
         const cred = await auth.signInWithEmailAndPassword(email, password);
         const user = cred.user;
 
+        // ดึงสิทธิ์ที่แท้จริงจากฐานข้อมูล Firestore
         let profile = null;
         try {
           const snap = await db.collection('users').doc(user.uid).get();
           if (snap.exists) profile = snap.data();
         } catch (e) {
-          console.error("Error fetching profile:", e);
+          console.error(e);
         }
 
         const actualRole = profile?.role || 'user';
+
+        // 🛑 ตรวจสอบความถูกต้องของสิทธิ์ (Strict Role Verification)
+        if (selectedRole === 'admin' && actualRole !== 'admin') {
+          await auth.signOut();
+          alert('❌ การเข้าถึงถูกปฏิเสธ: บัญชีนี้ไม่มีสิทธิ์เป็นผู้ดูแลระบบ');
+          return;
+        }
+
+        if (selectedRole === 'user' && actualRole === 'admin') {
+          alert('⚠️ บัญชีนี้เป็นสิทธิ์ผู้ดูแลระบบ ระบบจะนำคุณไปยังหน้า Admin Dashboard');
+        }
 
         const currentUserData = {
           uid: user.uid,
@@ -929,6 +973,7 @@
   function boot() {
     setupProfileModal();
     setupPasswordToggle();
+    setupRoleUI();
     loadRememberedData();
     setupLoginForm();
     setupRegisterForm();
