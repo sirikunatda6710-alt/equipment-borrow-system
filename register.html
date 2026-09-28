@@ -75,8 +75,7 @@
             margin-bottom: 0.4rem;
         }
 
-        .form-group input,
-        .form-select {
+        .form-group input {
             width: 100%;
             padding: 0.75rem 1rem;
             border: 1px solid #d1d5db;
@@ -87,8 +86,7 @@
             transition: border-color 0.2s, box-shadow 0.2s;
         }
 
-        .form-group input:focus,
-        .form-select:focus {
+        .form-group input:focus {
             border-color: #2e7d32;
             box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.15);
         }
@@ -196,22 +194,7 @@
                 <input type="email" id="regEmail" placeholder="กรอกอีเมลของคุณ" required>
             </div>
 
-            <!-- 3. ประเภทสิทธิ์ผู้ใช้งาน -->
-            <div class="form-group">
-                <label for="regRole">ประเภทสิทธิ์ลงทะเบียน</label>
-                <select id="regRole" class="form-select">
-                    <option value="user">ผู้ใช้งานทั่วไป</option>
-                    <option value="admin">ผู้ดูแลระบบ (Admin)</option>
-                </select>
-            </div>
-
-            <!-- 4. รหัสยืนยันผู้ดูแลระบบ (จะซ่อนไว้หากเป็นผู้ใช้ทั่วไป) -->
-            <div class="form-group" id="regAdminCodeGroup" style="display: none;">
-                <label for="regAdminCode">รหัสยืนยันผู้ดูแลระบบ</label>
-                <input type="password" id="regAdminCode" placeholder="กรอกรหัส Admin (24236)">
-            </div>
-
-            <!-- 5. สร้างรหัสผ่าน -->
+            <!-- 3. สร้างรหัสผ่าน -->
             <div class="form-group">
                 <label for="regPassword">สร้างรหัสผ่าน</label>
                 <div class="password-wrapper">
@@ -219,7 +202,7 @@
                     <button type="button" class="toggle-password">แสดง</button>
                 </div>
                 
-                <!-- กล่องรายการเงื่อนไขรหัสผ่าน -->
+                <!-- รายการเงื่อนไขรหัสผ่าน 4 ข้อ -->
                 <div class="password-rules">
                     <ul>
                         <li id="ruleLength"><span class="rule-icon">❌</span> จำนวนไม่น้อยกว่า 8 หลัก</li>
@@ -230,7 +213,7 @@
                 </div>
             </div>
 
-            <!-- 6. ยืนยันรหัสผ่าน -->
+            <!-- 4. ยืนยันรหัสผ่าน -->
             <div class="form-group">
                 <label for="regConfirmPassword">ยืนยันรหัสผ่าน</label>
                 <div class="password-wrapper">
