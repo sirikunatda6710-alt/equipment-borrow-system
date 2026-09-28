@@ -4,14 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ประวัติระบบ | ระบบยืม-คืนอุปกรณ์</title>
+    <title>ประวัติยืม-คืน | ระบบยืม-คืนอุปกรณ์</title>
     <link rel="stylesheet" href="style.css">
     <style>
         .status-badge-approved { background: #d1fae5; color: #059669; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 0.85rem; }
         .status-badge-pending { background: #fef3c7; color: #d97706; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 0.85rem; }
         .status-badge-rejected { background: #fee2e2; color: #dc2626; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 0.85rem; }
-        .section-card { background: #fff; border-radius: 12px; padding: 1.5rem; border: 1px solid #e5e7eb; margin-top: 1.5rem; }
-        .section-card h2 { font-size: 1.15rem; margin-bottom: 1rem; color: #1f2937; display: flex; align-items: center; gap: 0.5rem; }
     </style>
 </head>
 
@@ -23,14 +21,14 @@
                 <div class="header-logo"><img src="https://img2.pic.in.th/007-med-msu.md.webp" alt="โลโก้คณะ"></div>
                 <div class="brand-text">
                     <h2>ระบบยืม-คืนอุปกรณ์</h2>
-                    <p id="systemRoleText">ส่วนผู้ดูแลระบบ</p>
+                    <p id="systemRoleText">ส่วนผู้ใช้งานทั่วไป</p>
                 </div>
             </div>
             <div class="header-actions">
                 <button type="button" id="profileButton" class="profile-button">
                     <i data-lucide="circle-user-round"></i>
                     <div class="profile-info">
-                        <span class="profile-label" id="userRoleBadge">ผู้ดูแลระบบ</span>
+                        <span class="profile-label" id="userRoleBadge">ผู้ใช้งานทั่วไป</span>
                         <span id="userName" class="profile-name">ผู้ใช้งาน</span>
                     </div>
                 </button>
@@ -46,19 +44,16 @@
         <!-- Main Content -->
         <main class="main-content">
             <section class="dashboard-heading">
-                <h1 id="pageMainTitle">📜 ประวัติคำขอและการทำงานในระบบ</h1>
-                <p id="pageMainSub">ตรวจสอบประวัติคำขอยืม-คืนทั้งหมด พร้อมบันทึกกิจกรรมการจัดการของแอดมิน</p>
+                <h1>📜 ประวัติการทำรายการยืม-คืนของฉัน</h1>
+                <p>ตรวจสอบประวัติการยืม-คืนอุปกรณ์ทั้งหมด พร้อมชื่อผู้ดูแลระบบผู้อนุมัติรายการ</p>
             </section>
 
-            <!-- ตารางที่ 1: ประวัติการยืม-คืนอุปกรณ์ -->
-            <div class="section-card">
-                <h2><i data-lucide="clipboard-list"></i> ประวัติรายการยืม-คืนอุปกรณ์</h2>
+            <section class="table-container" style="margin-top: 1.5rem;">
                 <div class="table-responsive">
                     <table>
                         <thead>
                             <tr>
                                 <th>รหัสรายการ</th>
-                                <th>ผู้ทำรายการ</th>
                                 <th>ชื่ออุปกรณ์</th>
                                 <th>ประเภทคำขอ</th>
                                 <th>จำนวน</th>
@@ -67,28 +62,10 @@
                                 <th>แอดมินผู้อนุมัติ/ดำเนินการ</th>
                             </tr>
                         </thead>
-                        <tbody id="requestHistoryTable"></tbody>
+                        <tbody id="userHistoryTable"></tbody>
                     </table>
                 </div>
-            </div>
-
-            <!-- ตารางที่ 2: บันทึกกิจกรรมระบบของแอดมิน (แสดงเฉพาะ Admin) -->
-            <div class="section-card" id="adminLogSection" style="display: none;">
-                <h2><i data-lucide="shield-alert"></i> บันทึกกิจกรรมการจัดการอุปกรณ์ของแอดมิน (System Activity Logs)</h2>
-                <div class="table-responsive">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>วัน-เวลา</th>
-                                <th>แอดมินผู้ดำเนินการ</th>
-                                <th>กิจกรรม</th>
-                                <th>รายละเอียด</th>
-                            </tr>
-                        </thead>
-                        <tbody id="systemLogTable"></tbody>
-                    </table>
-                </div>
-            </div>
+            </section>
         </main>
     </div>
 
@@ -109,62 +86,37 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            renderHistoryPage();
+            renderUserHistory();
         });
 
-        function renderHistoryPage() {
+        function renderUserHistory() {
+            const table = document.getElementById('userHistoryTable');
             const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
-            const isAdmin = currentUser.role === 'admin';
-
-            // 1. Render ตารางประวัติการยืม-คืน
-            const reqTable = document.getElementById('requestHistoryTable');
             const allRequests = JSON.parse(localStorage.getItem('user_requests')) || [];
-            
-            const displayRequests = isAdmin 
-                ? allRequests 
-                : allRequests.filter(r => r.userEmail === currentUser.email || r.userName === currentUser.name);
 
-            if (displayRequests.length === 0) {
-                reqTable.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 2rem; color: #6b7280;">ไม่มีรายการประวัติยืม-คืนในระบบ</td></tr>`;
-            } else {
-                reqTable.innerHTML = displayRequests.map(item => `
-                    <tr>
-                        <td><strong>${item.id}</strong></td>
-                        <td>${item.userName || item.userEmail || 'ผู้ใช้งาน'}</td>
-                        <td>${item.equipmentName}</td>
-                        <td><span style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-size:0.8rem; font-weight:600;">${item.type || 'ยืม'}</span></td>
-                        <td>${item.quantity || 1}</td>
-                        <td>${item.requestDate}</td>
-                        <td>
-                            <span class="status-badge-${item.status}">
-                                ${item.status === 'pending' ? 'รออนุมัติ' : item.status === 'approved' ? 'อนุมัติสำเร็จ' : 'ถูกปฏิเสธ'}
-                            </span>
-                        </td>
-                        <td><strong>${item.approvedBy ? item.approvedBy : (item.status === 'pending' ? '-' : 'ผู้ดูแลระบบ')}</strong></td>
-                    </tr>
-                `).join('');
+            // กรองประวัติเฉพาะของตนเอง
+            const myHistory = allRequests.filter(r => r.userEmail === currentUser.email || r.userName === currentUser.name);
+
+            if (myHistory.length === 0) {
+                table.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 2.5rem; color: #6b7280;">คุณยังไม่มีประวัติการยืม-คืนอุปกรณ์ในระบบ</td></tr>`;
+                return;
             }
 
-            // 2. Render ตาราง System Logs (แสดงเฉพาะเมื่อเป็น Admin)
-            if (isAdmin) {
-                const logSection = document.getElementById('adminLogSection');
-                const logTable = document.getElementById('systemLogTable');
-                logSection.style.display = 'block';
-
-                const logs = JSON.parse(localStorage.getItem('system_history')) || [];
-                if (logs.length === 0) {
-                    logTable.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 2rem; color: #6b7280;">ยังไม่มีบันทึกกิจกรรมในระบบ</td></tr>`;
-                } else {
-                    logTable.innerHTML = logs.map(log => `
-                        <tr>
-                            <td>${log.date}</td>
-                            <td><strong>${log.adminName || 'ผู้ดูแลระบบ'}</strong></td>
-                            <td><span style="background:#f3f4f6; padding:2px 8px; border-radius:4px; font-weight:600;">${log.action}</span></td>
-                            <td>${log.detail}</td>
-                        </tr>
-                    `).join('');
-                }
-            }
+            table.innerHTML = myHistory.map(item => `
+                <tr>
+                    <td><strong>${item.id}</strong></td>
+                    <td>${item.equipmentName}</td>
+                    <td><span style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-size:0.8rem; font-weight:600;">${item.type || 'ยืม'}</span></td>
+                    <td>${item.quantity || 1}</td>
+                    <td>${item.requestDate}</td>
+                    <td>
+                        <span class="status-badge-${item.status}">
+                            ${item.status === 'pending' ? 'รออนุมัติ' : item.status === 'approved' ? 'อนุมัติสำเร็จ' : 'ถูกปฏิเสธ'}
+                        </span>
+                    </td>
+                    <td><strong>${item.approvedBy || (item.status === 'pending' ? '-' : 'ผู้ดูแลระบบ')}</strong></td>
+                </tr>
+            `).join('');
 
             if (window.lucide) lucide.createIcons();
         }
