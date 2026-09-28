@@ -6,203 +6,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>เข้าสู่ระบบ | ระบบยืม-คืนอุปกรณ์</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        body.auth-page {
-            background-color: #409243;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            font-family: system-ui, -apple-system, sans-serif;
-        }
-
-        .auth-card {
-            background: #ffffff;
-            border-radius: 16px;
-            padding: 2.5rem;
-            width: 100%;
-            max-width: 420px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-            text-align: center;
-            box-sizing: border-box;
-        }
-
-        .auth-logo {
-            width: 90px;
-            height: 90px;
-            margin: 0 auto 1.25rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #f0fdf4;
-            border-radius: 50%;
-            padding: 8px;
-            box-sizing: border-box;
-        }
-
-        .auth-logo img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
-        .auth-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #2e7d32;
-            margin: 0 0 0.25rem;
-        }
-
-        .auth-subtitle {
-            font-size: 0.875rem;
-            color: #6b7280;
-            margin: 0 0 1.5rem;
-        }
-
-        .form-group {
-            text-align: left;
-            margin-bottom: 1.25rem;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 0.5rem;
-        }
-
-        .form-group input,
-        .form-select {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            box-sizing: border-box;
-            outline: none;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        .form-group input:focus,
-        .form-select:focus {
-            border-color: #2e7d32;
-            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.15);
-        }
-
-        .password-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-
-        .toggle-password {
-            position: absolute;
-            right: 10px;
-            background: none;
-            border: none;
-            color: #2e7d32;
-            font-weight: 600;
-            font-size: 0.85rem;
-            cursor: pointer;
-        }
-
-        .form-options {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.85rem;
-            margin-bottom: 1.25rem;
-        }
-
-        .remember-me {
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-            color: #4b5563;
-            cursor: pointer;
-        }
-
-        .link-btn {
-            color: #2e7d32;
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .link-btn:hover {
-            text-decoration: underline;
-        }
-
-        .btn-primary {
-            width: 100%;
-            padding: 0.85rem;
-            background-color: #2e7d32;
-            color: #ffffff;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .btn-primary:hover {
-            background-color: #246527;
-        }
-    </style>
 </head>
 
-<body class="auth-page">
-
-    <div class="auth-card">
-        <div class="auth-logo">
-            <img src="https://img2.pic.in.th/007-med-msu.md.webp" alt="โลโก้คณะ">
-        </div>
-
-        <h1 class="auth-title">เข้าสู่ระบบ</h1>
-        <p class="auth-subtitle">ระบบยืม-คืนอุปกรณ์ คณะแพทยศาสตร์</p>
-
-        <form id="loginForm">
-            <div class="form-group">
-                <label for="email">อีเมล</label>
-                <input type="email" id="email" placeholder="กรอกอีเมลของคุณ" required>
+<body class="login-body">
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <img src="https://img2.pic.in.th/007-med-msu.md.webp" alt="โลโก้คณะ" class="login-logo">
+                <h2>เข้าสู่ระบบ</h2>
+                <p>เข้าสู่ระบบเพื่อใช้งานระบบยืม-คืนอุปกรณ์</p>
             </div>
 
-            <div class="form-group">
-                <label for="password">รหัสผ่าน</label>
-                <div class="password-wrapper">
-                    <input type="password" id="password" placeholder="กรอกรหัสผ่านของคุณ" required>
-                    <button type="button" class="toggle-password">แสดง</button>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">อีเมล</label>
+                    <input type="email" id="email" required placeholder="กรอกอีเมลของคุณ...">
                 </div>
-            </div>
 
-            <div class="form-group">
-                <label for="loginRole">สิทธิ์เข้าใช้งาน</label>
-                <select id="loginRole" class="form-select">
-                    <option value="user">ผู้ใช้งานทั่วไป</option>
-                    <option value="admin">ผู้ดูแลระบบ (Admin)</option>
-                </select>
-            </div>
+                <div class="form-group">
+                    <label for="password">รหัสผ่าน</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="password" required placeholder="กรอกรหัสผ่าน...">
+                        <button type="button" class="toggle-password">แสดง</button>
+                    </div>
+                </div>
 
-            <div class="form-group" id="adminCodeGroup" style="display: none;">
-                <label for="adminCode">รหัสยืนยันผู้ดูแลระบบ</label>
-                <input type="password" id="adminCode" placeholder="กรอกรหัส Admin (24236)">
-            </div>
+                <div class="form-options">
+                    <label class="remember-me">
+                        <input type="checkbox" id="rememberMe">
+                        <span>จดจำรหัสผ่านและอีเมลของฉัน</span>
+                    </label>
+                </div>
 
-            <div class="form-options">
-                <label class="remember-me">
-                    <input type="checkbox" id="rememberMe">
-                    <span>จดจำการเข้าสู่ระบบ</span>
-                </label>
-                <a href="forgot-password.html" class="link-btn">ลืมรหัสผ่าน?</a>
-            </div>
+                <button type="submit" class="btn btn-primary btn-block">เข้าสู่ระบบ</button>
 
-            <button type="submit" class="btn-primary">เข้าสู่ระบบ</button>
-        </form>
-
-        <div class="auth-footer" style="margin-top: 1.25rem; text-align: center;">
-            <p style="font-size: 0.875rem; color: #6b7280;">ยังไม่มีบัญชีใช่หรือไม่? <a href="register.html" class="link-btn" style="font-weight: 600;">สมัครสมาชิก</a></p>
+                <div class="form-footer">
+                    <a href="forgot-password.html">ลืมรหัสผ่าน?</a>
+                    <p>ยังไม่มีบัญชี? <a href="register.html">ลงทะเบียน</a></p>
+                </div>
+            </form>
         </div>
     </div>
 
