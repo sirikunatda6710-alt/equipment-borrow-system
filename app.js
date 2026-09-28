@@ -31,21 +31,8 @@
   let isFirebaseInitializing = false;
 
   // ============================================================
-  // Date & Time Formatter
+  // Helpers & Global Log System
   // ============================================================
-
-  function getCurrentDateTimeFormatted() {
-    const now = new Date();
-    return now.toLocaleString('th-TH', {
-      year: 'numeric',
-      month: 'numeric',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    });
-  }
 
   function saveJSON(key, value) {
     try {
@@ -59,13 +46,11 @@
     try {
       let history = JSON.parse(localStorage.getItem('system_history')) || [];
       const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
-      const adminName = currentUser.name || localStorage.getItem('userName') || 'ผู้ดูแลระบบ';
-      
       history.unshift({
         action: action,
         detail: detail,
-        adminName: adminName,
-        date: getCurrentDateTimeFormatted()
+        adminName: currentUser.name || localStorage.getItem('userName') || 'ผู้ดูแลระบบ',
+        date: new Date().toLocaleString('th-TH')
       });
       localStorage.setItem('system_history', JSON.stringify(history));
     } catch (e) {
@@ -75,27 +60,122 @@
 
   function getEquipmentLocal() {
     const mockEquipment = [
-      { id: "EQ-BUILD-001", name: "โปรเจกเตอร์ความละเอียดสูง (HD Projector)", category: "ครุภัณฑ์", total: 5, available: 1, status: "available" },
-      { id: "EQ-BUILD-002", name: "จอรับภาพแบบขาตั้ง 100 นิ้ว", category: "ครุภัณฑ์", total: 4, available: 4, status: "available" },
-      { id: "EQ-BUILD-003", name: "โต๊ะพับอเนกประสงค์หน้าขาว", category: "ครุภัณฑ์", total: 12, available: 10, status: "available" },
-      { id: "EQ-MAT-001", name: "ปลั๊กพ่วงสายยาว 10 เมตร (4 ช่อง)", category: "วัสดุ", total: 15, available: 0, status: "available" },
-      { id: "EQ-MAT-002", name: "สายแปลง HDMI to VGA", category: "วัสดุ", total: 10, available: 8, status: "available" },
-      { id: "EQ-AUDIO-001", name: "ชุดลำโพงเคลื่อนย้ายพร้อมไมค์ไร้สาย (Portable Speaker)", category: "อุปกรณ์", total: 5, available: 3, status: "available" },
-      { id: "EQ-AUDIO-002", name: "ไมโครโฟนไร้สายคู่ (Wireless Microphone Set)", category: "อุปกรณ์", total: 8, available: 6, status: "available" },
-      { id: "EQ-AUDIO-003", name: "เครื่องผสมสัญญาณเสียง มิกเซอร์ 8 ช่อง", category: "อุปกรณ์", total: 3, available: 2, status: "available" },
-      { id: "EQ-CAM-001", name: "กล้องถ่ายภาพ DSLR Canon EOS 80D พร้อมเลนส์ Kit", category: "บันทึกภาพ", total: 4, available: 2, status: "available" },
-      { id: "EQ-CAM-002", name: "ขาตั้งกล้องอลูมิเนียม พร้อมหัวแพน (Tripod)", category: "บันทึกภาพ", total: 6, available: 5, status: "available" },
-      { id: "EQ-CAM-003", name: "ชุดไฟต่อเนื่องสตูดิโอ (Softbox Light Set)", category: "บันทึกภาพ", total: 3, available: 3, status: "available" },
-      { id: "EQ-CAM-004", name: "กล้องวิดีโอ 4K Sony Handycam", category: "บันทึกภาพ", total: 3, available: 1, status: "available" }
+      // --- หมวด 1: ครุภัณฑ์ ---
+      {
+        id: "EQ-BUILD-001",
+        name: "โปรเจกเตอร์ความละเอียดสูง (HD Projector)",
+        category: "ครุภัณฑ์",
+        total: 5,
+        available: 4,
+        status: "available"
+      },
+      {
+        id: "EQ-BUILD-002",
+        name: "จอรับภาพแบบขาตั้ง 100 นิ้ว",
+        category: "ครุภัณฑ์",
+        total: 4,
+        available: 4,
+        status: "available"
+      },
+      {
+        id: "EQ-BUILD-003",
+        name: "โต๊ะพับอเนกประสงค์หน้าขาว",
+        category: "ครุภัณฑ์",
+        total: 12,
+        available: 10,
+        status: "available"
+      },
+
+      // --- หมวด 2: วัสดุ ---
+      {
+        id: "EQ-MAT-001",
+        name: "ปลั๊กพ่วงสายยาว 10 เมตร (4 ช่อง)",
+        category: "วัสดุ",
+        total: 15,
+        available: 12,
+        status: "available"
+      },
+      {
+        id: "EQ-MAT-002",
+        name: "สายแปลง HDMI to VGA",
+        category: "วัสดุ",
+        total: 10,
+        available: 8,
+        status: "available"
+      },
+
+      // --- หมวด 3: อุปกรณ์ (เครื่องเสียง) ---
+      {
+        id: "EQ-AUDIO-001",
+        name: "ชุดลำโพงเคลื่อนย้ายพร้อมไมค์ไร้สาย (Portable Speaker)",
+        category: "อุปกรณ์",
+        total: 5,
+        available: 3,
+        status: "available"
+      },
+      {
+        id: "EQ-AUDIO-002",
+        name: "ไมโครโฟนไร้สายคู่ (Wireless Microphone Set)",
+        category: "อุปกรณ์",
+        total: 8,
+        available: 6,
+        status: "available"
+      },
+      {
+        id: "EQ-AUDIO-003",
+        name: "เครื่องผสมสัญญาณเสียง มิกเซอร์ 8 ช่อง",
+        category: "อุปกรณ์",
+        total: 3,
+        available: 2,
+        status: "available"
+      },
+
+      // --- หมวด 4: บันทึกภาพ ---
+      {
+        id: "EQ-CAM-001",
+        name: "กล้องถ่ายภาพ DSLR Canon EOS 80D พร้อมเลนส์ Kit",
+        category: "บันทึกภาพ",
+        total: 4,
+        available: 2,
+        status: "available"
+      },
+      {
+        id: "EQ-CAM-002",
+        name: "ขาตั้งกล้องอลูมิเนียม พร้อมหัวแพน (Tripod)",
+        category: "บันทึกภาพ",
+        total: 6,
+        available: 5,
+        status: "available"
+      },
+      {
+        id: "EQ-CAM-003",
+        name: "ชุดไฟต่อเนื่องสตูดิโอ (Softbox Light Set)",
+        category: "บันทึกภาพ",
+        total: 3,
+        available: 3,
+        status: "available"
+      },
+      {
+        id: "EQ-CAM-004",
+        name: "กล้องวิดีโอ 4K Sony Handycam",
+        category: "บันทึกภาพ",
+        total: 3,
+        available: 1,
+        status: "available"
+      }
     ];
 
     try {
       const data = localStorage.getItem('equipment');
       if (data) {
         const parsed = JSON.parse(data);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
       }
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      console.error(e);
+    }
 
     saveJSON('equipment', mockEquipment);
     return mockEquipment;
@@ -104,12 +184,15 @@
   function firebaseErrorMessage(error) {
     const code = error?.code || '';
     const map = {
-      'auth/api-key-not-valid': 'API Key ของ Firebase ไม่ถูกต้อง',
-      'auth/email-already-in-use': 'อีเมลนี้มีบัญชีอยู่แล้ว',
+      'auth/api-key-not-valid': 'API Key ของ Firebase ไม่ถูกต้อง กรุณาตรวจสอบใน Project Settings',
+      'auth/invalid-api-key': 'API Key ของ Firebase ไม่ถูกต้อง',
+      'auth/email-already-in-use': 'อีเมลนี้มีบัญชีอยู่แล้ว กรุณาเข้าสู่ระบบ',
       'auth/invalid-email': 'รูปแบบอีเมลไม่ถูกต้อง',
       'auth/weak-password': 'รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร',
-      'auth/user-not-found': 'ไม่พบบัญชีผู้ใช้ในระบบ',
-      'auth/wrong-password': 'อีเมลหรือรหัสผ่านไม่ถูกต้อง'
+      'auth/user-not-found': 'ไม่พบบัญชีผู้ใช้นี้',
+      'auth/wrong-password': 'อีเมลหรือรหัสผ่านไม่ถูกต้อง',
+      'auth/invalid-credential': 'อีเมลหรือรหัสผ่านไม่ถูกต้อง',
+      'auth/too-many-requests': 'พยายามเข้าสู่ระบบหลายครั้งเกินไป กรุณาลองใหม่ในภายหลัง'
     };
     return map[code] || error?.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อระบบ';
   }
@@ -123,9 +206,16 @@
         existing.addEventListener('error', reject, { once: true });
         return;
       }
+
       const script = document.createElement('script');
-      script.src = src; script.async = true;
-      script.addEventListener('load', () => { script.dataset.loaded = 'true'; resolve(); }, { once: true });
+      script.src = src;
+      script.async = true;
+
+      script.addEventListener('load', () => {
+        script.dataset.loaded = 'true';
+        resolve();
+      }, { once: true });
+
       script.addEventListener('error', () => reject(new Error('Load failed')), { once: true });
       document.head.appendChild(script);
     });
@@ -133,26 +223,39 @@
 
   async function initFirebase() {
     if (window.firebase?.apps?.length) {
-      db = window.firebase.firestore(); auth = window.firebase.auth(); return true;
+      db = window.firebase.firestore();
+      auth = window.firebase.auth();
+      return true;
     }
+
     if (isFirebaseInitializing) return false;
     isFirebaseInitializing = true;
+
     try {
       const base = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}`;
       await loadScript(`${base}/firebase-app-compat.js`);
       await loadScript(`${base}/firebase-auth-compat.js`);
       await loadScript(`${base}/firebase-firestore-compat.js`);
+
       if (window.firebase) {
-        if (!window.firebase.apps.length) window.firebase.initializeApp(FIREBASE_CONFIG);
-        db = window.firebase.firestore(); auth = window.firebase.auth();
-        isFirebaseInitializing = false; return true;
+        if (!window.firebase.apps.length) {
+          window.firebase.initializeApp(FIREBASE_CONFIG);
+        }
+        db = window.firebase.firestore();
+        auth = window.firebase.auth();
+        isFirebaseInitializing = false;
+        return true;
       }
-    } catch (e) { console.warn('Firebase init warning:', e); }
-    isFirebaseInitializing = false; return false;
+    } catch (e) {
+      console.warn('Firebase setup warning:', e);
+    }
+
+    isFirebaseInitializing = false;
+    return false;
   }
 
   // ============================================================
-  // Controls & UI
+  // Profile & Logout Handler
   // ============================================================
 
   function setupProfileModal() {
@@ -176,18 +279,25 @@
 
     if (!profileModal) return;
 
+    profileModal.style.display = 'none';
+    profileModal.classList.remove('active');
+
     if (profileBtn && profileBtn.dataset.bound !== 'true') {
       profileBtn.dataset.bound = 'true';
       profileBtn.addEventListener('click', () => {
         const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
         if (nameInput) nameInput.value = currentUser.name || '';
         profileModal.style.display = 'flex';
+        profileModal.classList.add('active');
       });
     }
 
     if (closeBtn && closeBtn.dataset.bound !== 'true') {
       closeBtn.dataset.bound = 'true';
-      closeBtn.addEventListener('click', () => { profileModal.style.display = 'none'; });
+      closeBtn.addEventListener('click', () => {
+        profileModal.style.display = 'none';
+        profileModal.classList.remove('active');
+      });
     }
 
     if (saveBtn && saveBtn.dataset.bound !== 'true') {
@@ -199,24 +309,36 @@
           currentUser.name = newName;
           saveJSON('equipment_current_user', currentUser);
           localStorage.setItem('userName', newName);
+
           const userNameElem = document.getElementById('userName');
           if (userNameElem) userNameElem.textContent = newName;
+
           alert('บันทึกข้อมูลชื่อเรียบร้อยแล้ว');
         }
         profileModal.style.display = 'none';
+        profileModal.classList.remove('active');
       });
     }
   }
 
+  // ============================================================
+  // UI Functionalities
+  // ============================================================
+
   function setupPasswordToggle() {
-    document.querySelectorAll('.toggle-password').forEach(button => {
+    const buttons = document.querySelectorAll('.toggle-password');
+    buttons.forEach(button => {
       if (button.dataset.ready === 'true') return;
       button.dataset.ready = 'true';
+
       button.addEventListener('click', event => {
         event.preventDefault();
+        event.stopPropagation();
+
         const wrapper = button.closest('.password-wrapper') || button.parentElement;
         const input = wrapper ? wrapper.querySelector('input') : null;
         if (!input) return;
+
         const isPassword = input.type === 'password';
         input.type = isPassword ? 'text' : 'password';
         button.textContent = isPassword ? 'ซ่อน' : 'แสดง';
@@ -224,86 +346,44 @@
     });
   }
 
-  function setupRoleUI() {
-    const roleSelect = document.getElementById('loginRole');
-    const adminCodeGroup = document.getElementById('adminCodeGroup');
-    const adminCode = document.getElementById('adminCode');
-    if (!roleSelect || !adminCodeGroup) return;
-
-    const update = () => {
-      const isAdmin = roleSelect.value === 'admin';
-      adminCodeGroup.style.display = isAdmin ? 'block' : 'none';
-      if (adminCode) { adminCode.required = isAdmin; if (!isAdmin) adminCode.value = ''; }
-    };
-    roleSelect.addEventListener('change', update); 
-    update();
-  }
-
   function loadRememberedData() {
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
     const rememberMe = document.getElementById('rememberMe');
+
     const savedEmail = localStorage.getItem('rememberedEmail');
     const savedPassword = localStorage.getItem('rememberedPassword');
+
     if (emailInput && savedEmail) emailInput.value = savedEmail;
     if (passwordInput && savedPassword) passwordInput.value = savedPassword;
     if (rememberMe && savedEmail) rememberMe.checked = true;
   }
 
   // ============================================================
-  // Login Feature
+  // Dropdown Navigation Handler
   // ============================================================
 
-  function setupLoginForm() {
-    const form = document.getElementById('loginForm');
-    if (!form || form.dataset.bound === 'true') return;
-    form.dataset.bound = 'true';
+  function setupDropdownToggle() {
+    const dropdownBtns = document.querySelectorAll('.nav-dropdown-btn');
 
-    form.addEventListener('submit', async event => {
-      event.preventDefault();
-      const email = document.getElementById('email')?.value?.trim() || '';
-      const password = document.getElementById('password')?.value || '';
-      const selectedRole = document.getElementById('loginRole')?.value || 'user';
-      const adminCodeInput = document.getElementById('adminCode');
+    dropdownBtns.forEach(btn => {
+      if (btn.dataset.bound === 'true') return;
+      btn.dataset.bound = 'true';
 
-      if (!email || !password) { alert('กรุณากรอกอีเมลและรหัสผ่าน'); return; }
-      if (selectedRole === 'admin' && adminCodeInput?.value?.trim() !== '24236') {
-        alert('รหัสผู้ดูแลระบบไม่ถูกต้อง'); return;
-      }
-
-      try {
-        const ready = await initFirebase();
-        if (!ready || !auth) throw new Error('ไม่สามารถเชื่อมต่อระบบยืนยันตัวตนได้');
-        const cred = await auth.signInWithEmailAndPassword(email, password);
-        const user = cred.user;
-        let profile = null;
-        try {
-          const snap = await db.collection('users').doc(user.uid).get();
-          if (snap.exists) profile = snap.data();
-        } catch (e) {}
-
-        const actualRole = profile?.role || 'user';
-        if (selectedRole === 'admin' && actualRole !== 'admin') {
-          await auth.signOut();
-          alert('❌ การเข้าถึงถูกปฏิเสธ: บัญชีนี้ไม่มีสิทธิ์เป็นผู้ดูแลระบบ'); return;
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const dropdown = btn.closest('.nav-dropdown');
+        if (dropdown) {
+          dropdown.classList.toggle('active');
         }
+      });
+    });
 
-        const currentUserData = {
-          uid: user.uid,
-          name: profile?.name || user.displayName || email,
-          email: user.email || email,
-          role: actualRole
-        };
-
-        saveJSON(KEYS.currentUser, currentUserData);
-        localStorage.setItem(KEYS.loggedIn, 'true');
-        localStorage.setItem(KEYS.userEmail, email);
-        localStorage.setItem(KEYS.userName, currentUserData.name);
-        localStorage.setItem(KEYS.userRole, actualRole);
-
-        window.location.href = 'dashboard.html';
-
-      } catch (err) { alert(firebaseErrorMessage(err)); }
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.nav-dropdown').forEach(dropdown => {
+        dropdown.classList.remove('active');
+      });
     });
   }
 
@@ -318,73 +398,542 @@
 
     form.addEventListener('submit', async event => {
       event.preventDefault();
-      const name = document.getElementById('regName')?.value?.trim() || '';
-      const email = document.getElementById('regEmail')?.value?.trim() || '';
-      const password = document.getElementById('regPassword')?.value || '';
 
-      if (!name || !email || !password) { alert('กรุณากรอกข้อมูลให้ครบถ้วน'); return; }
+      const nameInput = document.getElementById('name');
+      const emailInput = document.getElementById('email');
+      const passwordInput = document.getElementById('password');
+      const confirmPasswordInput = document.getElementById('confirmPassword');
+      const roleInputs = Array.from(document.querySelectorAll('input[name="userRole"]'));
+
+      const name = nameInput?.value?.trim() || '';
+      const email = emailInput?.value?.trim() || '';
+      const password = passwordInput?.value || '';
+      const confirmPassword = confirmPasswordInput?.value || '';
+      const selectedRole = roleInputs.find(i => i.checked)?.value || 'user';
+
+      if (!name || !email || !password) {
+        alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        alert('รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน');
+        return;
+      }
+
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const originalText = submitBtn ? submitBtn.textContent : '';
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'กำลังลงทะเบียน...';
+      }
 
       try {
         const ready = await initFirebase();
-        if (!ready || !auth) throw new Error('ไม่สามารถเชื่อมต่อระบบยืนยันตัวตนได้');
+        if (!ready || !auth || !db) {
+          throw new Error('ไม่สามารถเชื่อมต่อระบบยืนยันตัวตนได้');
+        }
 
         const cred = await auth.createUserWithEmailAndPassword(email, password);
         const user = cred.user;
 
-        if (db) {
-          await db.collection('users').doc(user.uid).set({
-            name: name,
-            email: email,
-            role: 'user',
-            createdAt: new Date()
-          });
-        }
+        try {
+          await user.updateProfile({ displayName: name });
+        } catch (_) {}
 
-        alert('สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ');
+        const userData = {
+          uid: user.uid,
+          name,
+          email,
+          role: selectedRole,
+          createdAt: new Date().toISOString()
+        };
+
+        await db.collection('users').doc(user.uid).set(userData, { merge: true });
+        
+        let pendingUsers = JSON.parse(localStorage.getItem('pending_users')) || [];
+        pendingUsers.push({
+          id: 'USR' + Date.now().toString().slice(-4),
+          name: name,
+          email: email,
+          role: selectedRole,
+          date: new Date().toLocaleDateString('th-TH'),
+          status: 'pending'
+        });
+        localStorage.setItem('pending_users', JSON.stringify(pendingUsers));
+
+        await auth.signOut();
+
+        alert('ลงทะเบียนสำเร็จ! กรุณารอการอนุมัติจากผู้ดูแลระบบก่อนเข้าใช้งาน');
         window.location.href = 'index.html';
-
-      } catch (err) { alert(firebaseErrorMessage(err)); }
+      } catch (err) {
+        alert(firebaseErrorMessage(err));
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+        }
+      }
     });
   }
 
   // ============================================================
-  // Forgot Password Feature
+  // Login Feature (ตรวจสอบสิทธิ์จาก Firestore Database โดยตรง)
   // ============================================================
 
-  function setupForgotPasswordForm() {
-    const form = document.getElementById('forgotPasswordForm');
+  function setupLoginForm() {
+    const form = document.getElementById('loginForm');
     if (!form || form.dataset.bound === 'true') return;
     form.dataset.bound = 'true';
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('forgotEmail')?.value?.trim() || '';
-      if (!email) { alert('กรุณากรอกอีเมลของคุณ'); return; }
+    form.addEventListener('submit', async event => {
+      event.preventDefault();
+
+      const emailInput = document.getElementById('email');
+      const passwordInput = document.getElementById('password');
+      const rememberMe = document.getElementById('rememberMe');
+
+      const email = emailInput?.value?.trim() || '';
+      const password = passwordInput?.value || '';
+
+      if (!email || !password) {
+        alert('กรุณากรอกอีเมลและรหัสผ่าน');
+        return;
+      }
+
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const originalText = submitBtn ? submitBtn.textContent : '';
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'กำลังเข้าสู่ระบบ...';
+      }
 
       try {
         const ready = await initFirebase();
-        if (!ready || !auth) throw new Error('ไม่สามารถเชื่อมต่อ Firebase ได้');
+        if (!ready || !auth) {
+          throw new Error('ไม่สามารถเชื่อมต่อระบบยืนยันตัวตนได้');
+        }
 
-        await auth.sendPasswordResetEmail(email);
-        alert(`ส่งลิงก์รีเซ็ตรหัสผ่านไปยังอีเมล:\n${email} เรียบร้อยแล้ว`);
-        window.location.href = 'index.html';
-      } catch (err) { alert(firebaseErrorMessage(err)); }
+        const cred = await auth.signInWithEmailAndPassword(email, password);
+        const user = cred.user;
+
+        let profile = null;
+        try {
+          const snap = await db.collection('users').doc(user.uid).get();
+          if (snap.exists) profile = snap.data();
+        } catch (e) {
+          console.error("Error fetching profile:", e);
+        }
+
+        const actualRole = profile?.role || 'user';
+
+        const currentUserData = {
+          uid: user.uid,
+          name: profile?.name || user.displayName || email,
+          email: user.email || email,
+          role: actualRole
+        };
+
+        saveJSON(KEYS.currentUser, currentUserData);
+        localStorage.setItem(KEYS.loggedIn, 'true');
+        localStorage.setItem(KEYS.userEmail, email);
+        localStorage.setItem(KEYS.userName, currentUserData.name);
+        localStorage.setItem(KEYS.firebaseUid, user.uid);
+        localStorage.setItem(KEYS.userRole, actualRole);
+
+        if (rememberMe?.checked) {
+          localStorage.setItem('rememberedEmail', email);
+          localStorage.setItem('rememberedPassword', password);
+        } else {
+          localStorage.removeItem('rememberedEmail');
+          localStorage.removeItem('rememberedPassword');
+        }
+
+        if (actualRole === 'admin') {
+          window.location.href = 'dashboard.html';
+        } else {
+          window.location.href = 'borrow.html';
+        }
+      } catch (err) {
+        alert(firebaseErrorMessage(err));
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+        }
+      }
     });
   }
 
   // ============================================================
-  // Init App Safely
+  // ROLE-BASED DASHBOARD RENDER LOGIC
+  // ============================================================
+
+  function initDashboardByRole() {
+    const adminView = document.getElementById('adminDashboardView');
+    const userView = document.getElementById('userDashboardView');
+
+    const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {
+      name: 'ผู้ใช้งานระบบ',
+      role: 'user'
+    };
+
+    const roleBadge = document.getElementById('userRoleBadge');
+    const userNameElem = document.getElementById('userName');
+    const navbar = document.getElementById('mainNavbar');
+
+    if (userNameElem) userNameElem.textContent = currentUser.name;
+
+    const currentPage = window.location.pathname.split('/').pop() || 'dashboard.html';
+
+    const dropdownNavHTML = `
+      <div class="nav-dropdown">
+        <button type="button" class="nav-dropdown-btn ${currentPage === 'equipment.html' ? 'active' : ''}">
+          <i data-lucide="package-search"></i> 
+          <span>รายการอุปกรณ์</span>
+          <i data-lucide="chevron-down" class="dropdown-icon"></i>
+        </button>
+        <div class="nav-dropdown-content">
+          <a href="equipment.html?category=ครุภัณฑ์">🏢 ครุภัณฑ์</a>
+          <a href="equipment.html?category=วัสดุ">📦 วัสดุ</a>
+          <a href="equipment.html?category=อุปกรณ์">🔊 อุปกรณ์ / เครื่องเสียง</a>
+          <a href="equipment.html?category=บันทึกภาพ">📷 อุปกรณ์บันทึกภาพ</a>
+        </div>
+      </div>`;
+
+    if (currentUser.role === 'admin') {
+      if (roleBadge) roleBadge.textContent = 'ผู้ดูแลระบบ (Admin)';
+      
+      if (navbar) {
+        navbar.innerHTML = `
+          <a href="dashboard.html" class="nav-item ${currentPage === 'dashboard.html' ? 'active' : ''}"><i data-lucide="layout-dashboard"></i> <span>Dashboard</span></a>
+          ${dropdownNavHTML}
+          <a href="admin-management.html" class="nav-item ${currentPage === 'admin-management.html' ? 'active' : ''}"><i data-lucide="settings"></i> <span>จัดการสิ่งของ</span></a>
+          <a href="admin-approvals.html" class="nav-item ${currentPage === 'admin-approvals.html' ? 'active' : ''}"><i data-lucide="check-square"></i> <span>อนุมัติยืม-คืน</span></a>
+          <a href="history.html" class="nav-item ${currentPage === 'history.html' ? 'active' : ''}"><i data-lucide="history"></i> <span>ประวัติระบบ</span></a>
+        `;
+      }
+
+      if (adminView) adminView.style.display = 'block';
+      if (userView) userView.style.display = 'none';
+
+      renderAdminDashboardData();
+
+    } else {
+      if (roleBadge) roleBadge.textContent = 'ผู้ใช้งานทั่วไป';
+
+      if (navbar) {
+        navbar.innerHTML = `
+          <a href="dashboard.html" class="nav-item ${currentPage === 'dashboard.html' ? 'active' : ''}"><i data-lucide="layout-dashboard"></i> <span>Dashboard</span></a>
+          ${dropdownNavHTML}
+          <a href="borrow.html" class="nav-item ${currentPage === 'borrow.html' ? 'active' : ''}"><i data-lucide="clipboard-list"></i> <span>รายการยืม</span></a>
+          <a href="return.html" class="nav-item ${currentPage === 'return.html' ? 'active' : ''}"><i data-lucide="undo-2"></i> <span>คืนอุปกรณ์</span></a>
+          <a href="history.html" class="nav-item ${currentPage === 'history.html' ? 'active' : ''}"><i data-lucide="history"></i> <span>ประวัติยืม-คืน</span></a>
+        `;
+      }
+
+      if (adminView) adminView.style.display = 'none';
+      if (userView) userView.style.display = 'block';
+
+      renderUserDashboardData(currentUser);
+    }
+
+    setupDropdownToggle();
+
+    if (window.lucide) lucide.createIcons();
+  }
+
+  // ============================================================
+  // ADMIN DASHBOARD RENDER
+  // ============================================================
+
+  function renderAdminDashboardData() {
+    const equipmentList = getEquipmentLocal();
+
+    function calculateStats(categoryName) {
+      const items = equipmentList.filter(item => {
+        const cat = String(item.category || '').trim();
+        return cat === categoryName;
+      });
+
+      let total = 0;
+      let available = 0;
+      let borrowed = 0;
+      let unavailable = 0;
+
+      items.forEach(item => {
+        const itemTotal = Number(item.total || 0);
+        const itemAvail = Number(item.available || 0);
+
+        total += itemTotal;
+        available += itemAvail;
+
+        if (item.status === 'unavailable') {
+          unavailable += Math.max(0, itemTotal - itemAvail);
+        } else {
+          borrowed += Math.max(0, itemTotal - itemAvail);
+        }
+      });
+
+      return { total, available, borrowed, unavailable };
+    }
+
+    function updateCategoryUI(prefix, stats) {
+      const totalElem = document.getElementById(`total${prefix}`);
+      const availElem = document.getElementById(`avail${prefix}`);
+      const borrowedElem = document.getElementById(`borrowed${prefix}`);
+      const unavailElem = document.getElementById(`unavail${prefix}`);
+
+      if (totalElem) totalElem.textContent = stats.total;
+      if (availElem) availElem.textContent = stats.available;
+      if (borrowedElem) borrowedElem.textContent = stats.borrowed;
+      if (unavailElem) unavailElem.textContent = stats.unavailable;
+    }
+
+    updateCategoryUI('Building', calculateStats('ครุภัณฑ์'));
+    updateCategoryUI('Material', calculateStats('วัสดุ'));
+    updateCategoryUI('Device', calculateStats('อุปกรณ์'));
+    updateCategoryUI('Camera', calculateStats('บันทึกภาพ'));
+  }
+
+  // ============================================================
+  // USER DASHBOARD RENDER
+  // ============================================================
+
+  function renderUserDashboardData(user) {
+    const userRequests = JSON.parse(localStorage.getItem('user_requests')) || [];
+    const myRequests = userRequests.filter(r => r.userEmail === user.email || r.userName === user.name);
+
+    const activeBorrows = myRequests.filter(r => r.status === 'approved' && r.type === 'ยืม');
+    const pendingRequests = myRequests.filter(r => r.status === 'pending');
+
+    const activeElem = document.getElementById('userActiveBorrowCount');
+    const pendingElem = document.getElementById('userPendingCount');
+    const historyElem = document.getElementById('userTotalHistoryCount');
+
+    if (activeElem) activeElem.textContent = activeBorrows.length;
+    if (pendingElem) pendingElem.textContent = pendingRequests.length;
+    if (historyElem) historyElem.textContent = myRequests.length;
+
+    const tableBody = document.getElementById('userBorrowTable');
+    if (!tableBody) return;
+
+    if (myRequests.length === 0) {
+      tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;">ยังไม่มีประวัติหรือรายการยืมอุปกรณ์</td></tr>`;
+      return;
+    }
+
+    tableBody.innerHTML = myRequests.map(req => `
+      <tr>
+        <td>${req.id}</td>
+        <td>${req.equipmentName}</td>
+        <td>${req.requestDate}</td>
+        <td><span class="status-${req.status}">${req.status === 'pending' ? 'รอผู้ดูแลอนุมัติ' : req.status === 'approved' ? 'อนุมัติแล้ว' : 'ปฏิเสธ'}</span></td>
+        <td>
+          ${req.status === 'approved' && req.type === 'ยืม' ? `<button onclick="requestReturn('${req.id}')" class="btn btn-sm">ส่งคำขอคืน</button>` : '-'}
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  window.requestReturn = function(reqId) {
+    let requests = JSON.parse(localStorage.getItem('user_requests')) || [];
+    const idx = requests.findIndex(r => r.id === reqId);
+    if (idx !== -1) {
+      requests[idx].type = 'คืน';
+      requests[idx].status = 'pending';
+      requests[idx].requestDate = new Date().toLocaleDateString('th-TH');
+      localStorage.setItem('user_requests', JSON.stringify(requests));
+      alert('ส่งคำขอคืนเรียบร้อยแล้ว กรุณารอผู้ดูแลระบบอนุมัติ');
+      window.location.reload();
+    }
+  };
+
+  // ============================================================
+  // EQUIPMENT PAGE RENDER & BORROW SYSTEM
+  // ============================================================
+
+  function initEquipmentPage() {
+    const gridContainer = document.getElementById('equipmentGridContainer');
+    if (!gridContainer) return;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    let selectedCategory = urlParams.get('category') || '';
+    
+    try {
+      selectedCategory = decodeURIComponent(selectedCategory).trim();
+    } catch (e) {
+      console.error(e);
+    }
+
+    const pageTitle = document.getElementById('categoryPageTitle');
+    const categoryFilter = document.getElementById('categorySelectFilter');
+
+    if (selectedCategory) {
+      if (pageTitle) pageTitle.textContent = `รายการ${selectedCategory}`;
+      if (categoryFilter) categoryFilter.value = selectedCategory;
+    }
+
+    renderEquipmentGrid(selectedCategory, '');
+
+    const searchInput = document.getElementById('equipmentSearchInput');
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        renderEquipmentGrid(categoryFilter ? categoryFilter.value : '', e.target.value.trim());
+      });
+    }
+
+    if (categoryFilter) {
+      categoryFilter.addEventListener('change', (e) => {
+        const cat = e.target.value;
+        if (pageTitle) pageTitle.textContent = cat ? `รายการ${cat}` : 'รายการทั้งหมด';
+        renderEquipmentGrid(cat, searchInput ? searchInput.value.trim() : '');
+      });
+    }
+
+    setupBorrowFormSubmit();
+  }
+
+  function renderEquipmentGrid(category, searchKeyword) {
+    const container = document.getElementById('equipmentGridContainer');
+    if (!container) return;
+
+    const allEquipment = getEquipmentLocal();
+
+    const filtered = allEquipment.filter(item => {
+      const itemCat = String(item.category || '').trim();
+      const filterCat = String(category || '').trim();
+
+      const matchCategory = !filterCat || 
+        itemCat === filterCat || 
+        (filterCat.includes('อุปกรณ์') && itemCat.includes('อุปกรณ์'));
+
+      const matchSearch = !searchKeyword || 
+        (item.name && item.name.toLowerCase().includes(searchKeyword.toLowerCase())) ||
+        (item.id && item.id.toLowerCase().includes(searchKeyword.toLowerCase()));
+      
+      return matchCategory && matchSearch;
+    });
+
+    if (filtered.length === 0) {
+      container.innerHTML = `
+        <div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: #6b7280;">
+          ไม่พบรายการอุปกรณ์ในหมวดหมู่นี้
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = filtered.map(item => {
+      const isAvailable = (item.available || 0) > 0 && item.status !== 'unavailable';
+
+      return `
+        <div class="equipment-card" style="background: #fff; border-radius: 12px; padding: 1.25rem; border: 1px solid #e5e7eb; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+              <span style="font-size: 0.8rem; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-weight: 600;">${item.category || 'อุปกรณ์'}</span>
+              <span style="font-size: 0.85rem; font-weight: 600; color: ${isAvailable ? '#10b981' : '#ef4444'};">
+                ${isAvailable ? 'พร้อมเบิก' : 'ไม่พร้อมใช้งาน'}
+              </span>
+            </div>
+            <h3 style="font-size: 1.05rem; margin-bottom: 0.5rem; color: #1f2937;">${item.name}</h3>
+            <p style="font-size: 0.85rem; color: #6b7280; margin-bottom: 1rem;">คงเหลือพร้อมใช้: <strong>${item.available || 0}</strong> / ${item.total || 0}</p>
+          </div>
+
+          <button type="button" 
+            onclick="openBorrowModal('${item.id}', '${item.name}', ${item.available || 0})"
+            ${!isAvailable ? 'disabled' : ''}
+            style="width: 100%; padding: 0.6rem; border: none; border-radius: 8px; font-weight: 600; cursor: ${isAvailable ? 'pointer' : 'not-allowed'}; background: ${isAvailable ? '#10b981' : '#d1d5db'}; color: white;">
+            ${isAvailable ? 'กดเบิก/ยืมสิ่งนี้' : 'สินค้าหมด / ไม่พร้อมยืม'}
+          </button>
+        </div>
+      `;
+    }).join('');
+
+    if (window.lucide) lucide.createIcons();
+  }
+
+  window.openBorrowModal = function(id, name, maxAvail) {
+    const modal = document.getElementById('borrowModal');
+    if (!modal) return;
+
+    document.getElementById('modalEquipmentId').value = id;
+    document.getElementById('modalEquipmentName').value = name;
+    
+    const qtyInput = document.getElementById('modalBorrowQuantity');
+    qtyInput.max = maxAvail;
+    qtyInput.value = 1;
+    
+    document.getElementById('modalMaxAvailable').textContent = `*(เบิกได้สูงสุด ${maxAvail} ชิ้น)`;
+    document.getElementById('modalBorrowReason').value = '';
+
+    modal.style.display = 'flex';
+  };
+
+  window.closeBorrowModal = function() {
+    const modal = document.getElementById('borrowModal');
+    if (modal) modal.style.display = 'none';
+  };
+
+  function setupBorrowFormSubmit() {
+    const form = document.getElementById('borrowRequestForm');
+    if (!form || form.dataset.bound === 'true') return;
+    form.dataset.bound = 'true';
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {
+        name: 'ผู้ใช้งานระบบ',
+        email: 'user@example.com'
+      };
+
+      const eqId = document.getElementById('modalEquipmentId').value;
+      const eqName = document.getElementById('modalEquipmentName').value;
+      const qty = parseInt(document.getElementById('modalBorrowQuantity').value) || 1;
+      const reason = document.getElementById('modalBorrowReason').value.trim();
+
+      const userRequests = JSON.parse(localStorage.getItem('user_requests')) || [];
+      const newRequest = {
+        id: 'REQ' + Date.now().toString().slice(-6),
+        equipmentId: eqId,
+        equipmentName: eqName,
+        quantity: qty,
+        reason: reason,
+        userName: currentUser.name,
+        userEmail: currentUser.email,
+        requestDate: new Date().toLocaleDateString('th-TH'),
+        type: 'ยืม',
+        status: 'pending'
+      };
+
+      userRequests.unshift(newRequest);
+      localStorage.setItem('user_requests', JSON.stringify(userRequests));
+
+      alert('ส่งคำขอเบิก/ยืมเรียบร้อยแล้ว! กรุณารอการอนุมัติจากผู้ดูแลระบบ');
+      closeBorrowModal();
+
+      window.location.reload();
+    });
+  }
+
+  window.viewCategory = function(categoryName) {
+    window.location.href = `equipment.html?category=${encodeURIComponent(categoryName)}`;
+  };
+
+  // ============================================================
+  // App Bootstrapper
   // ============================================================
 
   function boot() {
-    try { setupPasswordToggle(); } catch (e) {}
-    try { setupRoleUI(); } catch (e) {}
-    try { loadRememberedData(); } catch (e) {}
-    try { setupLoginForm(); } catch (e) {}
-    try { setupRegisterForm(); } catch (e) {}
-    try { setupForgotPasswordForm(); } catch (e) {}
-    try { setupProfileModal(); } catch (e) {}
-    if (window.lucide) { try { lucide.createIcons(); } catch (e) {} }
+    setupProfileModal();
+    setupPasswordToggle();
+    loadRememberedData();
+    setupLoginForm();
+    setupRegisterForm();
+    initDashboardByRole();
+    initEquipmentPage();
   }
 
   if (document.readyState === 'loading') {
