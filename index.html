@@ -15,15 +15,15 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: #2e7d32; /* พื้นหลังสีเขียวตามดีไซน์เดิม */
-            font-family: inherit;
+            background-color: #2e7d32;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
         }
 
         .login-card {
             background: #ffffff;
             width: 100%;
             max-width: 420px;
-            padding: 2.5rem;
+            padding: 2.25rem;
             border-radius: 16px;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
             box-sizing: border-box;
@@ -31,30 +31,31 @@
 
         .login-header {
             text-align: center;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.25rem;
         }
 
         .login-logo {
             width: 70px;
             height: 70px;
             object-fit: contain;
-            margin-bottom: 0.75rem;
+            margin-bottom: 0.5rem;
         }
 
         .login-header h2 {
             margin: 0 0 0.25rem 0;
             color: #1b5e20;
             font-size: 1.75rem;
+            font-weight: 700;
         }
 
         .login-header p {
             margin: 0;
             color: #6b7280;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
         }
 
         .form-group {
-            margin-bottom: 1.25rem;
+            margin-bottom: 1.15rem;
         }
 
         .form-group label {
@@ -66,6 +67,8 @@
         }
 
         .form-group input[type="email"],
+        .form-group input[type="text"],
+        .form-group select,
         .password-wrapper input[type="password"],
         .password-wrapper input[type="text"] {
             width: 100%;
@@ -75,6 +78,13 @@
             font-size: 0.95rem;
             box-sizing: border-box;
             outline: none;
+            background-color: #fff;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #2e7d32;
         }
 
         .password-wrapper {
@@ -99,7 +109,7 @@
         .form-options {
             display: flex;
             align-items: center;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.25rem;
             font-size: 0.88rem;
             color: #374151;
         }
@@ -156,6 +166,21 @@
         </div>
 
         <form id="loginForm">
+            <!-- ดรอปดาวน์เลือกประเภทผู้ใช้งาน -->
+            <div class="form-group">
+                <label for="loginRole">ประเภทผู้ใช้งาน</label>
+                <select id="loginRole" required>
+                    <option value="user">ผู้ใช้งานทั่วไป</option>
+                    <option value="admin">ผู้ดูแลระบบ (Admin)</option>
+                </select>
+            </div>
+
+            <!-- ช่องกรอกรหัสผู้ดูแลระบบ (ซ่อนไว้อยู่ จะแสดงเฉพาะเมื่อเลือก Admin) -->
+            <div class="form-group" id="adminCodeGroup" style="display: none;">
+                <label for="adminCode">รหัสยืนยันผู้ดูแลระบบ (Admin Code)</label>
+                <input type="password" id="adminCode" placeholder="กรอกรหัสผ่านผู้ดูแลระบบ...">
+            </div>
+
             <div class="form-group">
                 <label for="email">อีเมล</label>
                 <input type="email" id="email" required placeholder="กรอกอีเมลของคุณ...">
