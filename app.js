@@ -453,7 +453,7 @@
   }
 
   // ============================================================
-  // Login Form
+  // Login Form (ตรวจสอบสิทธิ์จาก Database ป้องกันการปลอมสิทธิ์)
   // ============================================================
 
   function setupLoginForm() {
@@ -466,28 +466,33 @@
       const email = document.getElementById('email')?.value?.trim() || '';
       const password = document.getElementById('password')?.value || '';
       const selectedRole = document.getElementById('loginRole')?.value || 'user';
-      const adminCodeInput = document.getElementById('adminCode');
 
       if (!email || !password) { alert('กรุณากรอกอีเมลและรหัสผ่าน'); return; }
-      if (selectedRole === 'admin' && adminCodeInput?.value?.trim() !== '24236') {
-        alert('รหัสผู้ดูแลระบบไม่ถูกต้อง'); return;
-      }
 
       try {
         const ready = await initFirebase();
         if (!ready || !auth) throw new Error('ไม่สามารถเชื่อมต่อระบบยืนยันตัวตนได้');
+
+        // 🔒 1. ยืนยันตัวตนด้วย Firebase Auth
         const cred = await auth.signInWithEmailAndPassword(email, password);
         const user = cred.user;
         let profile = null;
+
+        // 🔒 2. ดึงสิทธิ์ที่แท้จริงจาก Firestore Database
         try {
           const snap = await db.collection('users').doc(user.uid).get();
           if (snap.exists) profile = snap.data();
-        } catch (e) {}
+        } catch (e) {
+          console.error("Fetch profile error:", e);
+        }
 
         const actualRole = profile?.role || 'user';
+
+        // 🔒 3. ป้องกันผู้ใช้นำบัญชีทั่วไปมาเลือกเข้าใช้งานในฐานะผู้ดูแลระบบ
         if (selectedRole === 'admin' && actualRole !== 'admin') {
           await auth.signOut();
-          alert('❌ การเข้าถึงถูกปฏิเสธ: บัญชีนี้ไม่มีสิทธิ์เป็นผู้ดูแลระบบ'); return;
+          alert('❌ การเข้าถึงถูกปฏิเสธ: บัญชีของคุณไม่มีสิทธิ์เป็นผู้ดูแลระบบ (Admin)');
+          return;
         }
 
         const currentUserData = {
@@ -510,7 +515,7 @@
   }
 
   // ============================================================
-  // Register Form (รองรับประเภทสิทธิ์ผู้ใช้ และเงื่อนไขรหัสผ่าน 4 ข้อ)
+  // Register Form (กำหนดสิทธิ์เริ่มต้นเป็น 'user' เท่านั้น)
   // ============================================================
 
   function setupRegisterForm() {
@@ -518,31 +523,13 @@
     if (!form || form.dataset.bound === 'true') return;
     form.dataset.bound = 'true';
 
-    const roleSelect = document.getElementById('regRole');
-    const adminCodeGroup = document.getElementById('regAdminCodeGroup');
-    const adminCodeInput = document.getElementById('regAdminCode');
-
-    // สลับแสดง/ซ่อนช่องรหัสผู้ดูแลระบบ
-    if (roleSelect && adminCodeGroup) {
-      const updateRoleUI = () => {
-        const isAdmin = roleSelect.value === 'admin';
-        adminCodeGroup.style.display = isAdmin ? 'block' : 'none';
-        if (adminCodeInput) {
-          adminCodeInput.required = isAdmin;
-          if (!isAdmin) adminCodeInput.value = '';
-        }
-      };
-      roleSelect.addEventListener('change', updateRoleUI);
-      updateRoleUI();
-    }
-
     const passwordInput = document.getElementById('regPassword');
     const ruleLength = document.getElementById('ruleLength');
     const ruleUpper = document.getElementById('ruleUpper');
     const ruleLower = document.getElementById('ruleLower');
     const ruleNumber = document.getElementById('ruleNumber');
 
-    // ฟังก์ชันตรวจเช็กความถูกต้องของรหัสผ่านเรียลไทม์
+    // ฟังก์ชันตรวจเช็กเงื่อนไขความปลอดภัยรหัสผ่านเรียลไทม์ 4 ข้อ
     function checkPasswordRules(pass) {
       const isLengthValid = pass.length >= 8;
       const isUpperValid = /[A-Z]/.test(pass);
@@ -583,8 +570,6 @@
       event.preventDefault();
       const name = document.getElementById('regName')?.value?.trim() || '';
       const email = document.getElementById('regEmail')?.value?.trim() || '';
-      const selectedRole = document.getElementById('regRole')?.value || 'user';
-      const adminCode = document.getElementById('regAdminCode')?.value?.trim() || '';
       const password = document.getElementById('regPassword')?.value || '';
       const confirmPassword = document.getElementById('regConfirmPassword')?.value || '';
 
@@ -592,12 +577,7 @@
         alert('กรุณากรอกข้อมูลให้ครบถ้วนทุกช่อง'); return;
       }
 
-      // ตรวจสอบรหัส Admin
-      if (selectedRole === 'admin' && adminCode !== '24236') {
-        alert('❌ รหัสยืนยันผู้ดูแลระบบไม่ถูกต้อง (รหัสคือ 24236)'); return;
-      }
-
-      // ตรวจสอบกฎความปลอดภัยรหัสผ่าน 4 ข้อ
+      // ตรวจสอบเงื่อนไขความปลอดภัยของรหัสผ่าน
       if (!checkPasswordRules(password)) {
         alert('❌ รหัสผ่านยังไม่ตรงตามเงื่อนไขความปลอดภัย กรุณาตรวจสอบอีกครั้ง:\n' +
               '- ต้องมีความยาวอย่างน้อย 8 ตัวอักษร\n' +
@@ -618,17 +598,17 @@
         const cred = await auth.createUserWithEmailAndPassword(email, password);
         const user = cred.user;
 
-        // บันทึกโปรไฟล์และสิทธิ์ผู้ใช้งาน
+        // 🔒 บันทึกข้อมูลสิทธิ์เป็น 'user' (ผู้ใช้งานทั่วไป) โดยอัตโนมัติ เพื่อความปลอดภัย
         if (db) {
           await db.collection('users').doc(user.uid).set({
             name: name,
             email: email,
-            role: selectedRole,
+            role: 'user', 
             createdAt: getCurrentDateTimeFormatted()
           });
         }
 
-        alert(`🎉 สมัครสมาชิกสำเร็จ! บัญชีสิทธิ์ (${selectedRole === 'admin' ? 'ผู้ดูแลระบบ' : 'ผู้ใช้งานทั่วไป'}) พร้อมใช้งานแล้ว`);
+        alert('🎉 สมัครสมาชิกสำเร็จ! บัญชีของคุณพร้อมสำหรับการเข้าสู่ระบบแล้ว');
         window.location.href = 'index.html';
 
       } catch (err) { alert(firebaseErrorMessage(err)); }
