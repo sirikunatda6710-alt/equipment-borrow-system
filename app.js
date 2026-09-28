@@ -1,6 +1,10 @@
 (function () {
   'use strict';
 
+  // ============================================================
+  // Configuration
+  // ============================================================
+
   const FIREBASE_CONFIG = {
     apiKey: "AIzaSyC3JRPuC-2LCs8nqiLy_LKvi72NyLLd7_U",
     authDomain: "equipment-borrow-1303c.firebaseapp.com",
@@ -25,6 +29,10 @@
   let db = null;
   let auth = null;
   let isFirebaseInitializing = false;
+
+  // ============================================================
+  // Helpers & Global Log System
+  // ============================================================
 
   function saveJSON(key, value) {
     try {
@@ -127,6 +135,10 @@
     } catch (e) { console.warn('Firebase init warning:', e); }
     isFirebaseInitializing = false; return false;
   }
+
+  // ============================================================
+  // Profile & Logout Handler
+  // ============================================================
 
   function setupProfileModal() {
     const profileBtn = document.getElementById('profileButton');
@@ -237,6 +249,10 @@
     });
   }
 
+  // ============================================================
+  // Login Feature
+  // ============================================================
+
   function setupLoginForm() {
     const form = document.getElementById('loginForm');
     if (!form || form.dataset.bound === 'true') return;
@@ -284,12 +300,15 @@
         localStorage.setItem(KEYS.userName, currentUserData.name);
         localStorage.setItem(KEYS.userRole, actualRole);
 
-        // 🟢 แก้ไขตรงนี้: ทุก Role จะวิ่งไปที่ dashboard.html เสมอ (เพื่อป้องกันปัญหา 404)
         window.location.href = 'dashboard.html';
 
       } catch (err) { alert(firebaseErrorMessage(err)); }
     });
   }
+
+  // ============================================================
+  // ROLE-BASED DASHBOARD & NAVBAR RENDER
+  // ============================================================
 
   function initDashboardByRole() {
     const adminView = document.getElementById('adminDashboardView');
@@ -381,7 +400,7 @@
     const userRequests = JSON.parse(localStorage.getItem('user_requests')) || [];
     const myRequests = userRequests.filter(r => r.userEmail === user.email || r.userName === user.name);
 
-    const activeBorrows = myRequests.filter(r => r.status === 'approved' && (r.type === 'ยืม' || r.type === 'รอคืน'));
+    const activeBorrows = myRequests.filter(r => r.status === 'approved' && r.type === 'ยืม');
     const pendingRequests = myRequests.filter(r => r.status === 'pending');
 
     if (document.getElementById('userActiveBorrowCount')) document.getElementById('userActiveBorrowCount').textContent = activeBorrows.length;
@@ -414,6 +433,39 @@
       </tr>
     `).join('');
   }
+
+  // ============================================================
+  // GLOBAL ADMIN APPROVAL HELPER (บันทึกชื่อ Admin ผู้อนุมัติ)
+  // ============================================================
+
+  window.handleAdminApproval = function(requestId, newStatus) {
+    let requests = JSON.parse(localStorage.getItem('user_requests')) || [];
+    const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
+    const adminName = currentUser.name || localStorage.getItem('userName') || 'ผู้ดูแลระบบ';
+
+    const idx = requests.findIndex(r => r.id === requestId);
+    if (idx !== -1) {
+      requests[idx].status = newStatus;
+      // 🟢 บันทึกชื่อ Admin คนที่กดลงใน field approvedBy
+      requests[idx].approvedBy = adminName;
+      
+      localStorage.setItem('user_requests', JSON.stringify(requests));
+      
+      if (window.addSystemLog) {
+        window.addSystemLog(
+          newStatus === 'approved' ? 'อนุมัติคำขอ' : 'ปฏิเสธคำขอ',
+          `รายการ ${requests[idx].equipmentName} (${requests[idx].id}) โดย ${adminName}`
+        );
+      }
+      
+      alert(`ทำรายการ ${newStatus === 'approved' ? 'อนุมัติ' : 'ปฏิเสธ'} เรียบร้อยแล้ว`);
+      window.location.reload();
+    }
+  };
+
+  // ============================================================
+  // EQUIPMENT PAGE RENDER & BORROW SYSTEM
+  // ============================================================
 
   function initEquipmentPage() {
     const gridContainer = document.getElementById('equipmentGridContainer');
@@ -542,6 +594,10 @@
       window.location.reload();
     });
   }
+
+  // ============================================================
+  // App Bootstrapper
+  // ============================================================
 
   function boot() {
     setupProfileModal();
