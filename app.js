@@ -31,6 +31,23 @@
   let isFirebaseInitializing = false;
 
   // ============================================================
+  // Date & Time Formatter (วัน-เวลา ปัจจุบัน)
+  // ============================================================
+
+  function getCurrentDateTimeFormatted() {
+    const now = new Date();
+    return now.toLocaleString('th-TH', {
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+  }
+
+  // ============================================================
   // Helpers & Global System Logs
   // ============================================================
 
@@ -42,7 +59,6 @@
     }
   }
 
-  // 🟢 ฟังก์ชันบันทึกกิจกรรมของ Admin ลงใน system_history
   window.addSystemLog = function (action, detail) {
     try {
       let history = JSON.parse(localStorage.getItem('system_history')) || [];
@@ -53,7 +69,7 @@
         action: action,
         detail: detail,
         adminName: adminName,
-        date: new Date().toLocaleString('th-TH')
+        date: getCurrentDateTimeFormatted() // 🟢 วันเวลาปัจจุบันแบบสมบูรณ์
       });
       localStorage.setItem('system_history', JSON.stringify(history));
     } catch (e) {
@@ -438,7 +454,7 @@
   }
 
   // ============================================================
-  // Global Admin Operations (บันทึกผู้อนุมัติ + บันทึก Log)
+  // Global Admin Operations
   // ============================================================
 
   window.handleAdminApproval = function(requestId, newStatus) {
@@ -449,11 +465,10 @@
     const idx = requests.findIndex(r => r.id === requestId);
     if (idx !== -1) {
       requests[idx].status = newStatus;
-      requests[idx].approvedBy = adminName; // 🟢 บันทึกชื่อ Admin ผู้อนุมัติ
+      requests[idx].approvedBy = adminName;
       
       localStorage.setItem('user_requests', JSON.stringify(requests));
       
-      // 🟢 บันทึกเข้า Log กิจกรรม
       window.addSystemLog(
         newStatus === 'approved' ? 'อนุมัติคำขอ' : 'ปฏิเสธคำขอ',
         `คำขอ ${requests[idx].id} (${requests[idx].equipmentName}) โดยแอดมิน ${adminName}`
@@ -582,7 +597,7 @@
         reason: reason,
         userName: currentUser.name,
         userEmail: currentUser.email,
-        requestDate: new Date().toLocaleDateString('th-TH'),
+        requestDate: getCurrentDateTimeFormatted(), // 🟢 วันเวลาปัจจุบันแบบสมบูรณ์
         type: 'ยืม',
         status: 'pending',
         approvedBy: '-'
