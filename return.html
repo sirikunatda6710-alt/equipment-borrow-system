@@ -9,7 +9,7 @@
     <style>
         .badge-borrowing { background: #d1fae5; color: #059669; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 0.85rem; }
         .badge-returning { background: #fef3c7; color: #d97706; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 0.85rem; }
-        .btn-return { background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        .btn-return { background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; }
         .btn-return:hover { background: #dc2626; }
     </style>
 </head>
@@ -95,12 +95,10 @@
             const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
             const allRequests = JSON.parse(localStorage.getItem('user_requests')) || [];
 
-            // 🟢 กรองดึงเฉพาะรายการที่ยังต้องคืนอยู่เท่านั้น:
-            // 1. กำลังถือครองยืมอยู่ (type === 'ยืม' && status === 'approved')
-            // 2. อยู่ระหว่างรอแอดมินตรวจสอบการคืน (type === 'คืน' && status === 'pending')
+            // ดึงเฉพาะรายการของผู้ใช้นี้ที่อนุมัติแล้ว หรือส่งคำขอคืนแล้วแต่แอดมินยังไม่ยืนยันรับคืน
             const activeItems = allRequests.filter(r => 
                 (r.userEmail === currentUser.email || r.userName === currentUser.name) &&
-                ((r.type === 'ยืม' && r.status === 'approved') || (r.type === 'คืน' && r.status === 'pending'))
+                (r.status === 'approved' || (r.status === 'pending' && r.type === 'คืน'))
             );
 
             if (activeItems.length === 0) {
@@ -124,7 +122,7 @@
                         </td>
                         <td style="text-align: center;">
                             ${isPendingReturn ? 
-                                `<span style="font-size:0.85rem; color:#d97706; font-weight:600;">รอผู้ดูแลระบบยืนยันรับคืน</span>` : 
+                                `<span style="font-size:0.85rem; color:#d97706;">รอแอดมินยืนยันรับคืน</span>` : 
                                 `<button class="btn-return" onclick="submitReturnRequest('${item.id}')">ส่งคำขอคืนอุปกรณ์</button>`
                             }
                         </td>
