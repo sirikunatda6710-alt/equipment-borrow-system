@@ -14,24 +14,26 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
+            padding: 1.5rem 0;
             font-family: system-ui, -apple-system, sans-serif;
+            box-sizing: border-box;
         }
 
         .auth-card {
             background: #ffffff;
             border-radius: 16px;
-            padding: 2.5rem;
+            padding: 2.25rem 2.5rem;
             width: 100%;
-            max-width: 420px;
+            max-width: 440px;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
             text-align: center;
             box-sizing: border-box;
         }
 
         .auth-logo {
-            width: 90px;
-            height: 90px;
-            margin: 0 auto 1.25rem;
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1rem;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -62,7 +64,7 @@
 
         .form-group {
             text-align: left;
-            margin-bottom: 1.25rem;
+            margin-bottom: 1.15rem;
         }
 
         .form-group label {
@@ -70,10 +72,11 @@
             font-size: 0.875rem;
             font-weight: 600;
             color: #374151;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.4rem;
         }
 
-        .form-group input {
+        .form-group input,
+        .form-select {
             width: 100%;
             padding: 0.75rem 1rem;
             border: 1px solid #d1d5db;
@@ -84,7 +87,8 @@
             transition: border-color 0.2s, box-shadow 0.2s;
         }
 
-        .form-group input:focus {
+        .form-group input:focus,
+        .form-select:focus {
             border-color: #2e7d32;
             box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.15);
         }
@@ -97,13 +101,46 @@
 
         .toggle-password {
             position: absolute;
-            right: 10px;
+            right: 12px;
             background: none;
             border: none;
             color: #2e7d32;
             font-weight: 600;
             font-size: 0.85rem;
             cursor: pointer;
+        }
+
+        .password-rules {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 0.75rem 0.9rem;
+            margin-top: 0.5rem;
+            text-align: left;
+        }
+
+        .password-rules ul {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .password-rules li {
+            font-size: 0.8rem;
+            color: #ef4444;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin-bottom: 0.25rem;
+            transition: color 0.2s;
+        }
+
+        .password-rules li:last-child {
+            margin-bottom: 0;
+        }
+
+        .password-rules li.valid {
+            color: #16a34a;
         }
 
         .btn-primary {
@@ -127,7 +164,7 @@
         .link-btn {
             color: #2e7d32;
             text-decoration: none;
-            font-weight: 500;
+            font-weight: 600;
         }
 
         .link-btn:hover {
@@ -147,20 +184,57 @@
         <p class="auth-subtitle">สร้างบัญชีผู้ใช้สำหรับระบบยืม-คืนอุปกรณ์</p>
 
         <form id="registerForm">
+            <!-- 1. ชื่อ - นามสกุล -->
             <div class="form-group">
                 <label for="regName">ชื่อ - นามสกุล</label>
                 <input type="text" id="regName" placeholder="กรอกชื่อ-นามสกุล" required>
             </div>
 
+            <!-- 2. อีเมล -->
             <div class="form-group">
                 <label for="regEmail">อีเมล</label>
                 <input type="email" id="regEmail" placeholder="กรอกอีเมลของคุณ" required>
             </div>
 
+            <!-- 3. ประเภทสิทธิ์ผู้ใช้งาน -->
             <div class="form-group">
-                <label for="regPassword">รหัสผ่าน</label>
+                <label for="regRole">ประเภทสิทธิ์ลงทะเบียน</label>
+                <select id="regRole" class="form-select">
+                    <option value="user">ผู้ใช้งานทั่วไป</option>
+                    <option value="admin">ผู้ดูแลระบบ (Admin)</option>
+                </select>
+            </div>
+
+            <!-- 4. รหัสยืนยันผู้ดูแลระบบ (จะซ่อนไว้หากเป็นผู้ใช้ทั่วไป) -->
+            <div class="form-group" id="regAdminCodeGroup" style="display: none;">
+                <label for="regAdminCode">รหัสยืนยันผู้ดูแลระบบ</label>
+                <input type="password" id="regAdminCode" placeholder="กรอกรหัส Admin (24236)">
+            </div>
+
+            <!-- 5. สร้างรหัสผ่าน -->
+            <div class="form-group">
+                <label for="regPassword">สร้างรหัสผ่าน</label>
                 <div class="password-wrapper">
-                    <input type="password" id="regPassword" placeholder="อย่างน้อย 6 ตัวอักษร" required minlength="6">
+                    <input type="password" id="regPassword" placeholder="ตั้งรหัสผ่านของคุณ" required>
+                    <button type="button" class="toggle-password">แสดง</button>
+                </div>
+                
+                <!-- กล่องรายการเงื่อนไขรหัสผ่าน -->
+                <div class="password-rules">
+                    <ul>
+                        <li id="ruleLength"><span class="rule-icon">❌</span> จำนวนไม่น้อยกว่า 8 หลัก</li>
+                        <li id="ruleUpper"><span class="rule-icon">❌</span> ตัวอักษรภาษาอังกฤษพิมพ์ใหญ่ A - Z อย่างน้อย 1 ตัว</li>
+                        <li id="ruleLower"><span class="rule-icon">❌</span> ตัวอักษรภาษาอังกฤษพิมพ์เล็ก a - z อย่างน้อย 1 ตัว</li>
+                        <li id="ruleNumber"><span class="rule-icon">❌</span> ตัวเลข 0 - 9 อย่างน้อย 1 ตัว</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 6. ยืนยันรหัสผ่าน -->
+            <div class="form-group">
+                <label for="regConfirmPassword">ยืนยันรหัสผ่าน</label>
+                <div class="password-wrapper">
+                    <input type="password" id="regConfirmPassword" placeholder="กรอกรหัสผ่านอีกครั้ง" required>
                     <button type="button" class="toggle-password">แสดง</button>
                 </div>
             </div>
@@ -169,7 +243,7 @@
         </form>
 
         <div class="auth-footer" style="margin-top: 1.25rem; text-align: center;">
-            <p style="font-size: 0.875rem; color: #6b7280;">มีบัญชีอยู่แล้ว? <a href="index.html" class="link-btn" style="font-weight: 600;">เข้าสู่ระบบ</a></p>
+            <p style="font-size: 0.875rem; color: #6b7280;">มีบัญชีอยู่แล้ว? <a href="index.html" class="link-btn">เข้าสู่ระบบ</a></p>
         </div>
     </div>
 
