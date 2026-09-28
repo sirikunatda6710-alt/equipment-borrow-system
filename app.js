@@ -494,7 +494,7 @@
 
         const actualRole = profile?.role || 'user';
 
-        // 🔒 4.Strict Role Authorization Validation (ป้องกันทั้งข้ามไป Admin และข้ามมา User)
+        // 🔒 4. Strict Role Authorization Validation (ป้องกันทั้งข้ามไป Admin และข้ามมา User)
         if (selectedRole === 'admin' && actualRole !== 'admin') {
           await auth.signOut();
           alert('❌ การเข้าถึงถูกปฏิเสธ: บัญชีนี้เป็นผู้ใช้งานทั่วไป ไม่มีสิทธิ์เข้าใช้งานระบบในฐานะ Admin');
@@ -527,13 +527,29 @@
   }
 
   // ============================================================
-  // Register Form (บังคับสิทธิ์เป็น 'user' และตรวจกฎรหัสผ่าน 4 ข้อ)
+  // Register Form (รองรับการเลือกประเภทสิทธิ์ User/Admin)
   // ============================================================
 
   function setupRegisterForm() {
     const form = document.getElementById('registerForm');
     if (!form || form.dataset.bound === 'true') return;
     form.dataset.bound = 'true';
+
+    const roleSelect = document.getElementById('regRole');
+    const adminCodeGroup = document.getElementById('regAdminCodeGroup');
+    const adminCodeInput = document.getElementById('regAdminCode');
+
+    // ควบคุมการแสดง/ซ่อน ช่องกรอกรหัส Admin Code
+    if (roleSelect && adminCodeGroup) {
+      roleSelect.addEventListener('change', () => {
+        const isAdmin = roleSelect.value === 'admin';
+        adminCodeGroup.style.display = isAdmin ? 'block' : 'none';
+        if (adminCodeInput) {
+          adminCodeInput.required = isAdmin;
+          if (!isAdmin) adminCodeInput.value = '';
+        }
+      });
+    }
 
     const passwordInput = document.getElementById('regPassword');
     const ruleLength = document.getElementById('ruleLength');
@@ -582,11 +598,19 @@
       event.preventDefault();
       const name = document.getElementById('regName')?.value?.trim() || '';
       const email = document.getElementById('regEmail')?.value?.trim() || '';
+      const role = document.getElementById('regRole')?.value || 'user';
+      const adminCode = adminCodeInput?.value?.trim() || '';
       const password = document.getElementById('regPassword')?.value || '';
       const confirmPassword = document.getElementById('regConfirmPassword')?.value || '';
 
       if (!name || !email || !password || !confirmPassword) {
         alert('กรุณากรอกข้อมูลให้ครบถ้วนทุกช่อง'); return;
+      }
+
+      // ตรวจสอบรหัสยืนยันผู้ดูแลระบบ
+      if (role === 'admin' && adminCode !== '24236') {
+        alert('❌ รหัสยืนยันผู้ดูแลระบบ (Admin Code) ไม่ถูกต้อง');
+        return;
       }
 
       // ตรวจสอบเงื่อนไขความปลอดภัยของรหัสผ่าน
@@ -610,17 +634,17 @@
         const cred = await auth.createUserWithEmailAndPassword(email, password);
         const user = cred.user;
 
-        // 🔒 บันทึกข้อมูลสิทธิ์เป็น 'user' (ผู้ใช้งานทั่วไป) โดยอัตโนมัติ ห้ามเปลี่ยนแปลงฝั่ง Client
+        // บันทึกข้อมูลประเภทสิทธิ์ (role) ที่เลือกไว้ลง Firestore
         if (db) {
           await db.collection('users').doc(user.uid).set({
             name: name,
             email: email,
-            role: 'user', 
+            role: role, 
             createdAt: getCurrentDateTimeFormatted()
           });
         }
 
-        alert('🎉 สมัครสมาชิกสำเร็จ! บัญชีของคุณพร้อมสำหรับการเข้าสู่ระบบแล้ว');
+        alert(`🎉 สมัครสมาชิกสำเร็จ! บัญชีของคุณ (${role === 'admin' ? 'ผู้ดูแลระบบ' : 'ผู้ใช้งานทั่วไป'}) พร้อมสำหรับการเข้าสู่ระบบแล้ว`);
         window.location.href = 'index.html';
 
       } catch (err) { alert(firebaseErrorMessage(err)); }
