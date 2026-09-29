@@ -255,6 +255,549 @@
       });
     });
   }
+  (function setupDashboardUserGuide() {
+'use strict';
+
+const GUIDE_STYLE_ID = 'dashboard-user-guide-style-v1';
+const GUIDE_BUTTON_ID = 'dashboard-user-guide-button-v1';
+const GUIDE_MODAL_ID = 'dashboard-user-guide-modal-v1';
+
+function addGuideStyles() {
+if (document.getElementById(GUIDE_STYLE_ID)) return;
+
+const style = document.createElement('style');
+style.id = GUIDE_STYLE_ID;
+style.textContent = `
+  #${GUIDE_BUTTON_ID} {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 2147483000;
+    border: 0;
+    border-radius: 999px;
+    padding: 12px 18px;
+    background: #2563eb;
+    color: #fff;
+    font: 600 14px/1.2 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(0,0,0,.18);
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+
+  #${GUIDE_BUTTON_ID}:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(0,0,0,.22);
+  }
+
+  #${GUIDE_BUTTON_ID}:focus-visible {
+    outline: 3px solid rgba(37,99,235,.35);
+    outline-offset: 3px;
+  }
+
+  #${GUIDE_MODAL_ID} {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483001;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(15,23,42,.55);
+    box-sizing: border-box;
+  }
+
+  #${GUIDE_MODAL_ID}.is-open {
+    display: flex;
+  }
+
+  #${GUIDE_MODAL_ID} .dashboard-guide-panel {
+    width: min(760px, 100%);
+    max-height: min(86vh, 820px);
+    overflow: auto;
+    background: #fff;
+    color: #1f2937;
+    border-radius: 18px;
+    box-shadow: 0 24px 70px rgba(0,0,0,.25);
+    box-sizing: border-box;
+  }
+
+  #${GUIDE_MODAL_ID} .dashboard-guide-header {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 22px;
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  #${GUIDE_MODAL_ID} .dashboard-guide-title {
+    margin: 0;
+    font: 700 20px/1.35 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  #${GUIDE_MODAL_ID} .dashboard-guide-close {
+    width: 38px;
+    height: 38px;
+    border: 0;
+    border-radius: 50%;
+    background: #f3f4f6;
+    color: #374151;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  #${GUIDE_MODAL_ID} .dashboard-guide-content {
+    padding: 22px;
+  }
+
+  #${GUIDE_MODAL_ID} .dashboard-guide-section {
+    margin: 0 0 20px;
+    padding: 16px 18px;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    background: #fafafa;
+  }
+
+  #${GUIDE_MODAL_ID} .dashboard-guide-section:last-child {
+    margin-bottom: 0;
+  }
+
+  #${GUIDE_MODAL_ID} .dashboard-guide-section h3 {
+    margin: 0 0 8px;
+    font: 700 16px/1.4 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  #${GUIDE_MODAL_ID} .dashboard-guide-section p,
+  #${GUIDE_MODAL_ID} .dashboard-guide-section li {
+    margin: 6px 0;
+    font: 400 14px/1.65 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  #${GUIDE_MODAL_ID} .dashboard-guide-section ul {
+    margin: 8px 0 0;
+    padding-left: 22px;
+  }
+
+  #${GUIDE_MODAL_ID} .dashboard-guide-note {
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: #eff6ff;
+    color: #1e40af;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  @media (max-width: 600px) {
+    #${GUIDE_BUTTON_ID} {
+      right: 12px;
+      bottom: 12px;
+      padding: 11px 15px;
+    }
+
+    #${GUIDE_MODAL_ID} {
+      padding: 10px;
+    }
+
+    #${GUIDE_MODAL_ID} .dashboard-guide-content {
+      padding: 16px;
+    }
+  }
+`;
+document.head.appendChild(style);
+
+}
+
+function createGuide() {
+if (document.getElementById(GUIDE_BUTTON_ID) ||
+document.getElementById(GUIDE_MODAL_ID)) return;
+
+addGuideStyles();
+
+const button = document.createElement('button');
+button.type = 'button';
+button.id = GUIDE_BUTTON_ID;
+button.setAttribute('aria-label', 'เปิดคู่มือการใช้งาน');
+button.textContent = '📘 คู่มือการใช้งาน';
+
+const modal = document.createElement('div');
+modal.id = GUIDE_MODAL_ID;
+modal.setAttribute('role', 'dialog');
+modal.setAttribute('aria-modal', 'true');
+modal.setAttribute('aria-labelledby', 'dashboard-user-guide-title-v1');
+
+modal.innerHTML = `
+  <div class="dashboard-guide-panel" role="document">
+    <div class="dashboard-guide-header">
+      <h2 id="dashboard-user-guide-title-v1" class="dashboard-guide-title">
+        📘 คู่มือการใช้งานระบบ
+      </h2>
+      <button type="button"
+              class="dashboard-guide-close"
+              data-guide-close
+              aria-label="ปิดคู่มือ">×</button>
+    </div>
+
+    <div class="dashboard-guide-content">
+      <section class="dashboard-guide-section">
+        <h3>1. ภาพรวม</h3>
+        <p>
+          หน้านี้ใช้สำหรับจัดการและตรวจสอบข้อมูลของระบบยืมอุปกรณ์
+          โดยข้อมูลบางส่วนอาจเชื่อมต่อกับ Firebase และมีข้อมูลสำรอง
+          ในเบราว์เซอร์ตามการทำงานของระบบเดิม
+        </p>
+      </section>
+
+      <section class="dashboard-guide-section">
+        <h3>2. การตรวจสอบรายการอุปกรณ์</h3>
+        <ul>
+          <li>ตรวจสอบชื่ออุปกรณ์และประเภทของอุปกรณ์จากรายการที่แสดงบน Dashboard</li>
+          <li>ตรวจสอบจำนวนทั้งหมดและจำนวนที่พร้อมใช้งานก่อนดำเนินการ</li>
+          <li>สถานะและข้อมูลที่แสดงบนหน้าจอให้ยึดตามข้อมูลล่าสุดของระบบ</li>
+        </ul>
+      </section>
+
+      <section class="dashboard-guide-section">
+        <h3>3. การแก้ไขข้อมูลโปรไฟล์</h3>
+        <ul>
+          <li>กดปุ่มโปรไฟล์ของผู้ใช้งาน</li>
+          <li>แก้ไขชื่อในช่องข้อมูลที่ระบบแสดง</li>
+          <li>กดปุ่มบันทึกเพื่อบันทึกชื่อใหม่</li>
+          <li>เมื่อบันทึกสำเร็จ ชื่อที่แสดงบน Dashboard จะถูกปรับตามข้อมูลใหม่</li>
+        </ul>
+      </section>
+
+      <section class="dashboard-guide-section">
+        <h3>4. การออกจากระบบ</h3>
+        <ul>
+          <li>กดปุ่ม “ออกจากระบบ”</li>
+          <li>ยืนยันการออกจากระบบเมื่อระบบถาม</li>
+          <li>ระบบจะล้างสถานะผู้ใช้ปัจจุบันและนำกลับไปยังหน้าเข้าสู่ระบบ</li>
+        </ul>
+      </section>
+
+      <section class="dashboard-guide-section">
+        <h3>5. การแจ้งเตือนเสียง</h3>
+        <p>
+          ระบบมีเสียงแจ้งเตือนที่สามารถใช้กับเหตุการณ์ของระบบเดิมได้
+          หากเบราว์เซอร์หรืออุปกรณ์ไม่รองรับ Web Audio ระบบจะไม่หยุดทำงาน
+          เพียงแต่จะไม่มีเสียงแจ้งเตือน
+        </p>
+      </section>
+
+      <section class="dashboard-guide-section">
+        <h3>6. การเชื่อมต่อระบบ</h3>
+        <p>
+          ระบบใช้ Firebase สำหรับ Authentication และ Firestore ตามการตั้งค่าเดิม
+          หากเกิดปัญหาการเชื่อมต่อ ให้ตรวจสอบอินเทอร์เน็ตและการตั้งค่า Firebase
+          ของระบบก่อนดำเนินการอื่น
+        </p>
+      </section>
+
+      <section class="dashboard-guide-section">
+        <h3>7. หากพบปัญหา</h3>
+        <ul>
+          <li>ลองรีเฟรชหน้า Dashboard 1 ครั้ง</li>
+          <li>ตรวจสอบการเชื่อมต่ออินเทอร์เน็ต</li>
+          <li>ตรวจสอบว่าบัญชีผู้ใช้ยังสามารถเข้าสู่ระบบได้</li>
+          <li>หากข้อมูลไม่ตรงกับที่คาดไว้ ให้แจ้งผู้ดูแลระบบพร้อมรายละเอียดของปัญหา</li>
+        </ul>
+        <div class="dashboard-guide-note">
+          คู่มือนี้เป็นเพียงส่วนแสดงข้อมูลเพิ่มเติม ไม่แก้ไขข้อมูลอุปกรณ์
+          ไม่เปลี่ยนสถานะการเข้าสู่ระบบ และไม่เปลี่ยนแปลงการทำงานของ Firebase
+          หรือฟังก์ชันเดิมของ Dashboard
+        </div>
+      </section>
+    </div>
+  </div>
+`;
+
+document.body.appendChild(button);
+document.body.appendChild(modal);
+
+const closeGuide = () => {
+  modal.classList.remove('is-open');
+  button.focus();
+};
+
+button.addEventListener('click', () => {
+  modal.classList.add('is-open');
+  const closeButton = modal.querySelector('[data-guide-close]');
+  if (closeButton) closeButton.focus();
+});
+
+modal.querySelector('[data-guide-close]')?.addEventListener('click', closeGuide);
+
+modal.addEventListener('click', (event) => {
+  if (event.target === modal) closeGuide();
+});
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && modal.classList.contains('is-open')) {
+    closeGuide();
+  }
+});
+
+}
+
+function init() {
+if (!document.body) return;
+createGuide();
+}
+
+if (document.readyState === 'loading') {
+document.addEventListener('DOMContentLoaded', init, { once: true });
+} else {
+init();
+}
+})();
+
+// ============================================================
+// Configuration
+// ============================================================
+
+const FIREBASE_CONFIG = {
+apiKey: "AIzaSyC3JRPuC-2LCs8nqiLy_LKvi72NyLLd7_U",
+authDomain: "equipment-borrow-1303c.firebaseapp.com",
+projectId: "equipment-borrow-1303c",
+storageBucket: "equipment-borrow-1303c.firebasestorage.app",
+messagingSenderId: "433020378004",
+appId: "1:433020378004:web:d574cf9e4c7fafa4034d81",
+measurementId: "G-MFWPB1GBKZ"
+};
+
+const FIREBASE_VERSION = '12.19.0';
+
+const KEYS = {
+currentUser: 'equipment_current_user',
+loggedIn: 'isLoggedIn',
+userEmail: 'userEmail',
+userName: 'userName',
+firebaseUid: 'firebaseUid',
+userRole: 'userRole'
+};
+
+let db = null;
+let auth = null;
+let isFirebaseInitializing = false;
+
+// ============================================================
+// Date & Time Formatter
+// ============================================================
+
+function getCurrentDateTimeFormatted() {
+const now = new Date();
+return now.toLocaleString('th-TH', {
+year: 'numeric',
+month: 'numeric',
+day: 'numeric',
+hour: '2-digit',
+minute: '2-digit',
+second: '2-digit',
+hour12: false
+});
+}
+
+// ============================================================
+// Audio Alert System
+// ============================================================
+
+function playNotificationSound() {
+try {
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+if (!AudioContext) return;
+const ctx = new AudioContext();
+const osc = ctx.createOscillator();
+const gain = ctx.createGain();
+
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(880, ctx.currentTime);
+  gain.gain.setValueAtTime(0.1, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.5);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start();
+  osc.stop(ctx.currentTime + 0.5);
+} catch (e) {
+  console.log('Audio Context error');
+}
+
+}
+
+// ============================================================
+// Helpers & System Log
+// ============================================================
+
+function saveJSON(key, value) {
+try {
+localStorage.setItem(key, JSON.stringify(value));
+} catch (e) {
+console.error(e);
+}
+}
+
+window.addSystemLog = function (action, detail) {
+try {
+let history = JSON.parse(localStorage.getItem('system_history')) || [];
+const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
+const adminName = currentUser.name || localStorage.getItem('userName') || 'ผู้ดูแลระบบ';
+
+  history.unshift({
+    action: action,
+    detail: detail,
+    adminName: adminName,
+    date: getCurrentDateTimeFormatted()
+  });
+  localStorage.setItem('system_history', JSON.stringify(history));
+} catch (e) {
+  console.error(e);
+}
+
+};
+
+function getEquipmentLocal() {
+const mockEquipment = [
+{ id: "EQ-BUILD-001", name: "โปรเจกเตอร์ความละเอียดสูง (HD Projector)", category: "ครุภัณฑ์", total: 5, available: 1, status: "available" },
+{ id: "EQ-BUILD-002", name: "จอรับภาพแบบขาตั้ง 100 นิ้ว", category: "ครุภัณฑ์", total: 4, available: 4, status: "available" },
+{ id: "EQ-BUILD-003", name: "โต๊ะพับอเนกประสงค์หน้าขาว", category: "ครุภัณฑ์", total: 12, available: 10, status: "available" },
+{ id: "EQ-MAT-001", name: "ปลั๊กพ่วงสายยาว 10 เมตร (4 ช่อง)", category: "วัสดุ", total: 15, available: 0, status: "available" },
+{ id: "EQ-MAT-002", name: "สายแปลง HDMI to VGA", category: "วัสดุ", total: 10, available: 8, status: "available" },
+{ id: "EQ-AUDIO-001", name: "ชุดลำโพงเคลื่อนย้ายพร้อมไมค์ไร้สาย (Portable Speaker)", category: "อุปกรณ์", total: 5, available: 3, status: "available" },
+{ id: "EQ-AUDIO-002", name: "ไมโครโฟนไร้สายคู่ (Wireless Microphone Set)", category: "อุปกรณ์", total: 8, available: 6, status: "available" },
+{ id: "EQ-AUDIO-003", name: "เครื่องผสมสัญญาณเสียง มิกเซอร์ 8 ช่อง", category: "อุปกรณ์", total: 3, available: 2, status: "available" },
+{ id: "EQ-CAM-001", name: "กล้องถ่ายภาพ DSLR Canon EOS 80D พร้อมเลนส์ Kit", category: "บันทึกภาพ", total: 4, available: 2, status: "available" },
+{ id: "EQ-CAM-002", name: "ขาตั้งกล้องอลูมิเนียม พร้อมหัวแพน (Tripod)", category: "บันทึกภาพ", total: 6, available: 5, status: "available" },
+{ id: "EQ-CAM-003", name: "ชุดไฟต่อเนื่องสตูดิโอ (Softbox Light Set)", category: "บันทึกภาพ", total: 3, available: 3, status: "available" },
+{ id: "EQ-CAM-004", name: "กล้องวิดีโอ 4K Sony Handycam", category: "บันทึกภาพ", total: 3, available: 1, status: "available" }
+];
+
+try {
+  const data = localStorage.getItem('equipment');
+  if (data) {
+    const parsed = JSON.parse(data);
+    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+  }
+} catch (e) { console.error(e); }
+
+saveJSON('equipment', mockEquipment);
+return mockEquipment;
+
+}
+
+function firebaseErrorMessage(error) {
+const code = error?.code || '';
+const map = {
+'auth/api-key-not-valid': 'API Key ของ Firebase ไม่ถูกต้อง',
+'auth/email-already-in-use': 'อีเมลนี้มีบัญชีในระบบอยู่แล้ว',
+'auth/invalid-email': 'รูปแบบอีเมลไม่ถูกต้อง',
+'auth/weak-password': 'รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร',
+'auth/user-not-found': 'ไม่พบบัญชีผู้ใช้ที่มีอีเมลนี้ในระบบ',
+'auth/wrong-password': 'อีเมลหรือรหัสผ่านไม่ถูกต้อง'
+};
+return map[code] || error?.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อระบบ';
+}
+
+function loadScript(src) {
+return new Promise((resolve, reject) => {
+const existing = document.querySelector(`script[src="${src}"]`);
+if (existing) {
+if (existing.dataset.loaded === 'true') return resolve();
+existing.addEventListener('load', resolve, { once: true });
+existing.addEventListener('error', reject, { once: true });
+return;
+}
+const script = document.createElement('script');
+script.src = src; script.async = true;
+script.addEventListener('load', () => { script.dataset.loaded = 'true'; resolve(); }, { once: true });
+script.addEventListener('error', () => reject(new Error('Load failed')), { once: true });
+document.head.appendChild(script);
+});
+}
+
+async function initFirebase() {
+if (window.firebase?.apps?.length) {
+db = window.firebase.firestore(); auth = window.firebase.auth(); return true;
+}
+if (isFirebaseInitializing) return false;
+isFirebaseInitializing = true;
+try {
+const base = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}`;
+await loadScript(`${base}/firebase-app-compat.js`);
+await loadScript(`${base}/firebase-auth-compat.js`);
+await loadScript(`${base}/firebase-firestore-compat.js`);
+if (window.firebase) {
+if (!window.firebase.apps.length) window.firebase.initializeApp(FIREBASE_CONFIG);
+db = window.firebase.firestore(); auth = window.firebase.auth();
+isFirebaseInitializing = false; return true;
+}
+} catch (e) { console.warn('Firebase init warning:', e); }
+isFirebaseInitializing = false; return false;
+}
+
+// ============================================================
+// Profile & Logout
+// ============================================================
+
+function setupProfileModal() {
+const profileBtn = document.getElementById('profileButton');
+const profileModal = document.getElementById('profileModal');
+const closeBtn = document.getElementById('closeProfileModal');
+const saveBtn = document.getElementById('saveProfileButton');
+const nameInput = document.getElementById('editUserName');
+const logoutBtn = document.getElementById('logoutButton');
+
+if (logoutBtn && logoutBtn.dataset.bound !== 'true') {
+  logoutBtn.dataset.bound = 'true';
+  logoutBtn.addEventListener('click', () => {
+    if (confirm('คุณต้องการออกจากระบบใช่หรือไม่?')) {
+      localStorage.removeItem('equipment_current_user');
+      localStorage.setItem('isLoggedIn', 'false');
+      window\.location.href = 'index.html';
+    }
+  });
+}
+
+if (!profileModal) return;
+profileModal.style.display = 'none';
+
+if (profileBtn && profileBtn.dataset.bound !== 'true') {
+  profileBtn.dataset.bound = 'true';
+  profileBtn.addEventListener('click', () => {
+    const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
+    if (nameInput) nameInput.value = currentUser.name || '';
+    profileModal.style.display = 'flex';
+  });
+}
+
+if (closeBtn && closeBtn.dataset.bound !== 'true') {
+  closeBtn.dataset.bound = 'true';
+  closeBtn.addEventListener('click', () => { profileModal.style.display = 'none'; });
+}
+
+if (saveBtn && saveBtn.dataset.bound !== 'true') {
+  saveBtn.dataset.bound = 'true';
+  saveBtn.addEventListener('click', () => {
+    const newName = nameInput?.value?.trim();
+    if (newName) {
+      const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
+      currentUser.name = newName;
+      saveJSON('equipment_current_user', currentUser);
+      localStorage.setItem('userName', newName);
+      const userNameElem = document.getElementById('userName');
+      if (userNameElem) userNameElem.textContent = newName;
+      alert('บันทึกข้อมูลชื่อเรียบร้อยแล้ว');
+    }
+    profileModal.style.display = 'none';
+  });
+}
+
+}
 
   function setupRoleUI() {
     const roleSelect = document.getElementById('loginRole');
