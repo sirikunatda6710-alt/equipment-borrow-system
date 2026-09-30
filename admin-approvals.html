@@ -96,14 +96,12 @@
             </div>
 
             <div class="header-actions">
-                <!-- ปุ่มไอคอนระฆังแจ้งเตือน -->
                 <div style="position: relative;">
                     <button type="button" id="notificationButton" style="background: none; border: none; cursor: pointer; padding: 8px; position: relative; display: flex; align-items: center; justify-content: center;">
                         <i data-lucide="bell" style="width: 22px; height: 22px; color: #4b5563;"></i>
                         <span id="notificationCount" style="position: absolute; top: 0; right: 0; display: none; background: #ef4444; color: white; border-radius: 9999px; padding: 2px 6px; font-size: 0.7rem; font-weight: bold;">0</span>
                     </button>
 
-                    <!-- Panel แสดงรายการแจ้งเตือน -->
                     <div id="notificationPanel" style="display: none; position: absolute; right: 0; top: 45px; width: 320px; background: white; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border: 1px solid #e5e7eb; z-index: 1000;">
                         <div style="padding: 12px 16px; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center;">
                             <strong style="color: #1f2937;">การแจ้งเตือน</strong>
@@ -233,7 +231,6 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             renderBorrowTable();
-            // หน่วงเวลาเล็กน้อยเพื่อให้ Firebase Init โหลดเสร็จแน่นอน
             setTimeout(() => {
                 renderUserTable();
             }, 800);
@@ -255,7 +252,7 @@
                 userSec.style.display = 'block';
                 tabBorrowBtn.classList.remove('active');
                 tabUserBtn.classList.add('active');
-                renderUserTable(); // โหลดใหม่เมื่อสลับมาแท็บนี้
+                renderUserTable();
             }
         }
 
@@ -330,14 +327,12 @@
                 users = await window.getFirestoreUsers();
             }
 
-            // ถ้าใน Firestore ไม่มี ให้ลองหาใน LocalStorage
             if (users.length === 0) {
                 try {
                     users = JSON.parse(localStorage.getItem('pending_user_registrations')) || [];
                 } catch (e) { users = []; }
             }
 
-            // อัปเดต Badge นับจำนวนเฉพาะรายการรออนุมัติ (pending)
             const pendingCount = users.filter(u => u.status === 'pending').length;
             const badge = document.getElementById('userPendingBadge');
             if (badge) {
@@ -345,7 +340,6 @@
                 badge.style.display = pendingCount > 0 ? 'inline-block' : 'none';
             }
 
-            // กรองข้อมูลตาม Dropdown
             const filteredUsers = users.filter(u => selectedFilter === 'all' || u.status === selectedFilter);
 
             if (filteredUsers.length === 0) {
@@ -372,8 +366,10 @@
         }
 
         function processUserRegistration(userUid, userEmail, newStatus) {
-            if (window.handleUserAccountApproval) {
-                window.handleUserAccountApproval(userUid, userEmail, newStatus);
+            if (confirm(`คุณต้องการ ${newStatus === 'approved' ? 'อนุมัติ' : 'ปฏิเสธ'} สมาชิก (${userEmail}) ใช่หรือไม่?`)) {
+                if (window.handleUserAccountApproval) {
+                    window.handleUserAccountApproval(userUid, userEmail, newStatus);
+                }
             }
         }
     </script>
