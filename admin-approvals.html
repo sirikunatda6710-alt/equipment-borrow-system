@@ -304,17 +304,23 @@
             }
         }
 
-        function getPendingUsers() {
-            try {
-                return JSON.parse(localStorage.getItem('pending_user_registrations')) || [];
-            } catch (e) {
-                return [];
-            }
-        }
-
-        function renderUserTable() {
+        async function renderUserTable() {
             const table = document.getElementById('userApprovalTable');
-            const users = getPendingUsers();
+            table.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 2rem; color: #6b7280;">กำลังโหลดข้อมูลผู้ใช้...</td></tr>`;
+
+            let users = [];
+
+            // 1. ดึงจาก Firestore ก่อน
+            if (window.getFirestoreUsers) {
+                users = await window.getFirestoreUsers();
+            }
+
+            // 2. ถ้าไม่มีข้อมูลใน Firestore ให้ดึงจาก LocalStorage
+            if (users.length === 0) {
+                try {
+                    users = JSON.parse(localStorage.getItem('pending_user_registrations')) || [];
+                } catch (e) { users = []; }
+            }
 
             const pendingCount = users.filter(u => u.status === 'pending').length;
             const badge = document.getElementById('userPendingBadge');
@@ -333,7 +339,7 @@
                     <td><strong>${u.name}</strong></td>
                     <td>${u.email}</td>
                     <td><span style="background:#f3f4f6; padding:2px 8px; border-radius:4px; font-size:0.85rem;">ผู้ใช้งานทั่วไป</span></td>
-                    <td>${u.requestDate || u.date || '-'}</td>
+                    <td>${u.requestDate || u.createdAt || '-'}</td>
                     <td><span class="badge-${u.status}">${u.status === 'pending' ? 'รออนุมัติ' : u.status === 'approved' ? 'อนุมัติแล้ว' : 'ปฏิเสธแล้ว'}</span></td>
                     <td style="text-align: center;">
                         ${u.status === 'pending' ? `
