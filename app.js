@@ -343,7 +343,7 @@
   }
 
   // ============================================================
-  // Notification System
+  // Notification System & Badges
   // ============================================================
 
   function initNotificationSystem() {
@@ -353,15 +353,13 @@
     const countBadge = document.getElementById('notificationCount');
     const notifList = document.getElementById('notificationList');
 
-    if (!notifBtn || !notifPanel) return;
-
     const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
     const isAdmin = currentUser.role === 'admin';
 
     let notifications = [];
 
     if (isAdmin) {
-      // 1. แจ้งเตือนคำขอยืม-คืนอุปกรณ์
+      // 1. คำขอยืม-คืนอุปกรณ์ที่รออนุมัติ
       const requests = JSON.parse(localStorage.getItem('user_requests')) || [];
       const pendingReqs = requests.filter(r => r.status === 'pending');
       pendingReqs.forEach(req => {
@@ -373,18 +371,31 @@
         });
       });
 
-      // 2. แจ้งเตือนผู้ลงทะเบียนใหม่รอการอนุมัติบัญชี
+      // 2. คำขออนุมัติผู้สมัครสมาชิกใหม่ที่ยังรออนุมัติ (status === 'pending')
       const pendingUsers = JSON.parse(localStorage.getItem('pending_user_registrations')) || [];
-      pendingUsers.forEach(u => {
+      const activePendingUsers = pendingUsers.filter(u => u.status === 'pending');
+
+      activePendingUsers.forEach(u => {
         notifications.push({
           type: 'urgent',
-          title: `👤 บัญชีใหม่รอการอนุมัติ`,
-          desc: `${u.name} (${u.email}) ขออนุมัติเข้าใช้งานระบบ`,
+          title: `👤 ผู้ใช้ใหม่รอการอนุมัติ`,
+          desc: `${u.name} (${u.email}) ลงทะเบียนขอเข้าใช้งานระบบ`,
           link: 'admin-approvals.html'
         });
       });
 
-      // 3. แจ้งเตือนสต็อกอุปกรณ์
+      // อัปเดตตัวเลขแจ้งเตือนบน Tab "อนุมัติสมาชิกใหม่" (ถ้ามี Element บนหน้า)
+      const userTabBadge = document.getElementById('pendingUserTabBadge');
+      if (userTabBadge) {
+        if (activePendingUsers.length > 0) {
+          userTabBadge.textContent = activePendingUsers.length;
+          userTabBadge.style.display = 'inline-block';
+        } else {
+          userTabBadge.style.display = 'none';
+        }
+      }
+
+      // 3. สต็อกอุปกรณ์หมด/ใกล้หมด
       const equipment = getEquipmentLocal();
       equipment.forEach(item => {
         const avail = Number(item.available || 0);
@@ -398,7 +409,7 @@
         } else if (avail <= 2) {
           notifications.push({
             type: 'warning',
-            title: `⚠️️ สินค้าใกล้หมด: ${item.name}`,
+            title: `⚠️ สินค้าใกล้หมด: ${item.name}`,
             desc: `หมวดหมู่ ${item.category} เหลือพร้อมใช้งานเพียง ${avail} ชิ้น`,
             link: 'admin-management.html'
           });
@@ -419,6 +430,7 @@
       });
     }
 
+    // อัปเดตตัวเลขกระดิ่งแจ้งเตือน
     if (countBadge) {
       if (notifications.length > 0) {
         countBadge.textContent = notifications.length;
@@ -442,19 +454,21 @@
       }
     }
 
-    if (notifBtn.dataset.bound !== 'true') {
+    if (notifBtn && notifBtn.dataset.bound !== 'true') {
       notifBtn.dataset.bound = 'true';
       notifBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        const isVisible = notifPanel.style.display === 'block';
-        notifPanel.style.display = isVisible ? 'none' : 'block';
+        if (notifPanel) {
+          const isVisible = notifPanel.style.display === 'block';
+          notifPanel.style.display = isVisible ? 'none' : 'block';
+        }
       });
     }
 
     if (closeBtn && closeBtn.dataset.bound !== 'true') {
       closeBtn.dataset.bound = 'true';
       closeBtn.addEventListener('click', () => {
-        notifPanel.style.display = 'none';
+        if (notifPanel) notifPanel.style.display = 'none';
       });
     }
 
@@ -466,7 +480,7 @@
   }
 
   // ============================================================
-  // Login Form (ตรวจเช็กสถานะการอนุมัติบัญชีผู้ใช้)
+  // Login Form
   // ============================================================
 
   function setupLoginForm() {
@@ -483,7 +497,6 @@
 
       if (!email || !password) { alert('กรุณากรอกอีเมลและรหัสผ่าน'); return; }
 
-      // 🔒 1. ตรวจสอบ Admin Code หากเลือกเข้าใช้งานในฐานะผู้ดูแลระบบ
       if (selectedRole === 'admin' && adminCodeInput?.value?.trim() !== '24236') {
         alert('❌ รหัสยืนยันผู้ดูแลระบบไม่ถูกต้อง'); return;
       }
@@ -492,12 +505,10 @@
         const ready = await initFirebase();
         if (!ready || !auth) throw new Error('ไม่สามารถเชื่อมต่อระบบยืนยันตัวตนได้');
 
-        // 🔒 2. ล็อกอินผ่าน Firebase Auth
         const cred = await auth.signInWithEmailAndPassword(email, password);
         const user = cred.user;
         let profile = null;
 
-        // 🔒 3. ดึงข้อมูลโปรไฟล์จาก Firestore Database
         try {
           const snap = await db.collection('users').doc(user.uid).get();
           if (snap.exists) profile = snap.data();
@@ -508,7 +519,6 @@
         const actualRole = profile?.role || 'user';
         const accountStatus = profile?.accountStatus || (actualRole === 'admin' ? 'approved' : 'pending');
 
-        // 🔒 4. Strict Role Authorization Validation
         if (selectedRole === 'admin' && actualRole !== 'admin') {
           await auth.signOut();
           alert('❌ การเข้าถึงถูกปฏิเสธ: บัญชีนี้เป็นผู้ใช้งานทั่วไป ไม่มีสิทธิ์เข้าใช้งานระบบในฐานะ Admin');
@@ -521,10 +531,10 @@
           return;
         }
 
-        // 🔒 5. ตรวจเช็กสถานะการอนุมัติบัญชีผู้ใช้งานทั่วไป
+        // ตรวจสอบสิทธิ์การอนุมัติใช้งาน
         if (actualRole === 'user' && accountStatus !== 'approved') {
           await auth.signOut();
-          alert('⏳ การเข้าสู่ระบบไม่สำเร็จ!\n\nบัญชีของคุณยังอยู่ในสถานะ "รอผู้ดูแลระบบอนุมัติการลงทะเบียน" กรุณารอการอนุมัติสิทธิ์ก่อนจึงจะสามารถเข้าใช้งานและเบิก/ยืมอุปกรณ์ได้');
+          alert('⏳ การเข้าสู่ระบบไม่สำเร็จ!\n\nบัญชีของคุณยังอยู่ในสถานะ "รอผู้ดูแลระบบอนุมัติการลงทะเบียน" กรุณารอการอนุมัติสิทธิ์ก่อนจึงจะสามารถเข้าใช้งานระบบได้');
           return;
         }
 
@@ -549,7 +559,7 @@
   }
 
   // ============================================================
-  // Register Form (กำหนดสถานะบัญชีใหม่เป็น 'pending' เสมอ)
+  // Register Form
   // ============================================================
 
   function setupRegisterForm() {
@@ -652,8 +662,6 @@
         const cred = await auth.createUserWithEmailAndPassword(email, password);
         const user = cred.user;
 
-        // บัญชี user ใหม่จะถูกตั้งค่าสถานะเป็น 'pending' (รอผู้ดูแลอนุมัติ)
-        // บัญชี admin จะได้รับสถานะ 'approved' ทันที
         const accountStatus = role === 'admin' ? 'approved' : 'pending';
 
         if (db) {
@@ -666,7 +674,7 @@
           });
         }
 
-        // บันทึกรายการคำขอสมัครสิทธิ์ลงใน LocalStorage สำหรับแจ้งเตือน Admin
+        // หากเป็น user ทั่วไป ให้เพิ่มข้อมูลลงรายการรออนุมัติของ Admin
         if (role === 'user') {
           let pendingUsers = JSON.parse(localStorage.getItem('pending_user_registrations')) || [];
           pendingUsers.unshift({
@@ -819,7 +827,7 @@
   }
 
   // ============================================================
-  // Global Admin Operations (อนุมัติคำขอยืม และ อนุมัติลงทะเบียนบัญชี)
+  // Global Admin Operations (อนุมัติยืม-คืน และ อนุมัติสมาชิกใหม่)
   // ============================================================
 
   window.handleAdminApproval = function(requestId, newStatus) {
@@ -844,7 +852,7 @@
     }
   };
 
-  // ฟังก์ชันอนุมัติบัญชีผู้ลงทะเบียนใหม่สำหรับ Admin
+  // ฟังก์ชันสำหรับ Admin อนุมัติ/ปฏิเสธ บัญชีสมาชิกใหม่
   window.handleUserAccountApproval = async function(userUid, userEmail, actionStatus) {
     const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
     const adminName = currentUser.name || 'ผู้ดูแลระบบ';
@@ -859,24 +867,32 @@
       }
 
       let pendingUsers = JSON.parse(localStorage.getItem('pending_user_registrations')) || [];
-      pendingUsers = pendingUsers.filter(u => u.uid !== userUid && u.email !== userEmail);
+      const userIndex = pendingUsers.findIndex(u => u.uid === userUid || u.email === userEmail);
+      
+      if (userIndex !== -1) {
+        pendingUsers[userIndex].status = actionStatus;
+        pendingUsers[userIndex].approvedBy = adminName;
+      } else {
+        pendingUsers = pendingUsers.filter(u => u.uid !== userUid && u.email !== userEmail);
+      }
+      
       localStorage.setItem('pending_user_registrations', JSON.stringify(pendingUsers));
 
       window.addSystemLog(
-        actionStatus === 'approved' ? 'อนุมัติบัญชีผู้ใช้' : 'ปฏิเสธบัญชีผู้ใช้',
-        `อนุมัติบัญชี ${userEmail} โดยแอดมิน ${adminName}`
+        actionStatus === 'approved' ? 'อนุมัติสมาชิกใหม่' : 'ปฏิเสธสมาชิกใหม่',
+        `บัญชี ${userEmail} โดยแอดมิน ${adminName}`
       );
 
-      alert(`ทำการ ${actionStatus === 'approved' ? 'อนุมัติ' : 'ปฏิเสธ'} บัญชีผู้ใช้เรียบร้อยแล้ว`);
+      alert(`ทำการ ${actionStatus === 'approved' ? 'อนุมัติ' : 'ปฏิเสธ'} สมาชิกใหม่เรียบร้อยแล้ว`);
       window.location.reload();
     } catch (e) {
       console.error(e);
-      alert('เกิดข้อผิดพลาดในการอัปเดตสถานะบัญชี');
+      alert('เกิดข้อผิดพลาดในการอัปเดตสถานะสมาชิก');
     }
   };
 
   // ============================================================
-  // Equipment Page & Borrow Form (ตรวจสอบอนุมัติบัญชีก่อนยืม)
+  // Equipment Page & Borrow Form
   // ============================================================
 
   function initEquipmentPage() {
@@ -957,7 +973,6 @@
   window.openBorrowModal = function(id, name, maxAvail) {
     const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
     
-    // 🔒 บล็อกไม่ให้ยืมสิ่งของ หากบัญชียังไม่อนุมัติ
     if (currentUser.role === 'user' && currentUser.accountStatus !== 'approved') {
       alert('❌ ไม่สามารถทำรายการได้!\n\nบัญชีของคุณยังไม่ได้รับการอนุมัติการลงทะเบียนจากผู้ดูแลระบบ กรุณารอผู้ดูแลระบบอนุมัติบัญชีของคุณก่อนทำรายการยืม-คืนอุปกรณ์');
       return;
