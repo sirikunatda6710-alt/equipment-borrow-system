@@ -343,15 +343,40 @@
   }
 
   // ============================================================
-  // Notification System & Badges
+  // Notification System & Badges (ปรับปรุงใหม่ แก้ไขบัค 2 จุด)
   // ============================================================
 
   function initNotificationSystem() {
-    const notifBtn = document.getElementById('notificationButton');
-    const notifPanel = document.getElementById('notificationPanel');
-    const closeBtn = document.getElementById('closeNotificationPanel');
-    const countBadge = document.getElementById('notificationCount');
-    const notifList = document.getElementById('notificationList');
+    let notifBtn = document.getElementById('notificationButton');
+    let notifPanel = document.getElementById('notificationPanel');
+    let countBadge = document.getElementById('notificationCount');
+    let notifList = document.getElementById('notificationList');
+
+    // หากหน้าใดไม่มีปุ่มแจ้งเตือน ให้สร้างอัตโนมัติก่อนหน้าโปรไฟล์
+    const headerActions = document.querySelector('.header-actions');
+    if (headerActions && !notifBtn) {
+      const btnWrapper = document.createElement('div');
+      btnWrapper.style.position = 'relative';
+      btnWrapper.innerHTML = `
+        <button type="button" id="notificationButton" style="background:none; border:none; cursor:pointer; padding:8px; position:relative; font-size:1.2rem;">
+          <i data-lucide="bell"></i>
+          <span id="notificationCount" style="position:absolute; top:2px; right:2px; background:#ef4444; color:white; border-radius:9999px; padding:2px 6px; font-size:0.7rem; font-weight:bold; display:none;">0</span>
+        </button>
+        <div id="notificationPanel" style="display:none; position:absolute; right:0; top:45px; width:320px; background:white; border-radius:8px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); border:1px solid #e5e7eb; z-index:1000;">
+          <div style="padding:12px 16px; border-bottom:1px solid #f3f4f6; display:flex; justify-content:space-between; align-items:center;">
+            <strong style="color:#1f2937;">การแจ้งเตือน</strong>
+            <button id="closeNotificationPanel" style="border:none; background:none; cursor:pointer; color:#6b7280;">✕</button>
+          </div>
+          <div id="notificationList" style="max-height:300px; overflow-y:auto;"></div>
+        </div>
+      `;
+      headerActions.insertBefore(btnWrapper, headerActions.firstChild);
+
+      notifBtn = document.getElementById('notificationButton');
+      notifPanel = document.getElementById('notificationPanel');
+      countBadge = document.getElementById('notificationCount');
+      notifList = document.getElementById('notificationList');
+    }
 
     const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
     const isAdmin = currentUser.role === 'admin';
@@ -359,7 +384,7 @@
     let notifications = [];
 
     if (isAdmin) {
-      // 1. คำขอยืม-คืนอุปกรณ์ที่รออนุมัติ
+      // 1. คำขอยืม-คืนรออนุมัติ
       const requests = JSON.parse(localStorage.getItem('user_requests')) || [];
       const pendingReqs = requests.filter(r => r.status === 'pending');
       pendingReqs.forEach(req => {
@@ -371,7 +396,7 @@
         });
       });
 
-      // 2. คำขออนุมัติผู้สมัครสมาชิกใหม่ที่ยังรออนุมัติ (status === 'pending')
+      // 2. คำขอสมัครสมาชิกใหม่รออนุมัติ
       const pendingUsers = JSON.parse(localStorage.getItem('pending_user_registrations')) || [];
       const activePendingUsers = pendingUsers.filter(u => u.status === 'pending');
 
@@ -384,8 +409,8 @@
         });
       });
 
-      // อัปเดตตัวเลขแจ้งเตือนบน Tab "อนุมัติสมาชิกใหม่" (ถ้ามี Element บนหน้า)
-      const userTabBadge = document.getElementById('pendingUserTabBadge');
+      // อัปเดต Badge บน Tab อนุมัติสมาชิกใหม่
+      const userTabBadge = document.getElementById('userPendingBadge');
       if (userTabBadge) {
         if (activePendingUsers.length > 0) {
           userTabBadge.textContent = activePendingUsers.length;
@@ -395,7 +420,7 @@
         }
       }
 
-      // 3. สต็อกอุปกรณ์หมด/ใกล้หมด
+      // 3. สต็อกอุปกรณ์ใกล้หมด/หมด
       const equipment = getEquipmentLocal();
       equipment.forEach(item => {
         const avail = Number(item.available || 0);
@@ -465,6 +490,7 @@
       });
     }
 
+    const closeBtn = document.getElementById('closeNotificationPanel');
     if (closeBtn && closeBtn.dataset.bound !== 'true') {
       closeBtn.dataset.bound = 'true';
       closeBtn.addEventListener('click', () => {
@@ -473,10 +499,12 @@
     }
 
     document.addEventListener('click', (e) => {
-      if (notifPanel && !notifPanel.contains(e.target) && e.target !== notifBtn) {
+      if (notifPanel && notifBtn && !notifPanel.contains(e.target) && !notifBtn.contains(e.target)) {
         notifPanel.style.display = 'none';
       }
     });
+
+    if (window.lucide) lucide.createIcons();
   }
 
   // ============================================================
@@ -531,7 +559,6 @@
           return;
         }
 
-        // ตรวจสอบสิทธิ์การอนุมัติใช้งาน
         if (actualRole === 'user' && accountStatus !== 'approved') {
           await auth.signOut();
           alert('⏳ การเข้าสู่ระบบไม่สำเร็จ!\n\nบัญชีของคุณยังอยู่ในสถานะ "รอผู้ดูแลระบบอนุมัติการลงทะเบียน" กรุณารอการอนุมัติสิทธิ์ก่อนจึงจะสามารถเข้าใช้งานระบบได้');
@@ -674,7 +701,6 @@
           });
         }
 
-        // หากเป็น user ทั่วไป ให้เพิ่มข้อมูลลงรายการรออนุมัติของ Admin
         if (role === 'user') {
           let pendingUsers = JSON.parse(localStorage.getItem('pending_user_registrations')) || [];
           pendingUsers.unshift({
@@ -827,7 +853,7 @@
   }
 
   // ============================================================
-  // Global Admin Operations (อนุมัติยืม-คืน และ อนุมัติสมาชิกใหม่)
+  // Global Admin Operations
   // ============================================================
 
   window.handleAdminApproval = function(requestId, newStatus) {
@@ -852,7 +878,6 @@
     }
   };
 
-  // ฟังก์ชันสำหรับ Admin อนุมัติ/ปฏิเสธ บัญชีสมาชิกใหม่
   window.handleUserAccountApproval = async function(userUid, userEmail, actionStatus) {
     const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
     const adminName = currentUser.name || 'ผู้ดูแลระบบ';
