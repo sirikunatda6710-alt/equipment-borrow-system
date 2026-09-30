@@ -182,6 +182,30 @@
     isFirebaseInitializing = false; return false;
   }
 
+  // ดึงข้อมูลผู้ใช้งานลงทะเบียนรออนุมัติจาก Firestore
+  window.getFirestoreUsers = async function() {
+    try {
+      await initFirebase();
+      if (!db) return [];
+      const snap = await db.collection('users').where('role', '==', 'user').get();
+      let list = [];
+      snap.forEach(doc => {
+        const data = doc.data();
+        list.push({
+          uid: doc.id,
+          name: data.name || 'ไม่ระบุชื่อ',
+          email: data.email || '',
+          requestDate: data.createdAt || '-',
+          status: data.accountStatus || 'pending'
+        });
+      });
+      return list;
+    } catch (e) {
+      console.error("Error fetching users from Firestore:", e);
+      return [];
+    }
+  };
+
   // ============================================================
   // Profile & Logout
   // ============================================================
@@ -343,10 +367,10 @@
   }
 
   // ============================================================
-  // Notification System & Badges
+  // Notification System & Badges (ดึง Firestore แบบ Realtime)
   // ============================================================
 
-  function initNotificationSystem() {
+  async function initNotificationSystem() {
     let notifBtn = document.getElementById('notificationButton');
     let notifPanel = document.getElementById('notificationPanel');
     let countBadge = document.getElementById('notificationCount');
@@ -383,6 +407,34 @@
     let notifications = [];
 
     if (isAdmin) {
+      // 1. ดึงผู้ใช้ใหม่รออนุมัติจาก Firestore
+      let activePendingUsers = [];
+      if (window.getFirestoreUsers) {
+        const users = await window.getFirestoreUsers();
+        activePendingUsers = users.filter(u => u.status === 'pending');
+      }
+
+      activePendingUsers.forEach(u => {
+        notifications.push({
+          type: 'urgent',
+          title: `👤 ผู้ใช้ใหม่รอการอนุมัติ`,
+          desc: `${u.name} (${u.email}) ลงทะเบียนขอเข้าใช้งานระบบ`,
+          link: 'admin-approvals.html'
+        });
+      });
+
+      // อัปเดต Badge บน Tab อนุมัติสมาชิกใหม่
+      const userTabBadge = document.getElementById('userPendingBadge');
+      if (userTabBadge) {
+        if (activePendingUsers.length > 0) {
+          userTabBadge.textContent = activePendingUsers.length;
+          userTabBadge.style.display = 'inline-block';
+        } else {
+          userTabBadge.style.display = 'none';
+        }
+      }
+
+      // 2. คำขอยืม-คืนรออนุมัติ
       const requests = JSON.parse(localStorage.getItem('user_requests')) || [];
       const pendingReqs = requests.filter(r => r.status === 'pending');
       pendingReqs.forEach(req => {
@@ -394,28 +446,7 @@
         });
       });
 
-      const pendingUsers = JSON.parse(localStorage.getItem('pending_user_registrations')) || [];
-      const activePendingUsers = pendingUsers.filter(u => u.status === 'pending');
-
-      activePendingUsers.forEach(u => {
-        notifications.push({
-          type: 'urgent',
-          title: `👤 ผู้ใช้ใหม่รอการอนุมัติ`,
-          desc: `${u.name} (${u.email}) ลงทะเบียนขอเข้าใช้งานระบบ`,
-          link: 'admin-approvals.html'
-        });
-      });
-
-      const userTabBadge = document.getElementById('userPendingBadge');
-      if (userTabBadge) {
-        if (activePendingUsers.length > 0) {
-          userTabBadge.textContent = activePendingUsers.length;
-          userTabBadge.style.display = 'inline-block';
-        } else {
-          userTabBadge.style.display = 'none';
-        }
-      }
-
+      // 3. สต็อกอุปกรณ์ใกล้หมด/หมด
       const equipment = getEquipmentLocal();
       equipment.forEach(item => {
         const avail = Number(item.available || 0);
@@ -502,7 +533,7 @@
   }
 
   // ============================================================
-  // Login Form (แก้ไขการตรวจสอบสถานะการอนุมัติ)
+  // Login Form
   // ============================================================
 
   function setupLoginForm() {
@@ -538,13 +569,11 @@
           console.error("Fetch profile error:", e);
         }
 
-        // ตรวจสอบข้อมูลจาก LocalStorage ควบคู่กันไป
         const pendingUsers = JSON.parse(localStorage.getItem('pending_user_registrations')) || [];
         const localUser = pendingUsers.find(u => u.email === email || u.uid === user.uid);
 
         const actualRole = profile?.role || 'user';
         
-        // กำหนดสถานะ accountStatus โดยลำดับความสำคัญจาก LocalStorage/Firestore
         let accountStatus = profile?.accountStatus;
         if (localUser && localUser.status) {
           accountStatus = localUser.status;
@@ -565,7 +594,6 @@
           return;
         }
 
-        // ตรวจสอบสิทธิ์การอนุมัติ
         if (actualRole === 'user' && accountStatus !== 'approved') {
           await auth.signOut();
           alert('⏳ การเข้าสู่ระบบไม่สำเร็จ!\n\nบัญชีของคุณยังอยู่ในสถานะ "รอผู้ดูแลระบบอนุมัติการลงทะเบียน" กรุณารอการอนุมัติสิทธิ์ก่อนจึงจะสามารถเข้าใช้งานระบบได้');
@@ -860,7 +888,7 @@
   }
 
   // ============================================================
-  // Global Admin Operations (แก้ไขให้อัปเดตทั้ง Firestore และ LocalStorage)
+  // Global Admin Operations
   // ============================================================
 
   window.handleAdminApproval = function(requestId, newStatus) {
@@ -905,7 +933,7 @@
         }
       }
 
-      // 2. อัปเดตใน LocalStorage (pending_user_registrations)
+      // 2. อัปเดตใน LocalStorage (เผื่อเรียกใช้)
       let pendingUsers = JSON.parse(localStorage.getItem('pending_user_registrations')) || [];
       const userIndex = pendingUsers.findIndex(u => (userUid && u.uid === userUid) || u.email === userEmail);
       
