@@ -361,6 +361,7 @@
     let notifications = [];
 
     if (isAdmin) {
+      // 1. แจ้งเตือนคำขอยืม-คืนอุปกรณ์
       const requests = JSON.parse(localStorage.getItem('user_requests')) || [];
       const pendingReqs = requests.filter(r => r.status === 'pending');
       pendingReqs.forEach(req => {
@@ -372,6 +373,18 @@
         });
       });
 
+      // 2. แจ้งเตือนผู้ลงทะเบียนใหม่รอการอนุมัติบัญชี
+      const pendingUsers = JSON.parse(localStorage.getItem('pending_user_registrations')) || [];
+      pendingUsers.forEach(u => {
+        notifications.push({
+          type: 'urgent',
+          title: `👤 บัญชีใหม่รอการอนุมัติ`,
+          desc: `${u.name} (${u.email}) ขออนุมัติเข้าใช้งานระบบ`,
+          link: 'admin-approvals.html'
+        });
+      });
+
+      // 3. แจ้งเตือนสต็อกอุปกรณ์
       const equipment = getEquipmentLocal();
       equipment.forEach(item => {
         const avail = Number(item.available || 0);
@@ -385,7 +398,7 @@
         } else if (avail <= 2) {
           notifications.push({
             type: 'warning',
-            title: `⚠️ สินค้าใกล้หมด: ${item.name}`,
+            title: `⚠️️ สินค้าใกล้หมด: ${item.name}`,
             desc: `หมวดหมู่ ${item.category} เหลือพร้อมใช้งานเพียง ${avail} ชิ้น`,
             link: 'admin-management.html'
           });
@@ -453,7 +466,7 @@
   }
 
   // ============================================================
-  // Login Form (เข้มงวดการตรวจสอบสิทธิ์แบบ 2 ทาง ป้องกันข้ามสาย)
+  // Login Form (ตรวจเช็กสถานะการอนุมัติบัญชีผู้ใช้)
   // ============================================================
 
   function setupLoginForm() {
@@ -470,7 +483,7 @@
 
       if (!email || !password) { alert('กรุณากรอกอีเมลและรหัสผ่าน'); return; }
 
-      // 🔒 1. หากเลือกโหมดผู้ดูแลระบบ ต้องตรวจรหัสยืนยัน Admin Code ก่อน
+      // 🔒 1. ตรวจสอบ Admin Code หากเลือกเข้าใช้งานในฐานะผู้ดูแลระบบ
       if (selectedRole === 'admin' && adminCodeInput?.value?.trim() !== '24236') {
         alert('❌ รหัสยืนยันผู้ดูแลระบบไม่ถูกต้อง'); return;
       }
@@ -484,7 +497,7 @@
         const user = cred.user;
         let profile = null;
 
-        // 🔒 3. ดึงบทบาทจริงจาก Firestore Database
+        // 🔒 3. ดึงข้อมูลโปรไฟล์จาก Firestore Database
         try {
           const snap = await db.collection('users').doc(user.uid).get();
           if (snap.exists) profile = snap.data();
@@ -493,8 +506,9 @@
         }
 
         const actualRole = profile?.role || 'user';
+        const accountStatus = profile?.accountStatus || (actualRole === 'admin' ? 'approved' : 'pending');
 
-        // 🔒 4. Strict Role Authorization Validation (ป้องกันทั้งข้ามไป Admin และข้ามมา User)
+        // 🔒 4. Strict Role Authorization Validation
         if (selectedRole === 'admin' && actualRole !== 'admin') {
           await auth.signOut();
           alert('❌ การเข้าถึงถูกปฏิเสธ: บัญชีนี้เป็นผู้ใช้งานทั่วไป ไม่มีสิทธิ์เข้าใช้งานระบบในฐานะ Admin');
@@ -507,11 +521,19 @@
           return;
         }
 
+        // 🔒 5. ตรวจเช็กสถานะการอนุมัติบัญชีผู้ใช้งานทั่วไป
+        if (actualRole === 'user' && accountStatus !== 'approved') {
+          await auth.signOut();
+          alert('⏳ การเข้าสู่ระบบไม่สำเร็จ!\n\nบัญชีของคุณยังอยู่ในสถานะ "รอผู้ดูแลระบบอนุมัติการลงทะเบียน" กรุณารอการอนุมัติสิทธิ์ก่อนจึงจะสามารถเข้าใช้งานและเบิก/ยืมอุปกรณ์ได้');
+          return;
+        }
+
         const currentUserData = {
           uid: user.uid,
           name: profile?.name || user.displayName || email,
           email: user.email || email,
-          role: actualRole
+          role: actualRole,
+          accountStatus: accountStatus
         };
 
         saveJSON(KEYS.currentUser, currentUserData);
@@ -527,7 +549,7 @@
   }
 
   // ============================================================
-  // Register Form (รองรับการเลือกประเภทสิทธิ์ User/Admin)
+  // Register Form (กำหนดสถานะบัญชีใหม่เป็น 'pending' เสมอ)
   // ============================================================
 
   function setupRegisterForm() {
@@ -539,7 +561,6 @@
     const adminCodeGroup = document.getElementById('regAdminCodeGroup');
     const adminCodeInput = document.getElementById('regAdminCode');
 
-    // ควบคุมการแสดง/ซ่อน ช่องกรอกรหัส Admin Code
     if (roleSelect && adminCodeGroup) {
       roleSelect.addEventListener('change', () => {
         const isAdmin = roleSelect.value === 'admin';
@@ -557,7 +578,6 @@
     const ruleLower = document.getElementById('ruleLower');
     const ruleNumber = document.getElementById('ruleNumber');
 
-    // ฟังก์ชันตรวจเช็กเงื่อนไขความปลอดภัยรหัสผ่านเรียลไทม์ 4 ข้อ
     function checkPasswordRules(pass) {
       const isLengthValid = pass.length >= 8;
       const isUpperValid = /[A-Z]/.test(pass);
@@ -607,13 +627,11 @@
         alert('กรุณากรอกข้อมูลให้ครบถ้วนทุกช่อง'); return;
       }
 
-      // ตรวจสอบรหัสยืนยันผู้ดูแลระบบ
       if (role === 'admin' && adminCode !== '24236') {
         alert('❌ รหัสยืนยันผู้ดูแลระบบ (Admin Code) ไม่ถูกต้อง');
         return;
       }
 
-      // ตรวจสอบเงื่อนไขความปลอดภัยของรหัสผ่าน
       if (!checkPasswordRules(password)) {
         alert('❌ รหัสผ่านยังไม่ตรงตามเงื่อนไขความปลอดภัย กรุณาตรวจสอบอีกครั้ง:\n' +
               '- ต้องมีความยาวอย่างน้อย 8 ตัวอักษร\n' +
@@ -634,17 +652,37 @@
         const cred = await auth.createUserWithEmailAndPassword(email, password);
         const user = cred.user;
 
-        // บันทึกข้อมูลประเภทสิทธิ์ (role) ที่เลือกไว้ลง Firestore
+        // บัญชี user ใหม่จะถูกตั้งค่าสถานะเป็น 'pending' (รอผู้ดูแลอนุมัติ)
+        // บัญชี admin จะได้รับสถานะ 'approved' ทันที
+        const accountStatus = role === 'admin' ? 'approved' : 'pending';
+
         if (db) {
           await db.collection('users').doc(user.uid).set({
             name: name,
             email: email,
             role: role, 
+            accountStatus: accountStatus,
             createdAt: getCurrentDateTimeFormatted()
           });
         }
 
-        alert(`🎉 สมัครสมาชิกสำเร็จ! บัญชีของคุณ (${role === 'admin' ? 'ผู้ดูแลระบบ' : 'ผู้ใช้งานทั่วไป'}) พร้อมสำหรับการเข้าสู่ระบบแล้ว`);
+        // บันทึกรายการคำขอสมัครสิทธิ์ลงใน LocalStorage สำหรับแจ้งเตือน Admin
+        if (role === 'user') {
+          let pendingUsers = JSON.parse(localStorage.getItem('pending_user_registrations')) || [];
+          pendingUsers.unshift({
+            uid: user.uid,
+            name: name,
+            email: email,
+            requestDate: getCurrentDateTimeFormatted(),
+            status: 'pending'
+          });
+          localStorage.setItem('pending_user_registrations', JSON.stringify(pendingUsers));
+
+          alert('🎉 สมัครสมาชิกสำเร็จ!\n\nขณะนี้บัญชีของคุณอยู่ในสถานะ "รอผู้ดูแลระบบอนุมัติการลงทะเบียน" กรุณารอผู้ดูแลระบบตรวจสอบและอนุมัติสิทธิ์ จึงจะสามารถเข้าสู่ระบบเพื่อใช้งานได้');
+        } else {
+          alert('🎉 สมัครสมาชิกบัญชีผู้ดูแลระบบสำเร็จ! คุณสามารถเข้าสู่ระบบได้ทันที');
+        }
+
         window.location.href = 'index.html';
 
       } catch (err) { alert(firebaseErrorMessage(err)); }
@@ -781,7 +819,7 @@
   }
 
   // ============================================================
-  // Global Admin Operations
+  // Global Admin Operations (อนุมัติคำขอยืม และ อนุมัติลงทะเบียนบัญชี)
   // ============================================================
 
   window.handleAdminApproval = function(requestId, newStatus) {
@@ -806,8 +844,39 @@
     }
   };
 
+  // ฟังก์ชันอนุมัติบัญชีผู้ลงทะเบียนใหม่สำหรับ Admin
+  window.handleUserAccountApproval = async function(userUid, userEmail, actionStatus) {
+    const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
+    const adminName = currentUser.name || 'ผู้ดูแลระบบ';
+
+    try {
+      if (db && userUid) {
+        await db.collection('users').doc(userUid).update({
+          accountStatus: actionStatus,
+          approvedBy: adminName,
+          approvedAt: getCurrentDateTimeFormatted()
+        });
+      }
+
+      let pendingUsers = JSON.parse(localStorage.getItem('pending_user_registrations')) || [];
+      pendingUsers = pendingUsers.filter(u => u.uid !== userUid && u.email !== userEmail);
+      localStorage.setItem('pending_user_registrations', JSON.stringify(pendingUsers));
+
+      window.addSystemLog(
+        actionStatus === 'approved' ? 'อนุมัติบัญชีผู้ใช้' : 'ปฏิเสธบัญชีผู้ใช้',
+        `อนุมัติบัญชี ${userEmail} โดยแอดมิน ${adminName}`
+      );
+
+      alert(`ทำการ ${actionStatus === 'approved' ? 'อนุมัติ' : 'ปฏิเสธ'} บัญชีผู้ใช้เรียบร้อยแล้ว`);
+      window.location.reload();
+    } catch (e) {
+      console.error(e);
+      alert('เกิดข้อผิดพลาดในการอัปเดตสถานะบัญชี');
+    }
+  };
+
   // ============================================================
-  // Equipment Page & Borrow Form
+  // Equipment Page & Borrow Form (ตรวจสอบอนุมัติบัญชีก่อนยืม)
   // ============================================================
 
   function initEquipmentPage() {
@@ -886,6 +955,14 @@
   }
 
   window.openBorrowModal = function(id, name, maxAvail) {
+    const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
+    
+    // 🔒 บล็อกไม่ให้ยืมสิ่งของ หากบัญชียังไม่อนุมัติ
+    if (currentUser.role === 'user' && currentUser.accountStatus !== 'approved') {
+      alert('❌ ไม่สามารถทำรายการได้!\n\nบัญชีของคุณยังไม่ได้รับการอนุมัติการลงทะเบียนจากผู้ดูแลระบบ กรุณารอผู้ดูแลระบบอนุมัติบัญชีของคุณก่อนทำรายการยืม-คืนอุปกรณ์');
+      return;
+    }
+
     const modal = document.getElementById('borrowModal');
     if (!modal) return;
     document.getElementById('modalEquipmentId').value = id;
@@ -909,7 +986,14 @@
 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
-      const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || { name: 'ผู้ใช้งานระบบ', email: 'user@example.com' };
+      const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
+
+      if (currentUser.role === 'user' && currentUser.accountStatus !== 'approved') {
+        alert('❌ ไม่สามารถทำรายการได้! บัญชีของคุณยังไม่ได้รับการอนุมัติการลงทะเบียนจากผู้ดูแลระบบ');
+        closeBorrowModal();
+        return;
+      }
+
       const eqId = document.getElementById('modalEquipmentId').value;
       const eqName = document.getElementById('modalEquipmentName').value;
       const qty = parseInt(document.getElementById('modalBorrowQuantity').value) || 1;
@@ -922,8 +1006,8 @@
         equipmentName: eqName,
         quantity: qty,
         reason: reason,
-        userName: currentUser.name,
-        userEmail: currentUser.email,
+        userName: currentUser.name || 'ผู้ใช้งานระบบ',
+        userEmail: currentUser.email || 'user@example.com',
         requestDate: getCurrentDateTimeFormatted(),
         type: 'ยืม',
         status: 'pending',
