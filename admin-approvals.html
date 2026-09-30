@@ -233,7 +233,10 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             renderBorrowTable();
-            renderUserTable();
+            // หน่วงเวลาเล็กน้อยเพื่อให้ Firebase Init โหลดเสร็จแน่นอน
+            setTimeout(() => {
+                renderUserTable();
+            }, 800);
         });
 
         function switchTab(tabName) {
@@ -252,6 +255,7 @@
                 userSec.style.display = 'block';
                 tabBorrowBtn.classList.remove('active');
                 tabUserBtn.classList.add('active');
+                renderUserTable(); // โหลดใหม่เมื่อสลับมาแท็บนี้
             }
         }
 
@@ -318,23 +322,22 @@
             const filterSelect = document.getElementById('userStatusFilter');
             const selectedFilter = filterSelect ? filterSelect.value : 'pending';
 
-            table.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 2rem; color: #6b7280;">กำลังโหลดข้อมูลผู้ใช้...</td></tr>`;
+            table.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 2rem; color: #6b7280;">กำลังดึงข้อมูลสมาชิกจากฐานข้อมูล...</td></tr>`;
 
             let users = [];
 
-            // 1. ดึงจาก Firestore
             if (window.getFirestoreUsers) {
                 users = await window.getFirestoreUsers();
             }
 
-            // 2. หาก Firestore ว่าง ให้ดึงจาก LocalStorage
+            // ถ้าใน Firestore ไม่มี ให้ลองหาใน LocalStorage
             if (users.length === 0) {
                 try {
                     users = JSON.parse(localStorage.getItem('pending_user_registrations')) || [];
                 } catch (e) { users = []; }
             }
 
-            // อัปเดต Badge นับเฉพาะผู้ใช้ที่อยู่ในสถานะรออนุมัติ (pending)
+            // อัปเดต Badge นับจำนวนเฉพาะรายการรออนุมัติ (pending)
             const pendingCount = users.filter(u => u.status === 'pending').length;
             const badge = document.getElementById('userPendingBadge');
             if (badge) {
@@ -342,7 +345,7 @@
                 badge.style.display = pendingCount > 0 ? 'inline-block' : 'none';
             }
 
-            // กรองข้อมูลตามที่ผู้ใช้เลือกใน Dropdown Filter
+            // กรองข้อมูลตาม Dropdown
             const filteredUsers = users.filter(u => selectedFilter === 'all' || u.status === selectedFilter);
 
             if (filteredUsers.length === 0) {
