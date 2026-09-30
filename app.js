@@ -513,7 +513,8 @@
         e.stopPropagation();
         if (notifPanel) {
           const isVisible = notifPanel.style.display === 'block';
-          notifPanel.style.display = isVisible ? 'none' : 'block';
+          notifPanel.style.display = 'none';
+          if (!isVisible) notifPanel.style.display = 'block';
         }
       });
     }
@@ -536,7 +537,7 @@
   }
 
   // ============================================================
-  // Login Form
+  // Login Form (ตรวจสิทธิ์ผ่าน Firestore ด่วน)
   // ============================================================
 
   function setupLoginForm() {
@@ -565,6 +566,7 @@
         const user = cred.user;
         let profile = null;
 
+        // ดึงข้อมูลโปรไฟล์จาก Firestore เพื่อเช็คสถานะการอนุมัติล่าสุด
         try {
           const snap = await db.collection('users').doc(user.uid).get();
           if (snap.exists) profile = snap.data();
@@ -572,17 +574,14 @@
           console.error("Fetch profile error:", e);
         }
 
-        const pendingUsers = JSON.parse(localStorage.getItem('pending_user_registrations')) || [];
-        const localUser = pendingUsers.find(u => u.email === email || u.uid === user.uid);
-
         const actualRole = profile?.role || 'user';
         
+        // เช็ค accountStatus จาก Firestore เป็นหลัก
         let accountStatus = profile?.accountStatus;
-        if (localUser && localUser.status) {
-          accountStatus = localUser.status;
-        }
-        if (!accountStatus) {
-          accountStatus = actualRole === 'admin' ? 'approved' : 'pending';
+        if (!accountStatus && actualRole === 'user') {
+          accountStatus = 'pending';
+        } else if (actualRole === 'admin') {
+          accountStatus = 'approved';
         }
 
         if (selectedRole === 'admin' && actualRole !== 'admin') {
@@ -593,10 +592,11 @@
 
         if (selectedRole === 'user' && actualRole === 'admin') {
           await auth.signOut();
-          alert('❌ การเข้าถึงถูกปฏิเสธ: บัญชีของคุณเป็นสิทธิ์ผู้ดูแลระบบ (Admin) กรุณาเลือกประเภทการเข้าสู่ระบบเป็น "ผู้ดูแลระบบ" และกรอกรหัสยืนยันให้ถูกต้อง');
+          alert('❌ การเข้าถึงถูกปฏิเสธ: บัญชีของคุณเป็นสิทธิ์ผู้ดูแลระบบ (Admin) กรุณาเลือกประเภทการเข้าสู่ระบบเป็น "ผู้ดูแลระบบ"');
           return;
         }
 
+        // หากผู้ใช้เป็น User แต่ยังไม่ได้รับอนุมัติ (status !== approved)
         if (actualRole === 'user' && accountStatus !== 'approved') {
           await auth.signOut();
           alert('⏳ การเข้าสู่ระบบไม่สำเร็จ!\n\nบัญชีของคุณยังอยู่ในสถานะ "รอผู้ดูแลระบบอนุมัติการลงทะเบียน" กรุณารอการอนุมัติสิทธิ์ก่อนจึงจะสามารถเข้าใช้งานระบบได้');
@@ -916,47 +916,61 @@
     }
   };
 
+  // อัปเดตสถานะบัญชีสมาชิกใน Firestore บน Cloud โดยตรง
   window.handleUserAccountApproval = async function(userUid, userEmail, actionStatus) {
     const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
     const adminName = currentUser.name || 'ผู้ดูแลระบบ';
 
     try {
-      await initFirebase();
+      const ready = await initFirebase();
+      if (!ready || !db) {
+        alert('❌ ไม่สามารถเชื่อมต่อฐานข้อมูล Firestore ได้');
+        return;
+      }
       
-      // 1. อัปเดตใน Firestore
-      if (db && userUid) {
-        try {
-          await db.collection('users').doc(userUid).update({
+      // 1. อัปเดตสถานะใน Firestore Document (Cloud)
+      if (userUid) {
+        await db.collection('users').doc(userUid).set({
+          accountStatus: actionStatus,
+          approvedBy: adminName,
+          approvedAt: getCurrentDateTimeFormatted()
+        }, { merge: true });
+      } else {
+        const snap = await db.collection('users').where('email', '==', userEmail).get();
+        snap.forEach(async (doc) => {
+          await db.collection('users').doc(doc.id).set({
             accountStatus: actionStatus,
             approvedBy: adminName,
             approvedAt: getCurrentDateTimeFormatted()
-          });
-        } catch (dbErr) {
-          console.warn('Firestore update warn:', dbErr);
-        }
+          }, { merge: true });
+        });
       }
 
-      // 2. อัปเดตใน LocalStorage
+      // 2. อัปเดตใน LocalStorage สำรอง
       let pendingUsers = JSON.parse(localStorage.getItem('pending_user_registrations')) || [];
       const userIndex = pendingUsers.findIndex(u => (userUid && u.uid === userUid) || u.email === userEmail);
-      
       if (userIndex !== -1) {
         pendingUsers[userIndex].status = actionStatus;
         pendingUsers[userIndex].approvedBy = adminName;
+        localStorage.setItem('pending_user_registrations', JSON.stringify(pendingUsers));
       }
-      
-      localStorage.setItem('pending_user_registrations', JSON.stringify(pendingUsers));
 
       window.addSystemLog(
         actionStatus === 'approved' ? 'อนุมัติสมาชิกใหม่' : 'ปฏิเสธสมาชิกใหม่',
         `บัญชี ${userEmail} โดยแอดมิน ${adminName}`
       );
 
-      alert(`ทำการ ${actionStatus === 'approved' ? 'อนุมัติ' : 'ปฏิเสธ'} สมาชิกใหม่เรียบร้อยแล้ว`);
-      window.location.reload();
+      alert(`ทำการ ${actionStatus === 'approved' ? 'อนุมัติ' : 'ปฏิเสธ'} สมาชิกใหม่เรียบร้อยแล้ว!`);
+      
+      // รีเฟรชตารางแสดงผล
+      if (window.renderUserTable) {
+        window.renderUserTable();
+      } else {
+        window.location.reload();
+      }
     } catch (e) {
-      console.error(e);
-      alert('เกิดข้อผิดพลาดในการอัปเดตสถานะสมาชิก');
+      console.error("Error approving user:", e);
+      alert('เกิดข้อผิดพลาดในการอัปเดตสถานะสมาชิก: ' + e.message);
     }
   };
 
