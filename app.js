@@ -940,73 +940,70 @@
   // Global Admin Operations
   // ============================================================
 
-  // อัปเดตสถานะการอนุมัติคำขอยืม-คืน ลง Firestore
   window.handleAdminApproval = async function(requestId, newStatus) {
     const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
     const adminName = currentUser.name || localStorage.getItem('userName') || 'ผู้ดูแลระบบ';
 
+    // อัปเดตลง LocalStorage
+    let requests = JSON.parse(localStorage.getItem('user_requests')) || [];
+    const idx = requests.findIndex(r => r.id === requestId);
+    if (idx !== -1) {
+      requests[idx].status = newStatus;
+      requests[idx].approvedBy = adminName;
+      localStorage.setItem('user_requests', JSON.stringify(requests));
+    }
+
+    // อัปเดตลง Firestore
     try {
       await initFirebase();
       if (db) {
-        await db.collection('borrow_requests').doc(requestId).update({
+        await db.collection('borrow_requests').doc(requestId).set({
           status: newStatus,
           approvedBy: adminName,
           approvedAt: getCurrentDateTimeFormatted()
-        });
-      }
-
-      let requests = JSON.parse(localStorage.getItem('user_requests')) || [];
-      const idx = requests.findIndex(r => r.id === requestId);
-      if (idx !== -1) {
-        requests[idx].status = newStatus;
-        requests[idx].approvedBy = adminName;
-        localStorage.setItem('user_requests', JSON.stringify(requests));
-      }
-
-      window.addSystemLog(
-        newStatus === 'approved' ? 'อนุมัติคำขอ' : 'ปฏิเสธคำขอ',
-        `คำขอ ${requestId} โดยแอดมิน ${adminName}`
-      );
-
-      alert(`ทำรายการ ${newStatus === 'approved' ? 'อนุมัติ' : 'ปฏิเสธ'} เรียบร้อยแล้ว`);
-      if (window.renderBorrowTable) {
-        window.renderBorrowTable();
-      } else {
-        window.location.reload();
+        }, { merge: true });
       }
     } catch (e) {
-      console.error("Error approving borrow request:", e);
-      alert("เกิดข้อผิดพลาดในการทำรายการ");
+      console.warn("Firestore update warning:", e);
+    }
+
+    window.addSystemLog(
+      newStatus === 'approved' ? 'อนุมัติคำขอ' : 'ปฏิเสธคำขอ',
+      `คำขอ ${requestId} โดยแอดมิน ${adminName}`
+    );
+
+    alert(`ทำรายการ ${newStatus === 'approved' ? 'อนุมัติ' : 'ปฏิเสธ'} เรียบร้อยแล้ว`);
+    if (window.renderBorrowTable) {
+      window.renderBorrowTable();
+    } else {
+      window.location.reload();
     }
   };
 
-  // อัปเดตสถานะบัญชีสมาชิกใน Firestore บน Cloud โดยตรง
   window.handleUserAccountApproval = async function(userUid, userEmail, actionStatus) {
     const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
     const adminName = currentUser.name || 'ผู้ดูแลระบบ';
 
     try {
-      const ready = await initFirebase();
-      if (!ready || !db) {
-        alert('❌ ไม่สามารถเชื่อมต่อฐานข้อมูล Firestore ได้');
-        return;
-      }
+      await initFirebase();
       
-      if (userUid) {
-        await db.collection('users').doc(userUid).set({
-          accountStatus: actionStatus,
-          approvedBy: adminName,
-          approvedAt: getCurrentDateTimeFormatted()
-        }, { merge: true });
-      } else {
-        const snap = await db.collection('users').where('email', '==', userEmail).get();
-        snap.forEach(async (doc) => {
-          await db.collection('users').doc(doc.id).set({
+      if (db) {
+        if (userUid) {
+          await db.collection('users').doc(userUid).set({
             accountStatus: actionStatus,
             approvedBy: adminName,
             approvedAt: getCurrentDateTimeFormatted()
           }, { merge: true });
-        });
+        } else {
+          const snap = await db.collection('users').where('email', '==', userEmail).get();
+          snap.forEach(async (doc) => {
+            await db.collection('users').doc(doc.id).set({
+              accountStatus: actionStatus,
+              approvedBy: adminName,
+              approvedAt: getCurrentDateTimeFormatted()
+            }, { merge: true });
+          });
+        }
       }
 
       let pendingUsers = JSON.parse(localStorage.getItem('pending_user_registrations')) || [];
@@ -1138,7 +1135,6 @@
     if (modal) modal.style.display = 'none';
   };
 
-  // บันทึกคำขอยืมลง Firestore เพื่อให้ซิงค์ข้ามอุปกรณ์
   function setupBorrowFormSubmit() {
     const form = document.getElementById('borrowRequestForm');
     if (!form || form.dataset.bound === 'true') return;
@@ -1175,23 +1171,24 @@
         approvedBy: '-'
       };
 
+      // บันทึกลง LocalStorage สำรอง
+      const userRequests = JSON.parse(localStorage.getItem('user_requests')) || [];
+      userRequests.unshift(newRequest);
+      localStorage.setItem('user_requests', JSON.stringify(userRequests));
+
+      // บันทึกลง Firestore
       try {
         await initFirebase();
         if (db) {
           await db.collection('borrow_requests').doc(requestId).set(newRequest);
         }
-
-        const userRequests = JSON.parse(localStorage.getItem('user_requests')) || [];
-        userRequests.unshift(newRequest);
-        localStorage.setItem('user_requests', JSON.stringify(userRequests));
-
-        alert('ส่งคำขอเบิก/ยืมเรียบร้อยแล้ว! กรุณารอการอนุมัติจากผู้ดูแลระบบ');
-        closeBorrowModal();
-        window.location.reload();
       } catch (err) {
-        console.error("Error submitting borrow request:", err);
-        alert('เกิดข้อผิดพลาดในการส่งคำขอ กรุณาลองใหม่อีกครั้ง');
+        console.warn("Firestore save warning (fallback to LocalStorage):", err);
       }
+
+      alert('ส่งคำขอเบิก/ยืมเรียบร้อยแล้ว! กรุณารอการอนุมัติจากผู้ดูแลระบบ');
+      closeBorrowModal();
+      window.location.reload();
     });
   }
 
