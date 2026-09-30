@@ -247,6 +247,7 @@
                 userSec.style.display = 'none';
                 tabBorrowBtn.classList.add('active');
                 tabUserBtn.classList.remove('active');
+                renderBorrowTable();
             } else {
                 borrowSec.style.display = 'none';
                 userSec.style.display = 'block';
@@ -256,18 +257,26 @@
             }
         }
 
-        function getBorrowRequests() {
-            try {
-                return JSON.parse(localStorage.getItem('user_requests')) || [];
-            } catch (e) {
-                return [];
-            }
-        }
-
-        function renderBorrowTable() {
+        async function renderBorrowTable() {
             const table = document.getElementById('borrowApprovalTable');
-            const filter = document.getElementById('borrowStatusFilter').value;
-            const requests = getBorrowRequests();
+            const filterSelect = document.getElementById('borrowStatusFilter');
+            const selectedFilter = filterSelect ? filterSelect.value : 'pending';
+
+            table.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 2rem; color: #6b7280;">กำลังดึงรายการคำขอยืม-คืนจากฐานข้อมูล...</td></tr>`;
+
+            let requests = [];
+
+            // 1. ดึงข้อมูลคำขอจาก Firestore
+            if (window.getFirestoreBorrowRequests) {
+                requests = await window.getFirestoreBorrowRequests();
+            }
+
+            // 2. ถ้าไม่มีใน Firestore ให้ดึงจาก LocalStorage เป็นสำรอง
+            if (requests.length === 0) {
+                try {
+                    requests = JSON.parse(localStorage.getItem('user_requests')) || [];
+                } catch (e) { requests = []; }
+            }
 
             const pendingCount = requests.filter(r => r.status === 'pending').length;
             const badge = document.getElementById('borrowPendingBadge');
@@ -276,10 +285,10 @@
                 badge.style.display = pendingCount > 0 ? 'inline-block' : 'none';
             }
 
-            const filtered = requests.filter(r => filter === 'all' || r.status === filter);
+            const filtered = requests.filter(r => selectedFilter === 'all' || r.status === selectedFilter);
 
             if (filtered.length === 0) {
-                table.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 2rem; color: #6b7280;">ไม่พบข้อมูลคำขอ</td></tr>`;
+                table.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 2rem; color: #6b7280;">ไม่พบข้อมูลคำขอในสถานะนี้</td></tr>`;
                 return;
             }
 
@@ -309,8 +318,10 @@
         }
 
         function processBorrowRequest(requestId, newStatus) {
-            if (window.handleAdminApproval) {
-                window.handleAdminApproval(requestId, newStatus);
+            if (confirm(`คุณต้องการ ${newStatus === 'approved' ? 'อนุมัติ' : 'ปฏิเสธ'} คำขอนี้ใช่หรือไม่?`)) {
+                if (window.handleAdminApproval) {
+                    window.handleAdminApproval(requestId, newStatus);
+                }
             }
         }
 
