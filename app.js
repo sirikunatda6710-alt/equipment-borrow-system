@@ -343,7 +343,7 @@
   }
 
   // ============================================================
-  // Notification System & Badges (ปรับปรุงใหม่ แก้ไขบัค 2 จุด)
+  // Notification System & Badges
   // ============================================================
 
   function initNotificationSystem() {
@@ -352,7 +352,6 @@
     let countBadge = document.getElementById('notificationCount');
     let notifList = document.getElementById('notificationList');
 
-    // หากหน้าใดไม่มีปุ่มแจ้งเตือน ให้สร้างอัตโนมัติก่อนหน้าโปรไฟล์
     const headerActions = document.querySelector('.header-actions');
     if (headerActions && !notifBtn) {
       const btnWrapper = document.createElement('div');
@@ -384,7 +383,6 @@
     let notifications = [];
 
     if (isAdmin) {
-      // 1. คำขอยืม-คืนรออนุมัติ
       const requests = JSON.parse(localStorage.getItem('user_requests')) || [];
       const pendingReqs = requests.filter(r => r.status === 'pending');
       pendingReqs.forEach(req => {
@@ -396,7 +394,6 @@
         });
       });
 
-      // 2. คำขอสมัครสมาชิกใหม่รออนุมัติ
       const pendingUsers = JSON.parse(localStorage.getItem('pending_user_registrations')) || [];
       const activePendingUsers = pendingUsers.filter(u => u.status === 'pending');
 
@@ -409,7 +406,6 @@
         });
       });
 
-      // อัปเดต Badge บน Tab อนุมัติสมาชิกใหม่
       const userTabBadge = document.getElementById('userPendingBadge');
       if (userTabBadge) {
         if (activePendingUsers.length > 0) {
@@ -420,7 +416,6 @@
         }
       }
 
-      // 3. สต็อกอุปกรณ์ใกล้หมด/หมด
       const equipment = getEquipmentLocal();
       equipment.forEach(item => {
         const avail = Number(item.available || 0);
@@ -455,7 +450,6 @@
       });
     }
 
-    // อัปเดตตัวเลขกระดิ่งแจ้งเตือน
     if (countBadge) {
       if (notifications.length > 0) {
         countBadge.textContent = notifications.length;
@@ -508,7 +502,7 @@
   }
 
   // ============================================================
-  // Login Form
+  // Login Form (แก้ไขการตรวจสอบสถานะการอนุมัติ)
   // ============================================================
 
   function setupLoginForm() {
@@ -544,8 +538,20 @@
           console.error("Fetch profile error:", e);
         }
 
+        // ตรวจสอบข้อมูลจาก LocalStorage ควบคู่กันไป
+        const pendingUsers = JSON.parse(localStorage.getItem('pending_user_registrations')) || [];
+        const localUser = pendingUsers.find(u => u.email === email || u.uid === user.uid);
+
         const actualRole = profile?.role || 'user';
-        const accountStatus = profile?.accountStatus || (actualRole === 'admin' ? 'approved' : 'pending');
+        
+        // กำหนดสถานะ accountStatus โดยลำดับความสำคัญจาก LocalStorage/Firestore
+        let accountStatus = profile?.accountStatus;
+        if (localUser && localUser.status) {
+          accountStatus = localUser.status;
+        }
+        if (!accountStatus) {
+          accountStatus = actualRole === 'admin' ? 'approved' : 'pending';
+        }
 
         if (selectedRole === 'admin' && actualRole !== 'admin') {
           await auth.signOut();
@@ -559,6 +565,7 @@
           return;
         }
 
+        // ตรวจสอบสิทธิ์การอนุมัติ
         if (actualRole === 'user' && accountStatus !== 'approved') {
           await auth.signOut();
           alert('⏳ การเข้าสู่ระบบไม่สำเร็จ!\n\nบัญชีของคุณยังอยู่ในสถานะ "รอผู้ดูแลระบบอนุมัติการลงทะเบียน" กรุณารอการอนุมัติสิทธิ์ก่อนจึงจะสามารถเข้าใช้งานระบบได้');
@@ -853,7 +860,7 @@
   }
 
   // ============================================================
-  // Global Admin Operations
+  // Global Admin Operations (แก้ไขให้อัปเดตทั้ง Firestore และ LocalStorage)
   // ============================================================
 
   window.handleAdminApproval = function(requestId, newStatus) {
@@ -883,22 +890,28 @@
     const adminName = currentUser.name || 'ผู้ดูแลระบบ';
 
     try {
+      await initFirebase();
+      
+      // 1. อัปเดตใน Firestore
       if (db && userUid) {
-        await db.collection('users').doc(userUid).update({
-          accountStatus: actionStatus,
-          approvedBy: adminName,
-          approvedAt: getCurrentDateTimeFormatted()
-        });
+        try {
+          await db.collection('users').doc(userUid).update({
+            accountStatus: actionStatus,
+            approvedBy: adminName,
+            approvedAt: getCurrentDateTimeFormatted()
+          });
+        } catch (dbErr) {
+          console.warn('Firestore update warn:', dbErr);
+        }
       }
 
+      // 2. อัปเดตใน LocalStorage (pending_user_registrations)
       let pendingUsers = JSON.parse(localStorage.getItem('pending_user_registrations')) || [];
-      const userIndex = pendingUsers.findIndex(u => u.uid === userUid || u.email === userEmail);
+      const userIndex = pendingUsers.findIndex(u => (userUid && u.uid === userUid) || u.email === userEmail);
       
       if (userIndex !== -1) {
         pendingUsers[userIndex].status = actionStatus;
         pendingUsers[userIndex].approvedBy = adminName;
-      } else {
-        pendingUsers = pendingUsers.filter(u => u.uid !== userUid && u.email !== userEmail);
       }
       
       localStorage.setItem('pending_user_registrations', JSON.stringify(pendingUsers));
