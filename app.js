@@ -182,22 +182,25 @@
     isFirebaseInitializing = false; return false;
   }
 
-  // ดึงผู้ใช้งานระบบจาก Firestore ทั้งหมดเพื่อนำมากรองแสดงผล
+  // ดึงผู้ใช้งานระบบจาก Firestore ทั้งหมด (ยกเว้น admin)
   window.getFirestoreUsers = async function() {
     try {
-      await initFirebase();
-      if (!db) return [];
-      const snap = await db.collection('users').where('role', '==', 'user').get();
+      const ready = await initFirebase();
+      if (!ready || !db) return [];
+      
+      const snap = await db.collection('users').get();
       let list = [];
       snap.forEach(doc => {
         const data = doc.data();
-        list.push({
-          uid: doc.id,
-          name: data.name || 'ไม่ระบุชื่อ',
-          email: data.email || '',
-          requestDate: data.createdAt || '-',
-          status: data.accountStatus || 'pending'
-        });
+        if (data.role !== 'admin') {
+          list.push({
+            uid: doc.id,
+            name: data.name || 'ไม่ระบุชื่อ',
+            email: data.email || '',
+            requestDate: data.createdAt || '-',
+            status: data.accountStatus || 'pending'
+          });
+        }
       });
       return list;
     } catch (e) {
@@ -316,6 +319,53 @@
     });
     document.addEventListener('click', () => {
       document.querySelectorAll('.nav-dropdown').forEach(dropdown => dropdown.classList.remove('active'));
+    });
+  }
+
+  // ============================================================
+  // Forgot Password Feature
+  // ============================================================
+
+  function setupForgotPasswordForm() {
+    const form = document.getElementById('forgotPasswordForm');
+    if (!form || form.dataset.bound === 'true') return;
+    form.dataset.bound = 'true';
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const emailInput = document.getElementById('forgotEmail');
+      const email = emailInput?.value?.trim() || '';
+
+      if (!email) {
+        alert('กรุณากรอกอีเมลของคุณ');
+        return;
+      }
+
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const originalText = submitBtn ? submitBtn.textContent : '';
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'กำลังส่งข้อมูล...';
+      }
+
+      try {
+        const ready = await initFirebase();
+        if (!ready || !auth) throw new Error('ไม่สามารถเชื่อมต่อระบบ Firebase Auth ได้');
+
+        await auth.sendPasswordResetEmail(email);
+
+        alert(`ระบบได้ส่งลิงก์ตั้งรหัสผ่านใหม่ไปยังอีเมล:\n${email}\n\nกรุณาตรวจสอบในกล่องข้อความ (Inbox) หรือโฟลเดอร์ขยะ (Junk/Spam) ของคุณ`);
+        window.location.href = 'index.html';
+
+      } catch (err) {
+        alert(firebaseErrorMessage(err));
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+        }
+      }
     });
   }
 
