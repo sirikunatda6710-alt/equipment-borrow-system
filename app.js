@@ -1,5 +1,5 @@
 (function () {
-  'use strict';
+  'style strict';
 
   // ============================================================
   // Configuration
@@ -47,7 +47,7 @@
     });
   }
 
-  // Helper ตรวจสอบความเป็นเจ้าของคำขออย่างแม่นยำ
+  // Helper สำหรับตรวจสอบว่าเป็นคำขอของผู้ใช้คนนี้หรือไม่
   function isOwnRequest(req, user) {
     if (!user) return false;
 
@@ -364,10 +364,10 @@
   // ============================================================
 
   async function initNotificationSystem() {
-    const notifBtn = document.getElementById('notificationButton');
-    const notifPanel = document.getElementById('notificationPanel');
-    const countBadge = document.getElementById('notificationCount');
-    const notifList = document.getElementById('notificationList');
+    let notifBtn = document.getElementById('notificationButton');
+    let notifPanel = document.getElementById('notificationPanel');
+    let countBadge = document.getElementById('notificationCount');
+    let notifList = document.getElementById('notificationList');
 
     const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
     const isAdmin = currentUser.role === 'admin';
@@ -384,7 +384,7 @@
     }
 
     if (isAdmin) {
-      // ฝั่ง Admin
+      // 1. ผู้ใช้ใหม่รออนุมัติ
       let activePendingUsers = [];
       if (window.getFirestoreUsers) {
         const users = await window.getFirestoreUsers();
@@ -399,6 +399,7 @@
         });
       });
 
+      // 2. คำขอยืม-คืนรออนุมัติ
       const pendingReqs = requests.filter(r => r.status === 'pending');
       pendingReqs.forEach(req => {
         notifications.push({
@@ -409,13 +410,13 @@
       });
 
     } else {
-      // ฝั่ง User: ดึงคำขอที่เป็นของตนเองและอนุมัติแล้วหรือปฏิเสธแล้ว
+      // ฝั่งผู้ใช้งานทั่วไป (User) - ดึงคำขอที่เป็นของเราและอนุมัติหรือปฏิเสธแล้ว
       const myApprovedOrRejected = requests.filter(r => isOwnRequest(r, currentUser) && (r.status === 'approved' || r.status === 'rejected'));
 
       myApprovedOrRejected.forEach(req => {
         const isApproved = req.status === 'approved';
         notifications.push({
-          title: isApproved ? `🟢 คำขอ${req.type}ได้รับการอนุมัติแล้ว` : `🔴 คำขอ${req.type}ถูกปฏิเสธ`,
+          title: isApproved ? `🟢 คำขอ${req.type}ได้รับการอนุมัติ` : `🔴 คำขอ${req.type}ถูกปฏิเสธ`,
           desc: `อุปกรณ์: ${req.equipmentName} (${req.requestDate})`,
           link: req.type === 'ยืม' ? 'return.html' : 'history.html'
         });
@@ -426,8 +427,7 @@
     if (countBadge) {
       if (notifications.length > 0) {
         countBadge.textContent = notifications.length;
-        countBadge.style.display = 'inline-flex';
-        playNotificationSound();
+        countBadge.style.display = 'inline-block';
       } else {
         countBadge.style.display = 'none';
       }
@@ -436,11 +436,11 @@
     // อัปเดตรายการในป๊อปอัปกระดิ่ง
     if (notifList) {
       if (notifications.length === 0) {
-        notifList.innerHTML = `<div style="padding: 1.5rem; text-align: center; color: #6b7280; font-size: 0.85rem;">ไม่มีการแจ้งเตือนใหม่ในขณะนี้</div>`;
+        notifList.innerHTML = `<div style="padding: 1.5rem; text-align: center; color: #6b7280;">ไม่มีการแจ้งเตือนใหม่ในขณะนี้</div>`;
       } else {
         notifList.innerHTML = notifications.map(n => `
           <a href="${n.link}" style="display: block; padding: 0.75rem 1rem; border-bottom: 1px solid #f3f4f6; text-decoration: none; color: inherit; transition: background 0.2s;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='transparent'">
-            <div style="font-weight: 600; font-size: 0.88rem; color: #1f2937;">${n.title}</div>
+            <div style="font-weight: 600; font-size: 0.9rem; color: #1f2937;">${n.title}</div>
             <div style="font-size: 0.8rem; color: #6b7280; margin-top: 2px;">${n.desc}</div>
           </a>
         `).join('');
@@ -456,14 +456,6 @@
           const isVisible = notifPanel.style.display === 'block';
           notifPanel.style.display = isVisible ? 'none' : 'block';
         }
-      });
-    }
-
-    const closeBtn = document.getElementById('closeNotificationPanel');
-    if (closeBtn && closeBtn.dataset.bound !== 'true') {
-      closeBtn.dataset.bound = 'true';
-      closeBtn.addEventListener('click', () => {
-        if (notifPanel) notifPanel.style.display = 'none';
       });
     }
 
@@ -591,7 +583,6 @@
       }
       if (adminView) adminView.style.display = 'block';
       if (userView) userView.style.display = 'none';
-      renderAdminDashboardData();
     } else {
       if (roleBadge) roleBadge.textContent = 'ผู้ใช้งานทั่วไป';
       if (navbar) {
@@ -610,33 +601,6 @@
     setupDropdownToggle();
     initNotificationSystem();
     if (window.lucide) lucide.createIcons();
-  }
-
-  function renderAdminDashboardData() {
-    const equipmentList = getEquipmentLocal();
-    function calculateStats(categoryName) {
-      const items = equipmentList.filter(item => String(item.category || '').trim() === categoryName);
-      let total = 0, available = 0, borrowed = 0, unavailable = 0;
-      items.forEach(item => {
-        const itemTotal = Number(item.total || 0), itemAvail = Number(item.available || 0);
-        total += itemTotal; available += itemAvail;
-        if (item.status === 'unavailable') unavailable += Math.max(0, itemTotal - itemAvail);
-        else borrowed += Math.max(0, itemTotal - itemAvail);
-      });
-      return { total, available, borrowed, unavailable };
-    }
-
-    function updateCategoryUI(prefix, stats) {
-      if (document.getElementById(`total${prefix}`)) document.getElementById(`total${prefix}`).textContent = stats.total;
-      if (document.getElementById(`avail${prefix}`)) document.getElementById(`avail${prefix}`).textContent = stats.available;
-      if (document.getElementById(`borrowed${prefix}`)) document.getElementById(`borrowed${prefix}`).textContent = stats.borrowed;
-      if (document.getElementById(`unavail${prefix}`)) document.getElementById(`unavail${prefix}`).textContent = stats.unavailable;
-    }
-
-    updateCategoryUI('Building', calculateStats('ครุภัณฑ์'));
-    updateCategoryUI('Material', calculateStats('วัสดุ'));
-    updateCategoryUI('Device', calculateStats('อุปกรณ์'));
-    updateCategoryUI('Camera', calculateStats('บันทึกภาพ'));
   }
 
   async function renderUserDashboardData(user) {
@@ -670,7 +634,9 @@
         <td>${req.equipmentName}</td>
         <td>${req.requestDate}</td>
         <td>
-          <span class="${req.status === 'pending' ? 'badge-pending' : req.status === 'approved' ? 'badge-approved' : 'badge-rejected'}">
+          <span style="padding: 2px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 600; 
+            background: ${req.status === 'pending' ? '#fef3c7' : req.status === 'approved' ? '#d1fae5' : '#fee2e2'};
+            color: ${req.status === 'pending' ? '#d97706' : req.status === 'approved' ? '#059669' : '#dc2626'};">
             ${req.status === 'pending' ? 'รอผู้ดูแลอนุมัติ' : req.status === 'approved' ? 'อนุมัติแล้ว' : 'ปฏิเสธ'}
           </span>
         </td>
