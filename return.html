@@ -154,4 +154,160 @@
     </script>
 </body>
 
+</html>คืน
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>คืนอุปกรณ์ | ระบบยืม-คืนอุปกรณ์</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .badge-borrowing { background: #d1fae5; color: #059669; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 0.85rem; }
+        .badge-returning { background: #fef3c7; color: #d97706; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 0.85rem; }
+        .btn-return { background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        .btn-return:hover { background: #dc2626; }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="brand">
+                <div class="header-logo"><img src="https://img2.pic.in.th/MED_logo1-1.png" alt="โลโก้คณะ"></div>
+                <div class="brand-text">
+                    <h2>ระบบยืม-คืนอุปกรณ์</h2>
+                    <p id="systemRoleText">ส่วนผู้ใช้งานทั่วไป</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button type="button" id="profileButton" class="profile-button">
+                    <i data-lucide="circle-user-round"></i>
+                    <div class="profile-info">
+                        <span class="profile-label" id="userRoleBadge">ผู้ใช้งานทั่วไป</span>
+                        <span id="userName" class="profile-name">ผู้ใช้งาน</span>
+                    </div>
+                </button>
+                <button type="button" id="logoutButton" class="logout-button">
+                    <i data-lucide="log-out"></i><span>ออกจากระบบ</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Navbar -->
+        <nav class="navbar" id="mainNavbar"></nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <section class="dashboard-heading">
+                <h1>↩️ รายการอุปกรณ์ที่กำลังยืมอยู่ (รอส่งคืน)</h1>
+                <p>อุปกรณ์ที่คุณได้รับการอนุมัติยืม สามารถส่งคำขอคืนเพื่อให้แอดมินตรวจสอบและยืนยันรับคืนได้ที่นี่</p>
+            </section>
+
+            <section class="table-container" style="margin-top: 1.5rem;">
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>รหัสคำขอ</th>
+                                <th>รายการอุปกรณ์</th>
+                                <th>จำนวน</th>
+                                <th>วันที่ยืม</th>
+                                <th>ผู้อนุมัติยืม</th>
+                                <th>สถานะการครอบครอง</th>
+                                <th style="text-align: center;">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="returnEquipmentTable"></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal ข้อมูลผู้ใช้งาน -->
+    <div id="profileModal" class="modal" style="display: none;">
+        <div class="modal-content profile-modal">
+            <button type="button" class="modal-close" id="closeProfileModal">×</button>
+            <h2>ข้อมูลผู้ใช้งาน</h2>
+            <div class="profile-modal-icon"><i data-lucide="circle-user-round"></i></div>
+            <label for="editUserName">ชื่อผู้ใช้งาน</label>
+            <input id="editUserName" placeholder="กรอกชื่อผู้ใช้งาน...">
+            <button type="button" id="saveProfileButton" class="save-profile-button">บันทึกข้อมูล</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="app.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            renderReturnTable();
+        });
+
+        function renderReturnTable() {
+            const table = document.getElementById('returnEquipmentTable');
+            const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
+            const allRequests = JSON.parse(localStorage.getItem('user_requests')) || [];
+
+            // 🟢 กรองดึงเฉพาะรายการที่ยังต้องคืนอยู่เท่านั้น:
+            // 1. กำลังถือครองยืมอยู่ (type === 'ยืม' && status === 'approved')
+            // 2. อยู่ระหว่างรอแอดมินตรวจสอบการคืน (type === 'คืน' && status === 'pending')
+            const activeItems = allRequests.filter(r => 
+                (r.userEmail === currentUser.email || r.userName === currentUser.name) &&
+                ((r.type === 'ยืม' && r.status === 'approved') || (r.type === 'คืน' && r.status === 'pending'))
+            );
+
+            if (activeItems.length === 0) {
+                table.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 2.5rem; color: #6b7280;">คุณไม่มีรายการอุปกรณ์ที่กำลังยืมอยู่</td></tr>`;
+                return;
+            }
+
+            table.innerHTML = activeItems.map(item => {
+                const isPendingReturn = item.type === 'คืน' && item.status === 'pending';
+                return `
+                    <tr>
+                        <td><strong>${item.id}</strong></td>
+                        <td>${item.equipmentName}</td>
+                        <td>${item.quantity || 1} ชิ้น</td>
+                        <td>${item.requestDate}</td>
+                        <td><strong>${item.approvedBy || 'ผู้ดูแลระบบ'}</strong></td>
+                        <td>
+                            <span class="${isPendingReturn ? 'badge-returning' : 'badge-borrowing'}">
+                                ${isPendingReturn ? '⏳ ส่งคำขอคืนแล้ว (รอ Admin ตรวจสอบ)' : '📦 กำลังถือครองยืม'}
+                            </span>
+                        </td>
+                        <td style="text-align: center;">
+                            ${isPendingReturn ? 
+                                `<span style="font-size:0.85rem; color:#d97706; font-weight:600;">รอผู้ดูแลระบบยืนยันรับคืน</span>` : 
+                                `<button class="btn-return" onclick="submitReturnRequest('${item.id}')">ส่งคำขอคืนอุปกรณ์</button>`
+                            }
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function submitReturnRequest(requestId) {
+            if (!confirm('คุณต้องการแจ้งส่งคืนอุปกรณ์นี้ใช่หรือไม่?\n*(ระบบจะส่งคำขอให้ผู้ดูแลระบบตรวจสอบของจริงก่อนยืนยันรับคืน)')) return;
+
+            let requests = JSON.parse(localStorage.getItem('user_requests')) || [];
+            const idx = requests.findIndex(r => r.id === requestId);
+            
+            if (idx !== -1) {
+                requests[idx].type = 'คืน';
+                requests[idx].status = 'pending';
+                requests[idx].returnRequestDate = new Date().toLocaleDateString('th-TH');
+                localStorage.setItem('user_requests', JSON.stringify(requests));
+                alert('ส่งคำขอคืนเรียบร้อยแล้ว! กรุณานำอุปกรณ์ไปคืนผู้ดูแลระบบเพื่อทำการอนุมัติปิดรายการ');
+                renderReturnTable();
+            }
+        }
+    </script>
+</body>
+
 </html>
