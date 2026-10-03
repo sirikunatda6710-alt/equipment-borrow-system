@@ -1,4 +1,3 @@
-แอปปจบ
 (function () {
   'use strict';
 
