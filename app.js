@@ -229,6 +229,15 @@
     }
   };
 
+  // Helper ฟังก์ชันสำหรับตรวจสอบว่าเป็นเจ้าของคำขอหรือไม่
+  function isOwnRequest(req, user) {
+    if (!user) return false;
+    if (user.uid && req.userUid && req.userUid === user.uid) return true;
+    if (user.email && req.userEmail && req.userEmail === user.email) return true;
+    if (user.name && req.userName && req.userName === user.name) return true;
+    return false;
+  }
+
   // ============================================================
   // Profile & Logout
   // ============================================================
@@ -515,7 +524,7 @@
         requests = JSON.parse(localStorage.getItem('user_requests')) || [];
       }
 
-      const myRequests = requests.filter(r => (r.userEmail === currentUser.email || r.userName === currentUser.name) && r.status !== 'pending');
+      const myRequests = requests.filter(r => isOwnRequest(r, currentUser) && r.status !== 'pending');
       
       myRequests.slice(0, 5).forEach(req => {
         notifications.push({
@@ -896,10 +905,10 @@
     let myRequests = [];
     if (window.getFirestoreBorrowRequests) {
       const allReqs = await window.getFirestoreBorrowRequests();
-      myRequests = allReqs.filter(r => r.userEmail === user.email || r.userName === user.name);
+      myRequests = allReqs.filter(r => isOwnRequest(r, user));
     } else {
       const userRequests = JSON.parse(localStorage.getItem('user_requests')) || [];
-      myRequests = userRequests.filter(r => r.userEmail === user.email || r.userName === user.name);
+      myRequests = userRequests.filter(r => isOwnRequest(r, user));
     }
 
     const activeBorrows = myRequests.filter(r => r.status === 'approved' && r.type === 'ยืม');
@@ -1162,8 +1171,8 @@
         equipmentName: eqName,
         quantity: qty,
         reason: reason,
-        userName: currentUser.name || 'ผู้ใช้งานระบบ',
-        userEmail: currentUser.email || 'user@example.com',
+        userName: currentUser.name || localStorage.getItem('userName') || 'ผู้ใช้งานระบบ',
+        userEmail: currentUser.email || localStorage.getItem('userEmail') || '',
         userUid: currentUser.uid || '',
         requestDate: getCurrentDateTimeFormatted(),
         type: 'ยืม',
