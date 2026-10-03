@@ -6,12 +6,13 @@
 
 
 /* =========================================================
-   Variables
+   Variables (อัปเดตสีหลัก --g ให้เป็นสีเขียวจากภาพ)
 ========================================================= */
 
 :root {
-    --g: #2e7d32;
-    --g2: #e8f5e9;
+    --g: #2d7a3a;          /* เปลี่ยนเป็นสีเขียวตามภาพถ่ายหน้าจอ */
+    --g-hover: #225e2d;    /* สีเขียวเข้มขึ้นเล็กน้อยสำหรับตอน Hover */
+    --g2: #eaf4eb;         /* สีเขียวอ่อนพื้นหลังองค์ประกอบ */
     --bg: #f5f7f6;
     --text: #263238;
     --muted: #718096;
@@ -516,7 +517,7 @@ tr:hover td {
 .primary-button:hover,
 .save-profile-button:hover,
 .login-button:hover {
-    background: #256b2a;
+    background: var(--g-hover);
 }
 
 
@@ -648,7 +649,7 @@ tr:hover td {
     justify-content: space-between;
     padding: 11px;
     background: #f7faf8;
-    border-radius: 9px;
+    border-radius: 99px;
     font-size: 13px;
 }
 
@@ -698,7 +699,7 @@ tr:hover td {
 
 
 /* =========================================================
-   Login Page
+   Login Page / Register Page (อัปเดตสีพื้นหลังแบบตามภาพ)
 ========================================================= */
 
 .login-page {
@@ -706,11 +707,7 @@ tr:hover td {
     display: grid;
     place-items: center;
     padding: 20px;
-    background: linear-gradient(
-        135deg,
-        #2e7d32,
-        #66bb6a
-    );
+    background: #2d7a3a; /* สีเขียวหลักตามภาพถ่ายหน้าจอ */
 }
 
 .login-container {
@@ -795,7 +792,7 @@ tr:hover td {
     top: 50%;
     transform: translateY(-50%);
     border: 0;
-    background: #438c4a;
+    background: var(--g);
     color: #fff;
     border-radius: 7px;
     width: 48px;
@@ -873,7 +870,7 @@ tr:hover td {
 }
 
 .rule-valid {
-    color: #2e7d32;
+    color: #2d7a3a;
 }
 
 
@@ -952,6 +949,7 @@ tr:hover td {
     }
 
 }
+
 /* =========================================
    DASHBOARD ICONS
 ========================================= */
@@ -959,43 +957,36 @@ tr:hover td {
 .stat-icon {
     width: 48px;
     height: 48px;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     border-radius: 14px;
 }
 
 .stat-icon svg {
     width: 26px;
     height: 26px;
-
     stroke-width: 2;
 }
 
 .table-title-icon {
     width: 48px;
     height: 48px;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     border-radius: 14px;
 }
 
 .table-title-icon svg {
     width: 25px;
     height: 25px;
-
     stroke-width: 2;
 }
 
 .header-search svg {
     width: 20px;
     height: 20px;
-
     flex-shrink: 0;
 }
 
@@ -1007,21 +998,18 @@ tr:hover td {
 .profile-button svg {
     width: 24px;
     height: 24px;
-
     flex-shrink: 0;
 }
 
 .logout-button svg {
     width: 18px;
     height: 18px;
-
     flex-shrink: 0;
 }
 
 .navbar a svg {
     width: 18px;
     height: 18px;
-
     flex-shrink: 0;
 }
 
@@ -1033,9 +1021,9 @@ tr:hover td {
 .table-search svg {
     width: 20px;
     height: 20px;
-
     flex-shrink: 0;
 }
+
 /* =========================================
    LUCIDE ICONS
 ========================================= */
@@ -1048,47 +1036,9 @@ tr:hover td {
     stroke-width: 2;
 }
 
-.stat-icon {
-    width: 48px;
-    height: 48px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 14px;
-}
-
-.stat-icon svg {
-    width: 26px;
-    height: 26px;
-}
-
-.table-title-icon {
-    width: 48px;
-    height: 48px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 14px;
-}
-
-.table-title-icon svg {
-    width: 26px;
-    height: 26px;
-}
-
 .header-search {
     display: flex;
     align-items: center;
-}
-
-.header-search svg {
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
 }
 
 .icon-button {
@@ -1097,21 +1047,10 @@ tr:hover td {
     justify-content: center;
 }
 
-.icon-button svg {
-    width: 22px;
-    height: 22px;
-}
-
 .profile-button {
     display: flex;
     align-items: center;
     gap: 8px;
-}
-
-.profile-button svg {
-    width: 24px;
-    height: 24px;
-    flex-shrink: 0;
 }
 
 .logout-button {
@@ -1120,31 +1059,15 @@ tr:hover td {
     gap: 8px;
 }
 
-.logout-button svg {
-    width: 18px;
-    height: 18px;
-}
-
 .navbar a {
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
-.navbar a svg {
-    width: 18px;
-    height: 18px;
-}
-
 .table-search {
     display: flex;
     align-items: center;
-}
-
-.table-search svg {
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
 }
 
 .profile-modal-icon {
@@ -1157,6 +1080,7 @@ tr:hover td {
     width: 48px;
     height: 48px;
 }
+
 /* ================================
    ICON FIX
 ================================ */
@@ -1170,11 +1094,8 @@ tr:hover td {
 .navbar a svg {
     width: 24px;
     height: 24px;
-
     display: block;
-
     flex-shrink: 0;
-
     stroke: currentColor;
     fill: none;
     stroke-width: 2;
@@ -1182,108 +1103,8 @@ tr:hover td {
     stroke-linejoin: round;
 }
 
-.stat-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.table-title-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.header-search {
-    display: flex;
-    align-items: center;
-}
-
-.icon-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.profile-button {
-    display: flex;
-    align-items: center;
-}
-
-.logout-button {
-    display: flex;
-    align-items: center;
-}
-
-.navbar a {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}/* ================================
-   ICON FIX
-================================ */
-
-.stat-icon svg,
-.table-title-icon svg,
-.header-search svg,
-.icon-button svg,
-.profile-button svg,
-.logout-button svg,
-.navbar a svg {
-    width: 24px;
-    height: 24px;
-
-    display: block;
-
-    flex-shrink: 0;
-
-    stroke: currentColor;
-    fill: none;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-}
-
-.stat-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.table-title-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.header-search {
-    display: flex;
-    align-items: center;
-}
-
-.icon-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.profile-button {
-    display: flex;
-    align-items: center;
-}
-
-.logout-button {
-    display: flex;
-    align-items: center;
-}
-
-.navbar a {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
 /* ================================
-   ประเภทผู้ใช้งาน
+   ประเภทผู้ใช้งาน (Radio Buttons)
 ================================ */
 
 .role-options {
@@ -1297,639 +1118,371 @@ tr:hover td {
     display: flex;
     align-items: center;
     gap: 10px;
-
     width: fit-content;
     margin: 0;
     padding: 0;
-
     font-size: 16px;
     font-weight: 500;
     cursor: pointer;
 }
 
-/* ปุ่มวงกลม */
 .role-option input[type="radio"] {
     appearance: none;
     -webkit-appearance: none;
-
     width: 18px !important;
     height: 18px !important;
-
     min-width: 18px;
     min-height: 18px;
-
     margin: 0 !important;
     padding: 0 !important;
-
     border: 2px solid #777;
     border-radius: 50%;
-
     background: #fff;
-
     cursor: pointer;
     position: relative;
-
     box-sizing: border-box;
 }
 
-/* ตอนเลือก */
 .role-option input[type="radio"]:checked {
-    border-color: #1565c0;
+    border-color: var(--g);
 }
 
-/* จุดตรงกลาง */
 .role-option input[type="radio"]:checked::after {
     content: "";
-
     position: absolute;
-
     width: 10px;
     height: 10px;
-
     top: 50%;
     left: 50%;
-
     transform: translate(-50%, -50%);
-
-    background: #1565c0;
+    background: var(--g);
     border-radius: 50%;
 }
 
-/* ข้อความ */
 .role-option span {
     font-size: 12px;
     line-height: 1.4;
     color: #333;
 }
+
 /* =========================================================
    Notification
 ========================================================= */
 
 .notification-wrapper {
-  position: relative;
+    position: relative;
 }
 
 .notification-button {
-  position: relative;
-
-  width: 42px;
-  height: 42px;
-
-  border: none;
-  border-radius: 50%;
-
-  background: #f5f7f6;
-  color: #333;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  cursor: pointer;
+    position: relative;
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: #333;
+    cursor: pointer;
+    border-radius: 10px;
+    transition: 0.2s;
 }
 
 .notification-button:hover {
-  background: #e8ece9;
+    background: #f0f0f0;
 }
 
 .notification-button svg {
-  width: 22px;
-  height: 22px;
-
-  stroke: currentColor;
-  fill: none;
+    width: 23px;
+    height: 23px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
 }
 
 .notification-count {
-  position: absolute;
-
-  top: -4px;
-  right: -4px;
-
-  min-width: 19px;
-  height: 19px;
-
-  padding: 0 5px;
-
-  border-radius: 20px;
-
-  background: #d32f2f;
-  color: #fff;
-
-  font-size: 11px;
-  font-weight: 700;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border: 2px solid #fff;
+    position: absolute;
+    top: 2px;
+    right: 1px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #dc3545;
+    color: white;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
 }
 
 .notification-panel {
-  position: absolute;
-
-  top: calc(100% + 10px);
-  right: 0;
-
-  width: 360px;
-  max-width: calc(100vw - 30px);
-
-  background: #fff;
-
-  border-radius: 14px;
-
-  box-shadow:
-    0 12px 35px rgba(0, 0, 0, 0.15);
-
-  overflow: hidden;
-
-  display: none;
-
-  z-index: 9999;
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: 350px;
+    max-width: calc(100vw - 30px);
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    display: none;
+    z-index: 9999;
 }
 
 .notification-panel.show {
-  display: block;
+    display: block;
 }
 
 .notification-header {
-  padding: 16px;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  border-bottom: 1px solid #eee;
-}
-
-.notification-header strong {
-  font-size: 17px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid #eee;
+    font-size: 16px;
 }
 
 .notification-header button {
-  border: none;
-  background: transparent;
-
-  font-size: 24px;
-
-  cursor: pointer;
-
-  color: #777;
-}
-
-.notification-list {
-  max-height: 420px;
-  overflow-y: auto;
-}
-
-.notification-item {
-  padding: 14px 16px;
-
-  border-bottom: 1px solid #eee;
-
-  cursor: pointer;
-}
-
-.notification-item:hover {
-  background: #f7f9f8;
-}
-
-.notification-item.unread {
-  background: #fff7f7;
-}
-
-.notification-item-title {
-  display: flex;
-  align-items: center;
-
-  gap: 8px;
-
-  font-weight: 700;
-
-  color: #c62828;
-}
-
-.notification-item-title::before {
-  content: "";
-
-  width: 8px;
-  height: 8px;
-
-  border-radius: 50%;
-
-  background: #d32f2f;
-
-  flex-shrink: 0;
-}
-
-.notification-item-name {
-  margin-top: 6px;
-
-  font-weight: 600;
-}
-
-.notification-item-info {
-  margin-top: 4px;
-
-  color: #666;
-
-  font-size: 13px;
-
-  line-height: 1.5;
-}
-
-.notification-item-time {
-  margin-top: 6px;
-
-  color: #999;
-
-  font-size: 12px;
-}
-
-.notification-empty {
-  padding: 35px 15px;
-
-  text-align: center;
-
-  color: #888;
-}
-/* ============================================================
-   NOTIFICATION
-   ============================================================ */
-
-.notification-wrapper {
-  position: relative;
-}
-
-.notification-button {
-  position: relative;
-  width: 42px;
-  height: 42px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border: none;
-  background: transparent;
-
-  color: #333;
-  cursor: pointer;
-
-  border-radius: 10px;
-
-  transition: 0.2s;
-}
-
-.notification-button:hover {
-  background: #f0f0f0;
-}
-
-.notification-button svg {
-  width: 23px;
-  height: 23px;
-
-  stroke: currentColor;
-  fill: none;
-  stroke-width: 2;
-}
-
-.notification-count {
-  position: absolute;
-
-  top: 2px;
-  right: 1px;
-
-  min-width: 18px;
-  height: 18px;
-
-  padding: 0 5px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  background: #dc3545;
-  color: white;
-
-  border-radius: 999px;
-
-  font-size: 10px;
-  font-weight: 700;
-
-  line-height: 1;
-}
-
-.notification-panel {
-  position: absolute;
-
-  top: calc(100% + 10px);
-  right: 0;
-
-  width: 350px;
-  max-width: calc(100vw - 30px);
-
-  background: #fff;
-
-  border: 1px solid #e5e5e5;
-  border-radius: 14px;
-
-  box-shadow:
-    0 10px 30px
-    rgba(0, 0, 0, 0.15);
-
-  overflow: hidden;
-
-  display: none;
-
-  z-index: 9999;
-}
-
-.notification-panel.show {
-  display: block;
-}
-
-.notification-header {
-  display: flex;
-
-  align-items: center;
-  justify-content: space-between;
-
-  padding: 14px 16px;
-
-  border-bottom: 1px solid #eee;
-
-  font-size: 16px;
-}
-
-.notification-header button {
-  width: 30px;
-  height: 30px;
-
-  border: none;
-  background: transparent;
-
-  font-size: 22px;
-  cursor: pointer;
-
-  border-radius: 8px;
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: transparent;
+    font-size: 22px;
+    cursor: pointer;
+    border-radius: 8px;
 }
 
 .notification-header button:hover {
-  background: #f1f1f1;
+    background: #f1f1f1;
 }
 
 .notification-list {
-  max-height: 380px;
-  overflow-y: auto;
+    max-height: 380px;
+    overflow-y: auto;
 }
 
 .notification-item {
-  width: 100%;
-
-  display: flex;
-  flex-direction: column;
-
-  gap: 4px;
-
-  padding: 13px 16px;
-
-  text-align: left;
-
-  border: none;
-  border-bottom: 1px solid #eee;
-
-  background: #fff;
-
-  cursor: pointer;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 13px 16px;
+    text-align: left;
+    border: none;
+    border-bottom: 1px solid #eee;
+    background: #fff;
+    cursor: pointer;
 }
 
 .notification-item:hover {
-  background: #f7f7f7;
+    background: #f7f7f7;
 }
 
 .notification-item.unread {
-  background: #f1f8f2;
+    background: #f1f8f2;
 }
 
 .notification-item strong {
-  color: #222;
-
-  font-size: 14px;
+    color: #222;
+    font-size: 14px;
 }
 
 .notification-item span {
-  color: #666;
-
-  font-size: 12px;
+    color: #666;
+    font-size: 12px;
 }
 
 .notification-item small {
-  color: #999;
-
-  font-size: 11px;
+    color: #999;
+    font-size: 11px;
 }
 
 .notification-empty {
-  padding: 30px 15px;
-
-  text-align: center;
-
-  color: #888;
-
-  font-size: 14px;
+    padding: 30px 15px;
+    text-align: center;
+    color: #888;
+    font-size: 14px;
 }
-/* Category Card Layout */
+
+/* =========================================
+   Category Card Layout
+========================================= */
+
 .category-section {
-  margin-top: 2rem;
+    margin-top: 2rem;
 }
 
 .category-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-  margin-top: 1rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
 }
 
 .category-card {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 1.5rem;
-  border: 1px solid #e5e7eb;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid #e5e7eb;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
 }
 
 .category-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  border-color: #10b981;
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    border-color: var(--g);
 }
 
 .category-icon {
-  width: 48px;
-  height: 48px;
-  background-color: #ecfdf5;
-  color: #10b981;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 1rem;
+    width: 48px;
+    height: 48px;
+    background-color: var(--g2);
+    color: var(--g);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
 }
 
 .category-stat-num {
-  font-weight: bold;
-  color: #059669;
-  margin-top: 0.5rem;
+    font-weight: bold;
+    color: var(--g);
+    margin-top: 0.5rem;
 }
 
-/* Badges & Status */
+/* =========================================
+   Badges & Status
+========================================= */
+
 .status-pending {
-  background-color: #fef3c7;
-  color: #d97706;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.875rem;
+    background-color: #fef3c7;
+    color: #d97706;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
 }
 
 .status-approved {
-  background-color: #d1fae5;
-  color: #059669;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.875rem;
+    background-color: #d1fae5;
+    color: #059669;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
 }
 
 .badge-borrow { background-color: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; }
 .badge-return { background-color: #fce7f3; color: #be185d; padding: 2px 8px; border-radius: 4px; }
+
 .category-block {
-  margin-bottom: 2.5rem;
-  background: #ffffff;
-  padding: 1.5rem;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    margin-bottom: 2.5rem;
+    background: #ffffff;
+    padding: 1.5rem;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .category-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 1.25rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 2px solid #f3f4f6;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #f3f4f6;
 }
 
-.stats-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1.25rem;
-}
 /* Navigation Dropdown Container */
 .nav-dropdown {
-  position: relative;
-  display: inline-block;
+    position: relative;
+    display: inline-block;
 }
 
-/* ปุ่ม Dropdown */
 .nav-dropdown-btn {
-  background: transparent;
-  border: none;
-  color: inherit;
-  font: inherit;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  cursor: pointer;
-  border-radius: 8px;
-  transition: background-color 0.2s;
+    background: transparent;
+    border: none;
+    color: inherit;
+    font: inherit;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background-color 0.2s;
 }
 
 .nav-dropdown-btn:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+    background-color: rgba(0, 0, 0, 0.05);
 }
 
 .dropdown-icon {
-  width: 16px;
-  height: 16px;
-  transition: transform 0.2s ease;
+    width: 16px;
+    height: 16px;
+    transition: transform 0.2s ease;
 }
 
-/* เมนูย่อยที่เลื่อนลงมา */
 .nav-dropdown-content {
-  display: none;
-  position: absolute;
-  top: 100%;
-  left: 0;
-  min-width: 180px;
-  background-color: #ffffff;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-  padding: 0.5rem 0;
-  z-index: 1000;
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 180px;
+    background-color: #ffffff;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    padding: 0.5rem 0;
+    z-index: 1000;
 }
 
-/* ลิงก์ภายในเมนูย่อย */
 .nav-dropdown-content a {
-  color: #374151;
-  padding: 0.6rem 1.2rem;
-  text-decoration: none;
-  display: block;
-  font-size: 0.95rem;
-  transition: background-color 0.15s, color 0.15s;
+    color: #374151;
+    padding: 0.6rem 1.2rem;
+    text-decoration: none;
+    display: block;
+    font-size: 0.95rem;
+    transition: background-color 0.15s, color 0.15s;
 }
 
 .nav-dropdown-content a:hover {
-  background-color: #f3f4f6;
-  color: #10b981;
+    background-color: #f3f4f6;
+    color: var(--g);
 }
 
-/* แสดงเมนูเมื่อคลิกปุ่ม active หรือ Hover */
 .nav-dropdown.active .nav-dropdown-content,
 .nav-dropdown:hover .nav-dropdown-content {
-  display: block;
+    display: block;
 }
 
 .nav-dropdown.active .dropdown-icon {
-  transform: rotate(180deg);
+    transform: rotate(180deg);
 }
+
 .equipment-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 1.5rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.5rem;
 }
 
 /* Modal Popup Background Overlay */
 .modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-}
-/* ซ่อน Modal เป็นค่าเริ่มต้น */
-.modal {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 9999;
-  align-items: center;
-  justify-content: center;
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
 }
 
-/* แสดง Modal เมื่อมีคลาส .active */
 .modal.active {
-  display: flex !important;
+    display: flex !important;
 }
