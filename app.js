@@ -1,5 +1,5 @@
 (function () {
-  'use strict';
+  'style strict';
 
   // ============================================================
   // Configuration
@@ -47,28 +47,21 @@
     });
   }
 
-  // Helper สำหรับตรวจสอบความเป็นเจ้าของคำขออย่างครอบคลุม
+  // Helper สำหรับตรวจสอบว่าเป็นคำขอของผู้ใช้คนนี้หรือไม่
   function isOwnRequest(req, user) {
     if (!user) return false;
-    
-    // 1. เช็กผ่าน UID
-    if (user.uid && req.userUid && String(user.uid).trim() === String(req.userUid).trim()) {
-      return true;
-    }
-    
-    // 2. เช็กผ่าน Email (แปลงเป็นตัวพิมพ์เล็กป้องกัน Mismatch)
-    const reqEmail = (req.userEmail || '').toLowerCase().trim();
-    const userEmail = (user.email || localStorage.getItem('userEmail') || '').toLowerCase().trim();
-    if (reqEmail && userEmail && reqEmail === userEmail) {
-      return true;
-    }
 
-    // 3. เช็กผ่าน ชื่อ-นามสกุล
-    const reqName = (req.userName || '').trim();
-    const userName = (user.name || localStorage.getItem('userName') || '').trim();
-    if (reqName && userName && reqName === userName) {
-      return true;
-    }
+    const uUid = String(user.uid || '').trim();
+    const rUid = String(req.userUid || '').trim();
+    if (uUid && rUid && uUid === rUid) return true;
+
+    const uEmail = String(user.email || localStorage.getItem('userEmail') || '').toLowerCase().trim();
+    const rEmail = String(req.userEmail || '').toLowerCase().trim();
+    if (uEmail && rEmail && uEmail === rEmail) return true;
+
+    const uName = String(user.name || localStorage.getItem('userName') || '').trim();
+    const rName = String(req.userName || '').trim();
+    if (uName && rName && uName === rName) return true;
 
     return false;
   }
@@ -367,54 +360,7 @@
   }
 
   // ============================================================
-  // Forgot Password Feature
-  // ============================================================
-
-  function setupForgotPasswordForm() {
-    const form = document.getElementById('forgotPasswordForm');
-    if (!form || form.dataset.bound === 'true') return;
-    form.dataset.bound = 'true';
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const emailInput = document.getElementById('forgotEmail');
-      const email = emailInput?.value?.trim() || '';
-
-      if (!email) {
-        alert('กรุณากรอกอีเมลของคุณ');
-        return;
-      }
-
-      const submitBtn = form.querySelector('button[type="submit"]');
-      const originalText = submitBtn ? submitBtn.textContent : '';
-
-      if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'กำลังส่งข้อมูล...';
-      }
-
-      try {
-        const ready = await initFirebase();
-        if (!ready || !auth) throw new Error('ไม่สามารถเชื่อมต่อระบบ Firebase Auth ได้');
-
-        await auth.sendPasswordResetEmail(email);
-
-        alert(`ระบบได้ส่งลิงก์ตั้งรหัสผ่านใหม่ไปยังอีเมล:\n${email}\n\nกรุณาตรวจสอบในกล่องข้อความ (Inbox) หรือโฟลเดอร์ขยะ (Junk/Spam) ของคุณ`);
-        window.location.href = 'index.html';
-
-      } catch (err) {
-        alert(firebaseErrorMessage(err));
-      } finally {
-        if (submitBtn) {
-          submitBtn.disabled = false;
-          submitBtn.textContent = originalText;
-        }
-      }
-    });
-  }
-
-  // ============================================================
-  // Notification System & Badges (ปรับปรุงใหม่แก้ไขบัคการแจ้งเตือน)
+  // Notification System & Badges (ปรับปรุงระฆังแจ้งเตือนฝั่งผู้ใช้)
   // ============================================================
 
   async function initNotificationSystem() {
@@ -423,38 +369,22 @@
     let countBadge = document.getElementById('notificationCount');
     let notifList = document.getElementById('notificationList');
 
-    const headerActions = document.querySelector('.header-actions');
-    if (headerActions && !notifBtn) {
-      const btnWrapper = document.createElement('div');
-      btnWrapper.style.position = 'relative';
-      btnWrapper.innerHTML = `
-        <button type="button" id="notificationButton" style="background:none; border:none; cursor:pointer; padding:8px; position:relative; font-size:1.2rem;">
-          <i data-lucide="bell"></i>
-          <span id="notificationCount" style="position:absolute; top:2px; right:2px; background:#ef4444; color:white; border-radius:9999px; padding:2px 6px; font-size:0.7rem; font-weight:bold; display:none;">0</span>
-        </button>
-        <div id="notificationPanel" style="display:none; position:absolute; right:0; top:45px; width:320px; background:white; border-radius:8px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); border:1px solid #e5e7eb; z-index:1000;">
-          <div style="padding:12px 16px; border-bottom:1px solid #f3f4f6; display:flex; justify-content:space-between; align-items:center;">
-            <strong style="color:#1f2937;">การแจ้งเตือน</strong>
-            <button id="closeNotificationPanel" style="border:none; background:none; cursor:pointer; color:#6b7280;">✕</button>
-          </div>
-          <div id="notificationList" style="max-height:300px; overflow-y:auto;"></div>
-        </div>
-      `;
-      headerActions.insertBefore(btnWrapper, headerActions.firstChild);
-
-      notifBtn = document.getElementById('notificationButton');
-      notifPanel = document.getElementById('notificationPanel');
-      countBadge = document.getElementById('notificationCount');
-      notifList = document.getElementById('notificationList');
-    }
-
     const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
     const isAdmin = currentUser.role === 'admin';
 
     let notifications = [];
 
+    // ดึงข้อมูลคำขอยืม-คืนทั้งหมด
+    let requests = [];
+    if (window.getFirestoreBorrowRequests) {
+      requests = await window.getFirestoreBorrowRequests();
+    }
+    if (!requests || requests.length === 0) {
+      requests = JSON.parse(localStorage.getItem('user_requests')) || [];
+    }
+
     if (isAdmin) {
-      // 1. ดึงผู้ใช้ใหม่รออนุมัติจาก Firestore
+      // 1. ผู้ใช้ใหม่รออนุมัติ
       let activePendingUsers = [];
       if (window.getFirestoreUsers) {
         const users = await window.getFirestoreUsers();
@@ -463,104 +393,47 @@
 
       activePendingUsers.forEach(u => {
         notifications.push({
-          type: 'urgent',
           title: `👤 ผู้ใช้ใหม่รอการอนุมัติ`,
-          desc: `${u.name} (${u.email}) ลงทะเบียนขอเข้าใช้งานระบบ`,
+          desc: `${u.name} (${u.email}) ลงทะเบียนขอเข้าใช้งาน`,
           link: 'admin-approvals.html'
         });
       });
 
-      const userTabBadge = document.getElementById('userPendingBadge');
-      if (userTabBadge) {
-        if (activePendingUsers.length > 0) {
-          userTabBadge.textContent = activePendingUsers.length;
-          userTabBadge.style.display = 'inline-block';
-        } else {
-          userTabBadge.style.display = 'none';
-        }
-      }
-
-      // 2. คำขอยืม-คืนรออนุมัติจาก Firestore
-      let requests = [];
-      if (window.getFirestoreBorrowRequests) {
-        requests = await window.getFirestoreBorrowRequests();
-      } else {
-        requests = JSON.parse(localStorage.getItem('user_requests')) || [];
-      }
-
+      // 2. คำขอยืม-คืนรออนุมัติ
       const pendingReqs = requests.filter(r => r.status === 'pending');
       pendingReqs.forEach(req => {
         notifications.push({
-          type: 'urgent',
           title: `🔔 มีคำขอ${req.type}รออนุมัติ`,
-          desc: `${req.userName || 'ผู้ใช้งาน'} ส่งคำขอ${req.type} ${req.equipmentName}`,
+          desc: `${req.userName || 'ผู้ใช้งาน'} ขอ${req.type} ${req.equipmentName}`,
           link: 'admin-approvals.html'
         });
       });
 
-      const borrowTabBadge = document.getElementById('borrowPendingBadge');
-      if (borrowTabBadge) {
-        if (pendingReqs.length > 0) {
-          borrowTabBadge.textContent = pendingReqs.length;
-          borrowTabBadge.style.display = 'inline-block';
-        } else {
-          borrowTabBadge.style.display = 'none';
-        }
-      }
-
-      // 3. สต็อกอุปกรณ์ใกล้หมด/หมด
-      const equipment = getEquipmentLocal();
-      equipment.forEach(item => {
-        const avail = Number(item.available || 0);
-        if (avail === 0) {
-          notifications.push({
-            type: 'alert',
-            title: `❌ สินค้าหมด: ${item.name}`,
-            desc: `หมวดหมู่ ${item.category} เหลือพร้อมใช้งาน 0 ชิ้น`,
-            link: 'admin-management.html'
-          });
-        } else if (avail <= 2) {
-          notifications.push({
-            type: 'warning',
-            title: `⚠️️ สินค้าใกล้หมด: ${item.name}`,
-            desc: `หมวดหมู่ ${item.category} เหลือพร้อมใช้งานเพียง ${avail} ชิ้น`,
-            link: 'admin-management.html'
-          });
-        }
-      });
-
     } else {
-      // ฝั่งผู้ใช้งานทั่วไป (User)
-      let requests = [];
-      if (window.getFirestoreBorrowRequests) {
-        requests = await window.getFirestoreBorrowRequests();
-      } else {
-        requests = JSON.parse(localStorage.getItem('user_requests')) || [];
-      }
+      // ฝั่งผู้ใช้งานทั่วไป (User) - ดึงคำขอที่เป็นของเราและอนุมัติหรือปฏิเสธแล้ว
+      const myApprovedOrRejected = requests.filter(r => isOwnRequest(r, currentUser) && (r.status === 'approved' || r.status === 'rejected'));
 
-      // กรองคำขอที่เป็นของตนเอง และถูกอนุมัติหรือถูกปฏิเสธแล้ว
-      const myRequests = requests.filter(r => isOwnRequest(r, currentUser) && r.status !== 'pending');
-      
-      myRequests.slice(0, 5).forEach(req => {
+      myApprovedOrRejected.forEach(req => {
+        const isApproved = req.status === 'approved';
         notifications.push({
-          type: req.status === 'approved' ? 'success' : 'alert',
-          title: req.status === 'approved' ? `🟢 คำขอ${req.type}ได้รับการอนุมัติ` : `🔴 คำขอ${req.type}ถูกปฏิเสธ`,
+          title: isApproved ? `🟢 คำขอ${req.type}ได้รับการอนุมัติ` : `🔴 คำขอ${req.type}ถูกปฏิเสธ`,
           desc: `อุปกรณ์: ${req.equipmentName} (${req.requestDate})`,
           link: req.type === 'ยืม' ? 'return.html' : 'history.html'
         });
       });
     }
 
+    // อัปเดตตัวเลขแจ้งเตือนบนไอคอนกระดิ่ง
     if (countBadge) {
       if (notifications.length > 0) {
         countBadge.textContent = notifications.length;
         countBadge.style.display = 'inline-block';
-        playNotificationSound();
       } else {
         countBadge.style.display = 'none';
       }
     }
 
+    // อัปเดตรายการในป๊อปอัปกระดิ่ง
     if (notifList) {
       if (notifications.length === 0) {
         notifList.innerHTML = `<div style="padding: 1.5rem; text-align: center; color: #6b7280;">ไม่มีการแจ้งเตือนใหม่ในขณะนี้</div>`;
@@ -574,23 +447,15 @@
       }
     }
 
+    // อีเวนต์เปิด/ปิดป๊อปอัปกระดิ่ง
     if (notifBtn && notifBtn.dataset.bound !== 'true') {
       notifBtn.dataset.bound = 'true';
       notifBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         if (notifPanel) {
           const isVisible = notifPanel.style.display === 'block';
-          notifPanel.style.display = 'none';
-          if (!isVisible) notifPanel.style.display = 'block';
+          notifPanel.style.display = isVisible ? 'none' : 'block';
         }
-      });
-    }
-
-    const closeBtn = document.getElementById('closeNotificationPanel');
-    if (closeBtn && closeBtn.dataset.bound !== 'true') {
-      closeBtn.dataset.bound = 'true';
-      closeBtn.addEventListener('click', () => {
-        if (notifPanel) notifPanel.style.display = 'none';
       });
     }
 
@@ -641,29 +506,17 @@
         }
 
         const actualRole = profile?.role || 'user';
-        
-        let accountStatus = profile?.accountStatus;
-        if (!accountStatus && actualRole === 'user') {
-          accountStatus = 'pending';
-        } else if (actualRole === 'admin') {
-          accountStatus = 'approved';
-        }
+        let accountStatus = profile?.accountStatus || (actualRole === 'admin' ? 'approved' : 'pending');
 
         if (selectedRole === 'admin' && actualRole !== 'admin') {
           await auth.signOut();
-          alert('❌ การเข้าถึงถูกปฏิเสธ: บัญชีนี้เป็นผู้ใช้งานทั่วไป ไม่มีสิทธิ์เข้าใช้งานระบบในฐานะ Admin');
-          return;
-        }
-
-        if (selectedRole === 'user' && actualRole === 'admin') {
-          await auth.signOut();
-          alert('❌ การเข้าถึงถูกปฏิเสธ: บัญชีของคุณเป็นสิทธิ์ผู้ดูแลระบบ (Admin) กรุณาเลือกประเภทการเข้าสู่ระบบเป็น "ผู้ดูแลระบบ"');
+          alert('❌ การเข้าถึงถูกปฏิเสธ: บัญชีนี้เป็นผู้ใช้งานทั่วไป');
           return;
         }
 
         if (actualRole === 'user' && accountStatus !== 'approved') {
           await auth.signOut();
-          alert('⏳ การเข้าสู่ระบบไม่สำเร็จ!\n\nบัญชีของคุณยังอยู่ในสถานะ "รอผู้ดูแลระบบอนุมัติการลงทะเบียน" กรุณารอการอนุมัติสิทธิ์ก่อนจึงจะสามารถเข้าใช้งานระบบได้');
+          alert('⏳ บัญชีของคุณยังอยู่ในสถานะรอผู้ดูแลระบบอนุมัติ');
           return;
         }
 
@@ -682,144 +535,6 @@
         localStorage.setItem(KEYS.userRole, actualRole);
 
         window.location.href = 'dashboard.html';
-
-      } catch (err) { alert(firebaseErrorMessage(err)); }
-    });
-  }
-
-  // ============================================================
-  // Register Form
-  // ============================================================
-
-  function setupRegisterForm() {
-    const form = document.getElementById('registerForm');
-    if (!form || form.dataset.bound === 'true') return;
-    form.dataset.bound = 'true';
-
-    const roleSelect = document.getElementById('regRole');
-    const adminCodeGroup = document.getElementById('regAdminCodeGroup');
-    const adminCodeInput = document.getElementById('regAdminCode');
-
-    if (roleSelect && adminCodeGroup) {
-      roleSelect.addEventListener('change', () => {
-        const isAdmin = roleSelect.value === 'admin';
-        adminCodeGroup.style.display = isAdmin ? 'block' : 'none';
-        if (adminCodeInput) {
-          adminCodeInput.required = isAdmin;
-          if (!isAdmin) adminCodeInput.value = '';
-        }
-      });
-    }
-
-    const passwordInput = document.getElementById('regPassword');
-    const ruleLength = document.getElementById('ruleLength');
-    const ruleUpper = document.getElementById('ruleUpper');
-    const ruleLower = document.getElementById('ruleLower');
-    const ruleNumber = document.getElementById('ruleNumber');
-
-    function checkPasswordRules(pass) {
-      const isLengthValid = pass.length >= 8;
-      const isUpperValid = /[A-Z]/.test(pass);
-      const isLowerValid = /[a-z]/.test(pass);
-      const isNumberValid = /[0-9]/.test(pass);
-
-      if (ruleLength) {
-        ruleLength.className = isLengthValid ? 'valid' : '';
-        const icon = ruleLength.querySelector('.rule-icon');
-        if (icon) icon.textContent = isLengthValid ? '✔' : '❌';
-      }
-      if (ruleUpper) {
-        ruleUpper.className = isUpperValid ? 'valid' : '';
-        const icon = ruleUpper.querySelector('.rule-icon');
-        if (icon) icon.textContent = isUpperValid ? '✔' : '❌';
-      }
-      if (ruleLower) {
-        ruleLower.className = isLowerValid ? 'valid' : '';
-        const icon = ruleLower.querySelector('.rule-icon');
-        if (icon) icon.textContent = isLowerValid ? '✔' : '❌';
-      }
-      if (ruleNumber) {
-        ruleNumber.className = isNumberValid ? 'valid' : '';
-        const icon = ruleNumber.querySelector('.rule-icon');
-        if (icon) icon.textContent = isNumberValid ? '✔' : '❌';
-      }
-
-      return isLengthValid && isUpperValid && isLowerValid && isNumberValid;
-    }
-
-    if (passwordInput) {
-      passwordInput.addEventListener('input', (e) => {
-        checkPasswordRules(e.target.value);
-      });
-    }
-
-    form.addEventListener('submit', async event => {
-      event.preventDefault();
-      const name = document.getElementById('regName')?.value?.trim() || '';
-      const email = document.getElementById('regEmail')?.value?.trim() || '';
-      const role = document.getElementById('regRole')?.value || 'user';
-      const adminCode = adminCodeInput?.value?.trim() || '';
-      const password = document.getElementById('regPassword')?.value || '';
-      const confirmPassword = document.getElementById('regConfirmPassword')?.value || '';
-
-      if (!name || !email || !password || !confirmPassword) {
-        alert('กรุณากรอกข้อมูลให้ครบถ้วนทุกช่อง'); return;
-      }
-
-      if (role === 'admin' && adminCode !== '24236') {
-        alert('❌ รหัสยืนยันผู้ดูแลระบบ (Admin Code) ไม่ถูกต้อง');
-        return;
-      }
-
-      if (!checkPasswordRules(password)) {
-        alert('❌ รหัสผ่านยังไม่ตรงตามเงื่อนไขความปลอดภัย กรุณาตรวจสอบอีกครั้ง:\n' +
-              '- ต้องมีความยาวอย่างน้อย 8 ตัวอักษร\n' +
-              '- ต้องมีตัวอักษรพิมพ์ใหญ่ A-Z อย่างน้อย 1 ตัว\n' +
-              '- ต้องมีตัวอักษรพิมพ์เล็ก a-z อย่างน้อย 1 ตัว\n' +
-              '- ต้องมีตัวเลข 0-9 อย่างน้อย 1 ตัว');
-        return;
-      }
-
-      if (password !== confirmPassword) {
-        alert('❌ รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน'); return;
-      }
-
-      try {
-        const ready = await initFirebase();
-        if (!ready || !auth) throw new Error('ไม่สามารถเชื่อมต่อระบบยืนยันตัวตนได้');
-
-        const cred = await auth.createUserWithEmailAndPassword(email, password);
-        const user = cred.user;
-
-        const accountStatus = role === 'admin' ? 'approved' : 'pending';
-
-        if (db) {
-          await db.collection('users').doc(user.uid).set({
-            name: name,
-            email: email,
-            role: role, 
-            accountStatus: accountStatus,
-            createdAt: getCurrentDateTimeFormatted()
-          });
-        }
-
-        if (role === 'user') {
-          let pendingUsers = JSON.parse(localStorage.getItem('pending_user_registrations')) || [];
-          pendingUsers.unshift({
-            uid: user.uid,
-            name: name,
-            email: email,
-            requestDate: getCurrentDateTimeFormatted(),
-            status: 'pending'
-          });
-          localStorage.setItem('pending_user_registrations', JSON.stringify(pendingUsers));
-
-          alert('🎉 สมัครสมาชิกสำเร็จ!\n\nขณะนี้บัญชีของคุณอยู่ในสถานะ "รอผู้ดูแลระบบอนุมัติการลงทะเบียน" กรุณารอผู้ดูแลระบบตรวจสอบและอนุมัติสิทธิ์ จึงจะสามารถเข้าสู่ระบบเพื่อใช้งานได้');
-        } else {
-          alert('🎉 สมัครสมาชิกบัญชีผู้ดูแลระบบสำเร็จ! คุณสามารถเข้าสู่ระบบได้ทันที');
-        }
-
-        window.location.href = 'index.html';
 
       } catch (err) { alert(firebaseErrorMessage(err)); }
     });
@@ -868,7 +583,6 @@
       }
       if (adminView) adminView.style.display = 'block';
       if (userView) userView.style.display = 'none';
-      renderAdminDashboardData();
     } else {
       if (roleBadge) roleBadge.textContent = 'ผู้ใช้งานทั่วไป';
       if (navbar) {
@@ -887,33 +601,6 @@
     setupDropdownToggle();
     initNotificationSystem();
     if (window.lucide) lucide.createIcons();
-  }
-
-  function renderAdminDashboardData() {
-    const equipmentList = getEquipmentLocal();
-    function calculateStats(categoryName) {
-      const items = equipmentList.filter(item => String(item.category || '').trim() === categoryName);
-      let total = 0, available = 0, borrowed = 0, unavailable = 0;
-      items.forEach(item => {
-        const itemTotal = Number(item.total || 0), itemAvail = Number(item.available || 0);
-        total += itemTotal; available += itemAvail;
-        if (item.status === 'unavailable') unavailable += Math.max(0, itemTotal - itemAvail);
-        else borrowed += Math.max(0, itemTotal - itemAvail);
-      });
-      return { total, available, borrowed, unavailable };
-    }
-
-    function updateCategoryUI(prefix, stats) {
-      if (document.getElementById(`total${prefix}`)) document.getElementById(`total${prefix}`).textContent = stats.total;
-      if (document.getElementById(`avail${prefix}`)) document.getElementById(`avail${prefix}`).textContent = stats.available;
-      if (document.getElementById(`borrowed${prefix}`)) document.getElementById(`borrowed${prefix}`).textContent = stats.borrowed;
-      if (document.getElementById(`unavail${prefix}`)) document.getElementById(`unavail${prefix}`).textContent = stats.unavailable;
-    }
-
-    updateCategoryUI('Building', calculateStats('ครุภัณฑ์'));
-    updateCategoryUI('Material', calculateStats('วัสดุ'));
-    updateCategoryUI('Device', calculateStats('อุปกรณ์'));
-    updateCategoryUI('Camera', calculateStats('บันทึกภาพ'));
   }
 
   async function renderUserDashboardData(user) {
@@ -961,258 +648,6 @@
   }
 
   // ============================================================
-  // Global Admin Operations
-  // ============================================================
-
-  window.handleAdminApproval = async function(requestId, newStatus) {
-    const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
-    const adminName = currentUser.name || localStorage.getItem('userName') || 'ผู้ดูแลระบบ';
-
-    let requests = JSON.parse(localStorage.getItem('user_requests')) || [];
-    const idx = requests.findIndex(r => r.id === requestId);
-    if (idx !== -1) {
-      requests[idx].status = newStatus;
-      requests[idx].approvedBy = adminName;
-      localStorage.setItem('user_requests', JSON.stringify(requests));
-    }
-
-    try {
-      await initFirebase();
-      if (db) {
-        await db.collection('borrow_requests').doc(requestId).set({
-          status: newStatus,
-          approvedBy: adminName,
-          approvedAt: getCurrentDateTimeFormatted()
-        }, { merge: true });
-      }
-    } catch (e) {
-      console.warn("Firestore update warning:", e);
-    }
-
-    window.addSystemLog(
-      newStatus === 'approved' ? 'อนุมัติคำขอ' : 'ปฏิเสธคำขอ',
-      `คำขอ ${requestId} โดยแอดมิน ${adminName}`
-    );
-
-    alert(`ทำรายการ ${newStatus === 'approved' ? 'อนุมัติ' : 'ปฏิเสธ'} เรียบร้อยแล้ว`);
-    if (window.renderBorrowTable) {
-      window.renderBorrowTable();
-    } else {
-      window.location.reload();
-    }
-  };
-
-  window.handleUserAccountApproval = async function(userUid, userEmail, actionStatus) {
-    const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
-    const adminName = currentUser.name || 'ผู้ดูแลระบบ';
-
-    try {
-      await initFirebase();
-      
-      if (db) {
-        if (userUid) {
-          await db.collection('users').doc(userUid).set({
-            accountStatus: actionStatus,
-            approvedBy: adminName,
-            approvedAt: getCurrentDateTimeFormatted()
-          }, { merge: true });
-        } else {
-          const snap = await db.collection('users').where('email', '==', userEmail).get();
-          snap.forEach(async (doc) => {
-            await db.collection('users').doc(doc.id).set({
-              accountStatus: actionStatus,
-              approvedBy: adminName,
-              approvedAt: getCurrentDateTimeFormatted()
-            }, { merge: true });
-          });
-        }
-      }
-
-      let pendingUsers = JSON.parse(localStorage.getItem('pending_user_registrations')) || [];
-      const userIndex = pendingUsers.findIndex(u => (userUid && u.uid === userUid) || u.email === userEmail);
-      if (userIndex !== -1) {
-        pendingUsers[userIndex].status = actionStatus;
-        pendingUsers[userIndex].approvedBy = adminName;
-        localStorage.setItem('pending_user_registrations', JSON.stringify(pendingUsers));
-      }
-
-      window.addSystemLog(
-        actionStatus === 'approved' ? 'อนุมัติสมาชิกใหม่' : 'ปฏิเสธสมาชิกใหม่',
-        `บัญชี ${userEmail} โดยแอดมิน ${adminName}`
-      );
-
-      alert(`ทำการ ${actionStatus === 'approved' ? 'อนุมัติ' : 'ปฏิเสธ'} สมาชิกใหม่เรียบร้อยแล้ว!`);
-      
-      if (window.renderUserTable) {
-        window.renderUserTable();
-      } else {
-        window.location.reload();
-      }
-    } catch (e) {
-      console.error("Error approving user:", e);
-      alert('เกิดข้อผิดพลาดในการอัปเดตสถานะสมาชิก: ' + e.message);
-    }
-  };
-
-  // ============================================================
-  // Equipment Page & Borrow Form
-  // ============================================================
-
-  function initEquipmentPage() {
-    const gridContainer = document.getElementById('equipmentGridContainer');
-    if (!gridContainer) return;
-
-    const urlParams = new URLSearchParams(window.location.search);
-    let selectedCategory = decodeURIComponent(urlParams.get('category') || '').trim();
-
-    const pageTitle = document.getElementById('categoryPageTitle');
-    const categoryFilter = document.getElementById('categorySelectFilter');
-
-    if (selectedCategory) {
-      if (pageTitle) pageTitle.textContent = `รายการ${selectedCategory}`;
-      if (categoryFilter) categoryFilter.value = selectedCategory;
-    }
-
-    renderEquipmentGrid(selectedCategory, '');
-
-    const searchInput = document.getElementById('equipmentSearchInput');
-    if (searchInput) {
-      searchInput.addEventListener('input', (e) => {
-        renderEquipmentGrid(categoryFilter ? categoryFilter.value : '', e.target.value.trim());
-      });
-    }
-
-    if (categoryFilter) {
-      categoryFilter.addEventListener('change', (e) => {
-        const cat = e.target.value;
-        if (pageTitle) pageTitle.textContent = cat ? `รายการ${cat}` : 'รายการทั้งหมด';
-        renderEquipmentGrid(cat, searchInput ? searchInput.value.trim() : '');
-      });
-    }
-
-    setupBorrowFormSubmit();
-  }
-
-  function renderEquipmentGrid(category, searchKeyword) {
-    const container = document.getElementById('equipmentGridContainer');
-    if (!container) return;
-
-    const allEquipment = getEquipmentLocal();
-    const filtered = allEquipment.filter(item => {
-      const itemCat = String(item.category || '').trim();
-      const filterCat = String(category || '').trim();
-      const matchCategory = !filterCat || itemCat === filterCat || (filterCat.includes('อุปกรณ์') && itemCat.includes('อุปกรณ์'));
-      const matchSearch = !searchKeyword || (item.name && item.name.toLowerCase().includes(searchKeyword.toLowerCase())) || (item.id && item.id.toLowerCase().includes(searchKeyword.toLowerCase()));
-      return matchCategory && matchSearch;
-    });
-
-    if (filtered.length === 0) {
-      container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: #6b7280;">ไม่พบรายการอุปกรณ์ในหมวดหมู่นี้</div>`;
-      return;
-    }
-
-    container.innerHTML = filtered.map(item => {
-      const isAvailable = (item.available || 0) > 0 && item.status !== 'unavailable';
-      return `
-        <div class="equipment-card" style="background: #fff; border-radius: 12px; padding: 1.25rem; border: 1px solid #e5e7eb; display: flex; flex-direction: column; justify-content: space-between;">
-          <div>
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
-              <span style="font-size: 0.8rem; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-weight: 600;">${item.category || 'อุปกรณ์'}</span>
-              <span style="font-size: 0.85rem; font-weight: 600; color: ${isAvailable ? '#10b981' : '#ef4444'};">${isAvailable ? 'พร้อมเบิก' : 'ไม่พร้อมใช้งาน'}</span>
-            </div>
-            <h3 style="font-size: 1.05rem; margin-bottom: 0.5rem; color: #1f2937;">${item.name}</h3>
-            <p style="font-size: 0.85rem; color: #6b7280; margin-bottom: 1rem;">คงเหลือพร้อมใช้: <strong>${item.available || 0}</strong> / ${item.total || 0}</p>
-          </div>
-          <button type="button" onclick="openBorrowModal('${item.id}', '${item.name}', ${item.available || 0})" ${!isAvailable ? 'disabled' : ''} style="width: 100%; padding: 0.6rem; border: none; border-radius: 8px; font-weight: 600; cursor: ${isAvailable ? 'pointer' : 'not-allowed'}; background: ${isAvailable ? '#10b981' : '#d1d5db'}; color: white;">
-            ${isAvailable ? 'กดเบิก/ยืมสิ่งนี้' : 'สินค้าหมด / ไม่พร้อมยืม'}
-          </button>
-        </div>
-      `;
-    }).join('');
-
-    if (window.lucide) lucide.createIcons();
-  }
-
-  window.openBorrowModal = function(id, name, maxAvail) {
-    const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
-    
-    if (currentUser.role === 'user' && currentUser.accountStatus !== 'approved') {
-      alert('❌ ไม่สามารถทำรายการได้!\n\nบัญชีของคุณยังไม่ได้รับการอนุมัติการลงทะเบียนจากผู้ดูแลระบบ กรุณารอผู้ดูแลระบบอนุมัติบัญชีของคุณก่อนทำรายการยืม-คืนอุปกรณ์');
-      return;
-    }
-
-    const modal = document.getElementById('borrowModal');
-    if (!modal) return;
-    document.getElementById('modalEquipmentId').value = id;
-    document.getElementById('modalEquipmentName').value = name;
-    const qtyInput = document.getElementById('modalBorrowQuantity');
-    qtyInput.max = maxAvail; qtyInput.value = 1;
-    document.getElementById('modalMaxAvailable').textContent = `*(เบิกได้สูงสุด ${maxAvail} ชิ้น)`;
-    document.getElementById('modalBorrowReason').value = '';
-    modal.style.display = 'flex';
-  };
-
-  window.closeBorrowModal = function() {
-    const modal = document.getElementById('borrowModal');
-    if (modal) modal.style.display = 'none';
-  };
-
-  function setupBorrowFormSubmit() {
-    const form = document.getElementById('borrowRequestForm');
-    if (!form || form.dataset.bound === 'true') return;
-    form.dataset.bound = 'true';
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
-
-      if (currentUser.role === 'user' && currentUser.accountStatus !== 'approved') {
-        alert('❌ ไม่สามารถทำรายการได้! บัญชีของคุณยังไม่ได้รับการอนุมัติการลงทะเบียนจากผู้ดูแลระบบ');
-        closeBorrowModal();
-        return;
-      }
-
-      const eqId = document.getElementById('modalEquipmentId').value;
-      const eqName = document.getElementById('modalEquipmentName').value;
-      const qty = parseInt(document.getElementById('modalBorrowQuantity').value) || 1;
-      const reason = document.getElementById('modalBorrowReason').value.trim();
-
-      const requestId = 'REQ' + Date.now().toString().slice(-6);
-      const newRequest = {
-        id: requestId,
-        equipmentId: eqId,
-        equipmentName: eqName,
-        quantity: qty,
-        reason: reason,
-        userName: currentUser.name || localStorage.getItem('userName') || 'ผู้ใช้งานระบบ',
-        userEmail: currentUser.email || localStorage.getItem('userEmail') || '',
-        userUid: currentUser.uid || '',
-        requestDate: getCurrentDateTimeFormatted(),
-        type: 'ยืม',
-        status: 'pending',
-        approvedBy: '-'
-      };
-
-      const userRequests = JSON.parse(localStorage.getItem('user_requests')) || [];
-      userRequests.unshift(newRequest);
-      localStorage.setItem('user_requests', JSON.stringify(userRequests));
-
-      try {
-        await initFirebase();
-        if (db) {
-          await db.collection('borrow_requests').doc(requestId).set(newRequest);
-        }
-      } catch (err) {
-        console.warn("Firestore save warning (fallback to LocalStorage):", err);
-      }
-
-      alert('ส่งคำขอเบิก/ยืมเรียบร้อยแล้ว! กรุณารอการอนุมัติจากผู้ดูแลระบบ');
-      closeBorrowModal();
-      window.location.reload();
-    });
-  }
-
-  // ============================================================
   // Boot System
   // ============================================================
 
@@ -1222,10 +657,7 @@
     try { setupRoleUI(); } catch (e) {}
     try { loadRememberedData(); } catch (e) {}
     try { setupLoginForm(); } catch (e) {}
-    try { setupRegisterForm(); } catch (e) {}
-    try { setupForgotPasswordForm(); } catch (e) {}
     try { initDashboardByRole(); } catch (e) {}
-    try { initEquipmentPage(); } catch (e) {}
   }
 
   if (document.readyState === 'loading') {
