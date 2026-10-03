@@ -47,6 +47,32 @@
     });
   }
 
+  // Helper สำหรับตรวจสอบความเป็นเจ้าของคำขออย่างครอบคลุม
+  function isOwnRequest(req, user) {
+    if (!user) return false;
+    
+    // 1. เช็กผ่าน UID
+    if (user.uid && req.userUid && String(user.uid).trim() === String(req.userUid).trim()) {
+      return true;
+    }
+    
+    // 2. เช็กผ่าน Email (แปลงเป็นตัวพิมพ์เล็กป้องกัน Mismatch)
+    const reqEmail = (req.userEmail || '').toLowerCase().trim();
+    const userEmail = (user.email || localStorage.getItem('userEmail') || '').toLowerCase().trim();
+    if (reqEmail && userEmail && reqEmail === userEmail) {
+      return true;
+    }
+
+    // 3. เช็กผ่าน ชื่อ-นามสกุล
+    const reqName = (req.userName || '').trim();
+    const userName = (user.name || localStorage.getItem('userName') || '').trim();
+    if (reqName && userName && reqName === userName) {
+      return true;
+    }
+
+    return false;
+  }
+
   // ============================================================
   // Audio Alert System
   // ============================================================
@@ -182,7 +208,6 @@
     isFirebaseInitializing = false; return false;
   }
 
-  // ดึงผู้ใช้งานระบบจาก Firestore ทั้งหมด (ยกเว้น admin)
   window.getFirestoreUsers = async function() {
     try {
       const ready = await initFirebase();
@@ -209,7 +234,6 @@
     }
   };
 
-  // ดึงคำขอยืม-คืนทั้งหมดจาก Firestore
   window.getFirestoreBorrowRequests = async function() {
     try {
       const ready = await initFirebase();
@@ -390,7 +414,7 @@
   }
 
   // ============================================================
-  // Notification System & Badges
+  // Notification System & Badges (ปรับปรุงใหม่แก้ไขบัคการแจ้งเตือน)
   // ============================================================
 
   async function initNotificationSystem() {
@@ -446,7 +470,6 @@
         });
       });
 
-      // อัปเดต Badge บน Tab อนุมัติสมาชิกใหม่
       const userTabBadge = document.getElementById('userPendingBadge');
       if (userTabBadge) {
         if (activePendingUsers.length > 0) {
@@ -475,7 +498,6 @@
         });
       });
 
-      // อัปเดต Badge บน Tab คำขอยืม-คืน
       const borrowTabBadge = document.getElementById('borrowPendingBadge');
       if (borrowTabBadge) {
         if (pendingReqs.length > 0) {
@@ -500,7 +522,7 @@
         } else if (avail <= 2) {
           notifications.push({
             type: 'warning',
-            title: `⚠️ สินค้าใกล้หมด: ${item.name}`,
+            title: `⚠️️ สินค้าใกล้หมด: ${item.name}`,
             desc: `หมวดหมู่ ${item.category} เหลือพร้อมใช้งานเพียง ${avail} ชิ้น`,
             link: 'admin-management.html'
           });
@@ -508,6 +530,7 @@
       });
 
     } else {
+      // ฝั่งผู้ใช้งานทั่วไป (User)
       let requests = [];
       if (window.getFirestoreBorrowRequests) {
         requests = await window.getFirestoreBorrowRequests();
@@ -515,7 +538,8 @@
         requests = JSON.parse(localStorage.getItem('user_requests')) || [];
       }
 
-      const myRequests = requests.filter(r => (r.userEmail === currentUser.email || r.userName === currentUser.name) && r.status !== 'pending');
+      // กรองคำขอที่เป็นของตนเอง และถูกอนุมัติหรือถูกปฏิเสธแล้ว
+      const myRequests = requests.filter(r => isOwnRequest(r, currentUser) && r.status !== 'pending');
       
       myRequests.slice(0, 5).forEach(req => {
         notifications.push({
@@ -896,10 +920,10 @@
     let myRequests = [];
     if (window.getFirestoreBorrowRequests) {
       const allReqs = await window.getFirestoreBorrowRequests();
-      myRequests = allReqs.filter(r => r.userEmail === user.email || r.userName === user.name);
+      myRequests = allReqs.filter(r => isOwnRequest(r, user));
     } else {
       const userRequests = JSON.parse(localStorage.getItem('user_requests')) || [];
-      myRequests = userRequests.filter(r => r.userEmail === user.email || r.userName === user.name);
+      myRequests = userRequests.filter(r => isOwnRequest(r, user));
     }
 
     const activeBorrows = myRequests.filter(r => r.status === 'approved' && r.type === 'ยืม');
@@ -944,7 +968,6 @@
     const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
     const adminName = currentUser.name || localStorage.getItem('userName') || 'ผู้ดูแลระบบ';
 
-    // อัปเดตลง LocalStorage
     let requests = JSON.parse(localStorage.getItem('user_requests')) || [];
     const idx = requests.findIndex(r => r.id === requestId);
     if (idx !== -1) {
@@ -953,7 +976,6 @@
       localStorage.setItem('user_requests', JSON.stringify(requests));
     }
 
-    // อัปเดตลง Firestore
     try {
       await initFirebase();
       if (db) {
@@ -1162,8 +1184,8 @@
         equipmentName: eqName,
         quantity: qty,
         reason: reason,
-        userName: currentUser.name || 'ผู้ใช้งานระบบ',
-        userEmail: currentUser.email || 'user@example.com',
+        userName: currentUser.name || localStorage.getItem('userName') || 'ผู้ใช้งานระบบ',
+        userEmail: currentUser.email || localStorage.getItem('userEmail') || '',
         userUid: currentUser.uid || '',
         requestDate: getCurrentDateTimeFormatted(),
         type: 'ยืม',
@@ -1171,12 +1193,10 @@
         approvedBy: '-'
       };
 
-      // บันทึกลง LocalStorage สำรอง
       const userRequests = JSON.parse(localStorage.getItem('user_requests')) || [];
       userRequests.unshift(newRequest);
       localStorage.setItem('user_requests', JSON.stringify(userRequests));
 
-      // บันทึกลง Firestore
       try {
         await initFirebase();
         if (db) {
