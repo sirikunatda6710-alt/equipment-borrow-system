@@ -1,5 +1,5 @@
 (function () {
-  'style strict';
+  'use strict';
 
   // ============================================================
   // Configuration
@@ -47,7 +47,7 @@
     });
   }
 
-  // Helper สำหรับตรวจสอบว่าเป็นคำขอของผู้ใช้คนนี้หรือไม่
+  // Helper สำหรับตรวจสอบความเป็นเจ้าของคำขอ
   function isOwnRequest(req, user) {
     if (!user) return false;
 
@@ -360,21 +360,20 @@
   }
 
   // ============================================================
-  // Notification System & Badges (ปรับปรุงระฆังแจ้งเตือนฝั่งผู้ใช้)
+  // Notification System & Badges
   // ============================================================
 
   async function initNotificationSystem() {
-    let notifBtn = document.getElementById('notificationButton');
-    let notifPanel = document.getElementById('notificationPanel');
-    let countBadge = document.getElementById('notificationCount');
-    let notifList = document.getElementById('notificationList');
+    const notifBtn = document.getElementById('notificationButton');
+    const notifPanel = document.getElementById('notificationPanel');
+    const countBadge = document.getElementById('notificationCount');
+    const notifList = document.getElementById('notificationList');
 
     const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
     const isAdmin = currentUser.role === 'admin';
 
     let notifications = [];
 
-    // ดึงข้อมูลคำขอยืม-คืนทั้งหมด
     let requests = [];
     if (window.getFirestoreBorrowRequests) {
       requests = await window.getFirestoreBorrowRequests();
@@ -384,7 +383,6 @@
     }
 
     if (isAdmin) {
-      // 1. ผู้ใช้ใหม่รออนุมัติ
       let activePendingUsers = [];
       if (window.getFirestoreUsers) {
         const users = await window.getFirestoreUsers();
@@ -399,7 +397,6 @@
         });
       });
 
-      // 2. คำขอยืม-คืนรออนุมัติ
       const pendingReqs = requests.filter(r => r.status === 'pending');
       pendingReqs.forEach(req => {
         notifications.push({
@@ -410,44 +407,41 @@
       });
 
     } else {
-      // ฝั่งผู้ใช้งานทั่วไป (User) - ดึงคำขอที่เป็นของเราและอนุมัติหรือปฏิเสธแล้ว
       const myApprovedOrRejected = requests.filter(r => isOwnRequest(r, currentUser) && (r.status === 'approved' || r.status === 'rejected'));
 
       myApprovedOrRejected.forEach(req => {
         const isApproved = req.status === 'approved';
         notifications.push({
-          title: isApproved ? `🟢 คำขอ${req.type}ได้รับการอนุมัติ` : `🔴 คำขอ${req.type}ถูกปฏิเสธ`,
+          title: isApproved ? `🟢 คำขอ${req.type}ได้รับการอนุมัติแล้ว` : `🔴 คำขอ${req.type}ถูกปฏิเสธ`,
           desc: `อุปกรณ์: ${req.equipmentName} (${req.requestDate})`,
           link: req.type === 'ยืม' ? 'return.html' : 'history.html'
         });
       });
     }
 
-    // อัปเดตตัวเลขแจ้งเตือนบนไอคอนกระดิ่ง
     if (countBadge) {
       if (notifications.length > 0) {
         countBadge.textContent = notifications.length;
-        countBadge.style.display = 'inline-block';
+        countBadge.style.display = 'inline-flex';
+        playNotificationSound();
       } else {
         countBadge.style.display = 'none';
       }
     }
 
-    // อัปเดตรายการในป๊อปอัปกระดิ่ง
     if (notifList) {
       if (notifications.length === 0) {
-        notifList.innerHTML = `<div style="padding: 1.5rem; text-align: center; color: #6b7280;">ไม่มีการแจ้งเตือนใหม่ในขณะนี้</div>`;
+        notifList.innerHTML = `<div style="padding: 1.5rem; text-align: center; color: #6b7280; font-size: 0.85rem;">ไม่มีการแจ้งเตือนใหม่ในขณะนี้</div>`;
       } else {
         notifList.innerHTML = notifications.map(n => `
           <a href="${n.link}" style="display: block; padding: 0.75rem 1rem; border-bottom: 1px solid #f3f4f6; text-decoration: none; color: inherit; transition: background 0.2s;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='transparent'">
-            <div style="font-weight: 600; font-size: 0.9rem; color: #1f2937;">${n.title}</div>
+            <div style="font-weight: 600; font-size: 0.88rem; color: #1f2937;">${n.title}</div>
             <div style="font-size: 0.8rem; color: #6b7280; margin-top: 2px;">${n.desc}</div>
           </a>
         `).join('');
       }
     }
 
-    // อีเวนต์เปิด/ปิดป๊อปอัปกระดิ่ง
     if (notifBtn && notifBtn.dataset.bound !== 'true') {
       notifBtn.dataset.bound = 'true';
       notifBtn.addEventListener('click', (e) => {
@@ -456,6 +450,14 @@
           const isVisible = notifPanel.style.display === 'block';
           notifPanel.style.display = isVisible ? 'none' : 'block';
         }
+      });
+    }
+
+    const closeBtn = document.getElementById('closeNotificationPanel');
+    if (closeBtn && closeBtn.dataset.bound !== 'true') {
+      closeBtn.dataset.bound = 'true';
+      closeBtn.addEventListener('click', () => {
+        if (notifPanel) notifPanel.style.display = 'none';
       });
     }
 
@@ -583,6 +585,7 @@
       }
       if (adminView) adminView.style.display = 'block';
       if (userView) userView.style.display = 'none';
+      renderAdminDashboardData();
     } else {
       if (roleBadge) roleBadge.textContent = 'ผู้ใช้งานทั่วไป';
       if (navbar) {
@@ -601,6 +604,33 @@
     setupDropdownToggle();
     initNotificationSystem();
     if (window.lucide) lucide.createIcons();
+  }
+
+  function renderAdminDashboardData() {
+    const equipmentList = getEquipmentLocal();
+    function calculateStats(categoryName) {
+      const items = equipmentList.filter(item => String(item.category || '').trim() === categoryName);
+      let total = 0, available = 0, borrowed = 0, unavailable = 0;
+      items.forEach(item => {
+        const itemTotal = Number(item.total || 0), itemAvail = Number(item.available || 0);
+        total += itemTotal; available += itemAvail;
+        if (item.status === 'unavailable') unavailable += Math.max(0, itemTotal - itemAvail);
+        else borrowed += Math.max(0, itemTotal - itemAvail);
+      });
+      return { total, available, borrowed, unavailable };
+    }
+
+    function updateCategoryUI(prefix, stats) {
+      if (document.getElementById(`total${prefix}`)) document.getElementById(`total${prefix}`).textContent = stats.total;
+      if (document.getElementById(`avail${prefix}`)) document.getElementById(`avail${prefix}`).textContent = stats.available;
+      if (document.getElementById(`borrowed${prefix}`)) document.getElementById(`borrowed${prefix}`).textContent = stats.borrowed;
+      if (document.getElementById(`unavail${prefix}`)) document.getElementById(`unavail${prefix}`).textContent = stats.unavailable;
+    }
+
+    updateCategoryUI('Building', calculateStats('ครุภัณฑ์'));
+    updateCategoryUI('Material', calculateStats('วัสดุ'));
+    updateCategoryUI('Device', calculateStats('อุปกรณ์'));
+    updateCategoryUI('Camera', calculateStats('บันทึกภาพ'));
   }
 
   async function renderUserDashboardData(user) {
@@ -634,9 +664,7 @@
         <td>${req.equipmentName}</td>
         <td>${req.requestDate}</td>
         <td>
-          <span style="padding: 2px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 600; 
-            background: ${req.status === 'pending' ? '#fef3c7' : req.status === 'approved' ? '#d1fae5' : '#fee2e2'};
-            color: ${req.status === 'pending' ? '#d97706' : req.status === 'approved' ? '#059669' : '#dc2626'};">
+          <span class="${req.status === 'pending' ? 'badge-pending' : req.status === 'approved' ? 'badge-approved' : 'badge-rejected'}">
             ${req.status === 'pending' ? 'รอผู้ดูแลอนุมัติ' : req.status === 'approved' ? 'อนุมัติแล้ว' : 'ปฏิเสธ'}
           </span>
         </td>
@@ -645,6 +673,174 @@
         </td>
       </tr>
     `).join('');
+  }
+
+  // ============================================================
+  // Equipment Page & Borrow Form
+  // ============================================================
+
+  function initEquipmentPage() {
+    const gridContainer = document.getElementById('equipmentGridContainer');
+    if (!gridContainer) return;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    let selectedCategory = decodeURIComponent(urlParams.get('category') || '').trim();
+
+    const pageTitle = document.getElementById('categoryPageTitle');
+    const categoryFilter = document.getElementById('categorySelectFilter');
+
+    if (selectedCategory) {
+      if (pageTitle) pageTitle.textContent = `รายการ${selectedCategory}`;
+      if (categoryFilter) categoryFilter.value = selectedCategory;
+    }
+
+    renderEquipmentGrid(selectedCategory, '');
+
+    const searchInput = document.getElementById('equipmentSearchInput');
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        renderEquipmentGrid(categoryFilter ? categoryFilter.value : '', e.target.value.trim());
+      });
+    }
+
+    if (categoryFilter) {
+      categoryFilter.addEventListener('change', (e) => {
+        const cat = e.target.value;
+        if (pageTitle) pageTitle.textContent = cat ? `รายการ${cat}` : 'รายการทั้งหมด';
+        renderEquipmentGrid(cat, searchInput ? searchInput.value.trim() : '');
+      });
+    }
+
+    setupBorrowFormSubmit();
+  }
+
+  function renderEquipmentGrid(category, searchKeyword) {
+    const container = document.getElementById('equipmentGridContainer');
+    if (!container) return;
+
+    const allEquipment = getEquipmentLocal();
+    const filtered = allEquipment.filter(item => {
+      const itemCat = String(item.category || '').trim();
+      const filterCat = String(category || '').trim();
+
+      // แมตช์หมวดหมู่ให้ยืดหยุ่นครอบคลุมทุกแบบ
+      let matchCategory = !filterCat || filterCat === 'รายการทั้งหมด' || itemCat === filterCat;
+      if (!matchCategory && filterCat) {
+        if (filterCat.includes('อุปกรณ์') && itemCat.includes('อุปกรณ์')) matchCategory = true;
+        if (filterCat.includes('บันทึกภาพ') && itemCat.includes('บันทึกภาพ')) matchCategory = true;
+      }
+
+      const matchSearch = !searchKeyword || 
+        (item.name && item.name.toLowerCase().includes(searchKeyword.toLowerCase())) || 
+        (item.id && item.id.toLowerCase().includes(searchKeyword.toLowerCase()));
+
+      return matchCategory && matchSearch;
+    });
+
+    if (filtered.length === 0) {
+      container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: #6b7280;">ไม่พบรายการอุปกรณ์ในหมวดหมู่นี้</div>`;
+      return;
+    }
+
+    container.innerHTML = filtered.map(item => {
+      const isAvailable = (item.available || 0) > 0 && item.status !== 'unavailable';
+      return `
+        <div class="equipment-card" style="background: #fff; border-radius: 12px; padding: 1.25rem; border: 1px solid #e5e7eb; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+              <span style="font-size: 0.8rem; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-weight: 600;">${item.category || 'อุปกรณ์'}</span>
+              <span style="font-size: 0.85rem; font-weight: 600; color: ${isAvailable ? '#10b981' : '#ef4444'};">${isAvailable ? 'พร้อมเบิก' : 'ไม่พร้อมใช้งาน'}</span>
+            </div>
+            <h3 style="font-size: 1.05rem; margin-bottom: 0.5rem; color: #1f2937;">${item.name}</h3>
+            <p style="font-size: 0.85rem; color: #6b7280; margin-bottom: 1rem;">คงเหลือพร้อมใช้: <strong>${item.available || 0}</strong> / ${item.total || 0}</p>
+          </div>
+          <button type="button" onclick="openBorrowModal('${item.id}', '${item.name}', ${item.available || 0})" ${!isAvailable ? 'disabled' : ''} style="width: 100%; padding: 0.6rem; border: none; border-radius: 8px; font-weight: 600; cursor: ${isAvailable ? 'pointer' : 'not-allowed'}; background: ${isAvailable ? '#10b981' : '#d1d5db'}; color: white;">
+            ${isAvailable ? 'กดเบิก/ยืมสิ่งนี้' : 'สินค้าหมด / ไม่พร้อมยืม'}
+          </button>
+        </div>
+      `;
+    }).join('');
+
+    if (window.lucide) lucide.createIcons();
+  }
+
+  window.openBorrowModal = function(id, name, maxAvail) {
+    const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
+    
+    if (currentUser.role === 'user' && currentUser.accountStatus !== 'approved') {
+      alert('❌ ไม่สามารถทำรายการได้!\n\nบัญชีของคุณยังไม่ได้รับการอนุมัติการลงทะเบียนจากผู้ดูแลระบบ กรุณารอผู้ดูแลระบบอนุมัติบัญชีของคุณก่อนทำรายการยืม-คืนอุปกรณ์');
+      return;
+    }
+
+    const modal = document.getElementById('borrowModal');
+    if (!modal) return;
+    document.getElementById('modalEquipmentId').value = id;
+    document.getElementById('modalEquipmentName').value = name;
+    const qtyInput = document.getElementById('modalBorrowQuantity');
+    qtyInput.max = maxAvail; qtyInput.value = 1;
+    document.getElementById('modalMaxAvailable').textContent = `*(เบิกได้สูงสุด ${maxAvail} ชิ้น)`;
+    document.getElementById('modalBorrowReason').value = '';
+    modal.style.display = 'flex';
+  };
+
+  window.closeBorrowModal = function() {
+    const modal = document.getElementById('borrowModal');
+    if (modal) modal.style.display = 'none';
+  };
+
+  function setupBorrowFormSubmit() {
+    const form = document.getElementById('borrowRequestForm');
+    if (!form || form.dataset.bound === 'true') return;
+    form.dataset.bound = 'true';
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
+
+      if (currentUser.role === 'user' && currentUser.accountStatus !== 'approved') {
+        alert('❌ ไม่สามารถทำรายการได้! บัญชีของคุณยังไม่ได้รับการอนุมัติการลงทะเบียนจากผู้ดูแลระบบ');
+        closeBorrowModal();
+        return;
+      }
+
+      const eqId = document.getElementById('modalEquipmentId').value;
+      const eqName = document.getElementById('modalEquipmentName').value;
+      const qty = parseInt(document.getElementById('modalBorrowQuantity').value) || 1;
+      const reason = document.getElementById('modalBorrowReason').value.trim();
+
+      const requestId = 'REQ' + Date.now().toString().slice(-6);
+      const newRequest = {
+        id: requestId,
+        equipmentId: eqId,
+        equipmentName: eqName,
+        quantity: qty,
+        reason: reason,
+        userName: currentUser.name || localStorage.getItem('userName') || 'ผู้ใช้งานระบบ',
+        userEmail: currentUser.email || localStorage.getItem('userEmail') || '',
+        userUid: currentUser.uid || '',
+        requestDate: getCurrentDateTimeFormatted(),
+        type: 'ยืม',
+        status: 'pending',
+        approvedBy: '-'
+      };
+
+      const userRequests = JSON.parse(localStorage.getItem('user_requests')) || [];
+      userRequests.unshift(newRequest);
+      localStorage.setItem('user_requests', JSON.stringify(userRequests));
+
+      try {
+        await initFirebase();
+        if (db) {
+          await db.collection('borrow_requests').doc(requestId).set(newRequest);
+        }
+      } catch (err) {
+        console.warn("Firestore save warning (fallback to LocalStorage):", err);
+      }
+
+      alert('ส่งคำขอเบิก/ยืมเรียบร้อยแล้ว! กรุณารอการอนุมัติจากผู้ดูแลระบบ');
+      closeBorrowModal();
+      window.location.reload();
+    });
   }
 
   // ============================================================
@@ -658,6 +854,7 @@
     try { loadRememberedData(); } catch (e) {}
     try { setupLoginForm(); } catch (e) {}
     try { initDashboardByRole(); } catch (e) {}
+    try { initEquipmentPage(); } catch (e) {}
   }
 
   if (document.readyState === 'loading') {
