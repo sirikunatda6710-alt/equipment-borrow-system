@@ -86,22 +86,43 @@
     <script src="app.js"></script>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            renderReturnTable();
+        document.addEventListener('DOMContentLoaded', async () => {
+            await renderReturnTable();
         });
 
-        function renderReturnTable() {
+        async function renderReturnTable() {
             const table = document.getElementById('returnEquipmentTable');
             const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
-            const allRequests = JSON.parse(localStorage.getItem('user_requests')) || [];
 
-            // 🟢 กรองดึงเฉพาะรายการที่ยังต้องคืนอยู่เท่านั้น:
-            // 1. กำลังถือครองยืมอยู่ (type === 'ยืม' && status === 'approved')
-            // 2. อยู่ระหว่างรอแอดมินตรวจสอบการคืน (type === 'คืน' && status === 'pending')
-            const activeItems = allRequests.filter(r => 
-                (r.userEmail === currentUser.email || r.userName === currentUser.name) &&
-                ((r.type === 'ยืม' && r.status === 'approved') || (r.type === 'คืน' && r.status === 'pending'))
-            );
+            // ป้องกันรันคำสั่งกรณีไม่มีข้อมูลผู้ใช้งานที่ล็อกอิน
+            if (!currentUser.email && !currentUser.uid && !currentUser.name) {
+                table.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 2.5rem; color: #ef4444;">ไม่พบข้อมูลผู้ใช้ที่ล็อกอิน กรุณาเข้าสู่ระบบใหม่อีกครั้ง</td></tr>`;
+                return;
+            }
+
+            let allRequests = [];
+            
+            // 1. ดึงจาก Firestore ล่าสุด
+            if (window.getFirestoreBorrowRequests) {
+                allRequests = await window.getFirestoreBorrowRequests();
+            }
+            
+            // Fallback ถ้ารายการใน Firestore ว่าง ให้ใช้ LocalStorage
+            if (!allRequests || allRequests.length === 0) {
+                allRequests = JSON.parse(localStorage.getItem('user_requests')) || [];
+            }
+
+            // 🟢 กรองเฉพาะรายการของแอคเคาน์ปัจจุบัน (Match ด้วย UID, Email หรือ Name ที่ถูกต้องแน่ชัด)
+            const activeItems = allRequests.filter(r => {
+                const isMyAccount = (currentUser.uid && r.userUid === currentUser.uid) ||
+                                    (currentUser.email && r.userEmail === currentUser.email) ||
+                                    (currentUser.name && r.userName === currentUser.name);
+
+                const isReturnableState = (r.type === 'ยืม' && r.status === 'approved') || 
+                                          (r.type === 'คืน' && r.status === 'pending');
+
+                return isMyAccount && isReturnableState;
+            });
 
             if (activeItems.length === 0) {
                 table.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 2.5rem; color: #6b7280;">คุณไม่มีรายการอุปกรณ์ที่กำลังยืมอยู่</td></tr>`;
@@ -135,20 +156,38 @@
             if (window.lucide) lucide.createIcons();
         }
 
-        function submitReturnRequest(requestId) {
+        async function submitReturnRequest(requestId) {
             if (!confirm('คุณต้องการแจ้งส่งคืนอุปกรณ์นี้ใช่หรือไม่?\n*(ระบบจะส่งคำขอให้ผู้ดูแลระบบตรวจสอบของจริงก่อนยืนยันรับคืน)')) return;
 
+            const returnDateStr = new Date().toLocaleDateString('th-TH');
+
+            // 1. อัปเดตใน LocalStorage
             let requests = JSON.parse(localStorage.getItem('user_requests')) || [];
             const idx = requests.findIndex(r => r.id === requestId);
             
             if (idx !== -1) {
                 requests[idx].type = 'คืน';
                 requests[idx].status = 'pending';
-                requests[idx].returnRequestDate = new Date().toLocaleDateString('th-TH');
+                requests[idx].returnRequestDate = returnDateStr;
                 localStorage.setItem('user_requests', JSON.stringify(requests));
-                alert('ส่งคำขอคืนเรียบร้อยแล้ว! กรุณานำอุปกรณ์ไปคืนผู้ดูแลระบบเพื่อทำการอนุมัติปิดรายการ');
-                renderReturnTable();
             }
+
+            // 2. อัปเดตใน Firebase Firestore
+            try {
+                if (window.firebase && window.firebase.firestore) {
+                    const db = window.firebase.firestore();
+                    await db.collection('borrow_requests').doc(requestId).set({
+                        type: 'คืน',
+                        status: 'pending',
+                        returnRequestDate: returnDateStr
+                    }, { merge: true });
+                }
+            } catch (e) {
+                console.warn("Firestore update warning:", e);
+            }
+
+            alert('ส่งคำขอคืนเรียบร้อยแล้ว! กรุณานำอุปกรณ์ไปคืนผู้ดูแลระบบเพื่อทำการอนุมัติปิดรายการ');
+            await renderReturnTable();
         }
     </script>
 </body>
