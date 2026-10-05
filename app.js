@@ -247,6 +247,102 @@
   };
 
   // ============================================================
+  // Global Admin Operations (เปิดใช้งานปุ่ม อนุมัติ / ปฏิเสธ)
+  // ============================================================
+
+  window.handleAdminApproval = async function(requestId, newStatus) {
+    const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
+    const adminName = currentUser.name || localStorage.getItem('userName') || 'ผู้ดูแลระบบ';
+
+    // 1. อัปเดตใน LocalStorage
+    let requests = JSON.parse(localStorage.getItem('user_requests')) || [];
+    const idx = requests.findIndex(r => r.id === requestId);
+    if (idx !== -1) {
+      requests[idx].status = newStatus;
+      requests[idx].approvedBy = adminName;
+      localStorage.setItem('user_requests', JSON.stringify(requests));
+    }
+
+    // 2. อัปเดตลง Firestore
+    try {
+      await initFirebase();
+      if (db) {
+        await db.collection('borrow_requests').doc(requestId).set({
+          status: newStatus,
+          approvedBy: adminName,
+          approvedAt: getCurrentDateTimeFormatted()
+        }, { merge: true });
+      }
+    } catch (e) {
+      console.warn("Firestore update warning:", e);
+    }
+
+    window.addSystemLog(
+      newStatus === 'approved' ? 'อนุมัติคำขอ' : 'ปฏิเสธคำขอ',
+      `คำขอ ${requestId} โดยแอดมิน ${adminName}`
+    );
+
+    alert(`ทำรายการ ${newStatus === 'approved' ? 'อนุมัติ' : 'ปฏิเสธ'} เรียบร้อยแล้ว`);
+    if (window.renderBorrowTable) {
+      window.renderBorrowTable();
+    } else {
+      window.location.reload();
+    }
+  };
+
+  window.handleUserAccountApproval = async function(userUid, userEmail, actionStatus) {
+    const currentUser = JSON.parse(localStorage.getItem('equipment_current_user')) || {};
+    const adminName = currentUser.name || 'ผู้ดูแลระบบ';
+
+    try {
+      await initFirebase();
+      
+      if (db) {
+        if (userUid) {
+          await db.collection('users').doc(userUid).set({
+            accountStatus: actionStatus,
+            approvedBy: adminName,
+            approvedAt: getCurrentDateTimeFormatted()
+          }, { merge: true });
+        } else {
+          const snap = await db.collection('users').where('email', '==', userEmail).get();
+          snap.forEach(async (doc) => {
+            await db.collection('users').doc(doc.id).set({
+              accountStatus: actionStatus,
+              approvedBy: adminName,
+              approvedAt: getCurrentDateTimeFormatted()
+            }, { merge: true });
+          });
+        }
+      }
+
+      let pendingUsers = JSON.parse(localStorage.getItem('pending_user_registrations')) || [];
+      const userIndex = pendingUsers.findIndex(u => (userUid && u.uid === userUid) || u.email === userEmail);
+      if (userIndex !== -1) {
+        pendingUsers[userIndex].status = actionStatus;
+        pendingUsers[userIndex].approvedBy = adminName;
+        localStorage.setItem('pending_user_registrations', JSON.stringify(pendingUsers));
+      }
+
+      window.addSystemLog(
+        actionStatus === 'approved' ? 'อนุมัติสมาชิกใหม่' : 'ปฏิเสธสมาชิกใหม่',
+        `บัญชี ${userEmail} โดยแอดมิน ${adminName}`
+      );
+
+      alert(`ทำการ ${actionStatus === 'approved' ? 'อนุมัติ' : 'ปฏิเสธ'} สมาชิกใหม่เรียบร้อยแล้ว!`);
+      
+      if (window.renderUserTable) {
+        window.renderUserTable();
+      } else {
+        window.location.reload();
+      }
+    } catch (e) {
+      console.error("Error approving user:", e);
+      alert('เกิดข้อผิดพลาดในการอัปเดตสถานะสมาชิก: ' + e.message);
+    }
+  };
+
+  // ============================================================
   // Profile & Logout
   // ============================================================
 
@@ -383,6 +479,7 @@
     }
 
     if (isAdmin) {
+      // ฝั่ง Admin
       let activePendingUsers = [];
       if (window.getFirestoreUsers) {
         const users = await window.getFirestoreUsers();
@@ -407,6 +504,7 @@
       });
 
     } else {
+      // ฝั่ง User
       const myApprovedOrRejected = requests.filter(r => isOwnRequest(r, currentUser) && (r.status === 'approved' || r.status === 'rejected'));
 
       myApprovedOrRejected.forEach(req => {
@@ -468,78 +566,6 @@
     });
 
     if (window.lucide) lucide.createIcons();
-  }
-
-  // ============================================================
-  // Login Form
-  // ============================================================
-
-  function setupLoginForm() {
-    const form = document.getElementById('loginForm');
-    if (!form || form.dataset.bound === 'true') return;
-    form.dataset.bound = 'true';
-
-    form.addEventListener('submit', async event => {
-      event.preventDefault();
-      const email = document.getElementById('email')?.value?.trim() || '';
-      const password = document.getElementById('password')?.value || '';
-      const selectedRole = document.getElementById('loginRole')?.value || 'user';
-      const adminCodeInput = document.getElementById('adminCode');
-
-      if (!email || !password) { alert('กรุณากรอกอีเมลและรหัสผ่าน'); return; }
-
-      if (selectedRole === 'admin' && adminCodeInput?.value?.trim() !== '24236') {
-        alert('❌ รหัสยืนยันผู้ดูแลระบบไม่ถูกต้อง'); return;
-      }
-
-      try {
-        const ready = await initFirebase();
-        if (!ready || !auth) throw new Error('ไม่สามารถเชื่อมต่อระบบยืนยันตัวตนได้');
-
-        const cred = await auth.signInWithEmailAndPassword(email, password);
-        const user = cred.user;
-        let profile = null;
-
-        try {
-          const snap = await db.collection('users').doc(user.uid).get();
-          if (snap.exists) profile = snap.data();
-        } catch (e) {
-          console.error("Fetch profile error:", e);
-        }
-
-        const actualRole = profile?.role || 'user';
-        let accountStatus = profile?.accountStatus || (actualRole === 'admin' ? 'approved' : 'pending');
-
-        if (selectedRole === 'admin' && actualRole !== 'admin') {
-          await auth.signOut();
-          alert('❌ การเข้าถึงถูกปฏิเสธ: บัญชีนี้เป็นผู้ใช้งานทั่วไป');
-          return;
-        }
-
-        if (actualRole === 'user' && accountStatus !== 'approved') {
-          await auth.signOut();
-          alert('⏳ บัญชีของคุณยังอยู่ในสถานะรอผู้ดูแลระบบอนุมัติ');
-          return;
-        }
-
-        const currentUserData = {
-          uid: user.uid,
-          name: profile?.name || user.displayName || email,
-          email: user.email || email,
-          role: actualRole,
-          accountStatus: accountStatus
-        };
-
-        saveJSON(KEYS.currentUser, currentUserData);
-        localStorage.setItem(KEYS.loggedIn, 'true');
-        localStorage.setItem(KEYS.userEmail, email);
-        localStorage.setItem(KEYS.userName, currentUserData.name);
-        localStorage.setItem(KEYS.userRole, actualRole);
-
-        window.location.href = 'dashboard.html';
-
-      } catch (err) { alert(firebaseErrorMessage(err)); }
-    });
   }
 
   // ============================================================
@@ -723,7 +749,6 @@
       const itemCat = String(item.category || '').trim();
       const filterCat = String(category || '').trim();
 
-      // แมตช์หมวดหมู่ให้ยืดหยุ่นครอบคลุมทุกแบบ
       let matchCategory = !filterCat || filterCat === 'รายการทั้งหมด' || itemCat === filterCat;
       if (!matchCategory && filterCat) {
         if (filterCat.includes('อุปกรณ์') && itemCat.includes('อุปกรณ์')) matchCategory = true;
