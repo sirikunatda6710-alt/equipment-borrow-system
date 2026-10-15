@@ -28,7 +28,6 @@
 
   let db = null;
   let auth = null;
-  let isFirebaseInitializing = false;
 
   // ============================================================
   // Date & Time Formatter
@@ -159,7 +158,8 @@
       'auth/invalid-email': 'รูปแบบอีเมลไม่ถูกต้อง',
       'auth/weak-password': 'รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร',
       'auth/user-not-found': 'ไม่พบบัญชีผู้ใช้ที่มีอีเมลนี้ในระบบ',
-      'auth/wrong-password': 'อีเมลหรือรหัสผ่านไม่ถูกต้อง'
+      'auth/wrong-password': 'อีเมลหรือรหัสผ่านไม่ถูกต้อง',
+      'auth/unauthorized-domain': 'โดเมนของเว็บไซต์นี้ยังไม่ได้รับอนุญาตใน Firebase Console'
     };
     return map[code] || error?.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อระบบ';
   }
@@ -183,26 +183,29 @@
 
   async function initFirebase() {
     if (window.firebase?.apps?.length) {
-      db = window.firebase.firestore(); 
-      auth = window.firebase.auth(); 
+      db = window.firebase.firestore();
+      auth = window.firebase.auth();
       return true;
     }
+
     try {
-      const base = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}`;
-      await loadScript(`${base}/firebase-app-compat.js`);
-      await loadScript(`${base}/firebase-auth-compat.js`);
-      await loadScript(`${base}/firebase-firestore-compat.js`);
+      if (!window.firebase) {
+        const base = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}`;
+        await loadScript(`${base}/firebase-app-compat.js`);
+        await loadScript(`${base}/firebase-auth-compat.js`);
+        await loadScript(`${base}/firebase-firestore-compat.js`);
+      }
       
       if (window.firebase) {
         if (!window.firebase.apps.length) {
           window.firebase.initializeApp(FIREBASE_CONFIG);
         }
-        db = window.firebase.firestore(); 
+        db = window.firebase.firestore();
         auth = window.firebase.auth();
         return true;
       }
-    } catch (e) { 
-      console.warn('Firebase init warning:', e); 
+    } catch (e) {
+      console.warn('Firebase init warning:', e);
     }
     return false;
   }
@@ -347,7 +350,7 @@
   };
 
   // ============================================================
-  // Forgot Password System
+  // Forgot Password System (แก้ไขส่วนนี้ส่งอีเมลสำเร็จ)
   // ============================================================
 
   function setupForgotPasswordForm() {
@@ -373,24 +376,18 @@
       }
 
       try {
-        // รอเริ่มการทำงานของ Firebase
-        const ready = await initFirebase();
+        await initFirebase();
         
-        // เช็กจนกว่า auth จะพร้อมทำงาน
-        if (!ready || !auth) {
-          if (window.firebase && window.firebase.auth) {
-            auth = window.firebase.auth();
-          } else {
-            throw new Error('ไม่สามารถเชื่อมต่อระบบยืนยันตัวตนได้');
-          }
+        if (!auth && window.firebase && window.firebase.auth) {
+          auth = window.firebase.auth();
         }
 
-        const redirectUrl = window.location.origin + window.location.pathname.replace('forgot-password.html', 'reset-password.html') + '?email=' + encodeURIComponent(email);
+        if (!auth) {
+          throw new Error('ไม่สามารถเชื่อมต่อระบบยืนยันตัวตนได้');
+        }
 
-        await auth.sendPasswordResetEmail(email, {
-          url: redirectUrl,
-          handleCodeInApp: true
-        });
+        // ส่งแบบมาตรฐานตรงๆ เพื่อป้องกันปัญหา URL บล็อก
+        await auth.sendPasswordResetEmail(email);
 
         if (statusMsg) {
           statusMsg.className = 'status-message success';
@@ -398,7 +395,7 @@
           statusMsg.style.display = 'block';
         }
 
-        alert('📧 ระบบได้ส่งลิงก์สำหรับตั้งรหัสผ่านใหม่ไปยังอีเมลของคุณเรียบร้อยแล้ว!');
+        alert('📧 ระบบได้ส่งลิงก์สำหรับตั้งรหัสผ่านใหม่ไปยังอีเมลของคุณเรียบร้อยแล้ว!\nกรุณาตรวจสอบใน Inbox หรือโฟลเดอร์ Junk/Spam');
         window.location.href = 'index.html';
 
       } catch (err) {
@@ -1019,7 +1016,6 @@
   // ============================================================
 
   function boot() {
-    // โหลด Firebase ไว้ล่วงหน้า
     initFirebase();
 
     try { setupProfileModal(); } catch (e) {}
