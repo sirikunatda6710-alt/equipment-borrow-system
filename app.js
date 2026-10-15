@@ -349,18 +349,25 @@
     if (!form || form.dataset.bound === 'true') return;
     form.dataset.bound = 'true';
 
-    // อ่านอีเมลจาก URL (เช่น reset-password.html?email=abc@gmail.com)
+    // ดึงอีเมลจาก URL parameter (เช่น reset-password.html?email=test@example.com)
     const urlParams = new URLSearchParams(window.location.search);
     const emailParam = urlParams.get('email') || localStorage.getItem('reset_email_temp') || '';
     const emailInput = document.getElementById('resetEmail');
-    if (emailInput && emailParam) {
-      emailInput.value = emailParam;
+    
+    if (emailInput) {
+      if (emailParam) {
+        emailInput.value = emailParam;
+      } else {
+        // หากไม่มีการส่งอีเมลผ่าน URL ให้ปลดล็อกช่องเพื่อกรอกเองได้
+        emailInput.removeAttribute('readonly');
+        emailInput.placeholder = 'กรอกอีเมลของคุณ...';
+      }
     }
 
     const newPasswordInput = document.getElementById('newPassword');
     const confirmPasswordInput = document.getElementById('confirmNewPassword');
 
-    // เช็กความถูกต้องของรหัสผ่านแบบ Realtime
+    // ตรวจสอบเงื่อนไขรหัสผ่านแบบ Realtime
     if (newPasswordInput) {
       newPasswordInput.addEventListener('input', () => {
         const val = newPasswordInput.value;
@@ -384,7 +391,7 @@
       const confirmPass = confirmPasswordInput?.value;
 
       if (!email) {
-        alert('❌ ไม่พบข้อมูลอีเมล กรุณาทำรายการตั้งรหัสผ่านใหม่อีกครั้ง');
+        alert('❌ กรุณากรอกหรือระบุอีเมลสำหรับตั้งรหัสผ่านใหม่');
         return;
       }
 
@@ -403,14 +410,15 @@
         const ready = await initFirebase();
         if (ready && auth && auth.currentUser) {
           await auth.currentUser.updatePassword(newPass);
-        } else {
-          localStorage.setItem('rememberedPassword', newPass);
         }
+        
+        localStorage.setItem('rememberedPassword', newPass);
 
         alert('✅ เปลี่ยนรหัสผ่านสำเร็จแล้ว! กรุณาเข้าสู่ระบบด้วยรหัสผ่านใหม่');
         localStorage.removeItem('reset_email_temp');
         window.location.href = 'index.html';
       } catch (err) {
+        console.error(err);
         alert('เกิดข้อผิดพลาด: ' + (err.message || 'ไม่สามารถเปลี่ยนรหัสผ่านได้'));
       }
     });
