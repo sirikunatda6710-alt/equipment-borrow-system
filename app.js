@@ -341,7 +341,7 @@
   };
 
   // ============================================================
-  // Reset Password Page Logic (ส่วนที่เพิ่มใหม่สำหรับหน้ารีเซ็ตรหัสผ่าน)
+  // Reset Password Page Logic
   // ============================================================
 
   function setupResetPasswordForm() {
@@ -349,7 +349,7 @@
     if (!form || form.dataset.bound === 'true') return;
     form.dataset.bound = 'true';
 
-    // ดึงอีเมลจาก URL parameter (เช่น reset-password.html?email=test@example.com) หรือจาก LocalStorage
+    // อ่านอีเมลจาก URL (เช่น reset-password.html?email=abc@gmail.com)
     const urlParams = new URLSearchParams(window.location.search);
     const emailParam = urlParams.get('email') || localStorage.getItem('reset_email_temp') || '';
     const emailInput = document.getElementById('resetEmail');
@@ -360,7 +360,7 @@
     const newPasswordInput = document.getElementById('newPassword');
     const confirmPasswordInput = document.getElementById('confirmNewPassword');
 
-    // เช็กความถูกต้องของรหัสผ่าน Realtime
+    // เช็กความถูกต้องของรหัสผ่านแบบ Realtime
     if (newPasswordInput) {
       newPasswordInput.addEventListener('input', () => {
         const val = newPasswordInput.value;
@@ -384,7 +384,7 @@
       const confirmPass = confirmPasswordInput?.value;
 
       if (!email) {
-        alert('❌ ไม่พบข้อมูลอีเมล กรุณาลองขอลิงก์ตั้งรหัสผ่านใหม่อีกครั้ง');
+        alert('❌ ไม่พบข้อมูลอีเมล กรุณาทำรายการตั้งรหัสผ่านใหม่อีกครั้ง');
         return;
       }
 
