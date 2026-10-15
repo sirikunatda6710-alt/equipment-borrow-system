@@ -160,6 +160,11 @@
             background-color: #246527;
         }
 
+        .btn-primary:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+
         .link-btn {
             color: #2e7d32;
             text-decoration: none;
@@ -176,7 +181,7 @@
 
     <div class="auth-card">
         <div class="auth-logo">
-            <img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5f/MED_logo1.png/1920px-MED_logo1.png?utm_source=th.wikipedia.org&utm_campaign=imageinfo&utm_content=thumbnail">
+            <img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5f/MED_logo1.png/1920px-MED_logo1.png?utm_source=th.wikipedia.org&utm_campaign=imageinfo&utm_content=thumbnail" alt="โลโก้คณะ">
         </div>
 
         <h1 class="auth-title">สมัครสมาชิก</h1>
@@ -238,7 +243,7 @@
                 </div>
             </div>
 
-            <button type="submit" class="btn-primary">ยืนยันการสมัครสมาชิก</button>
+            <button type="submit" id="btnRegisterSubmit" class="btn-primary">ยืนยันการสมัครสมาชิก</button>
         </form>
 
         <div class="auth-footer" style="margin-top: 1.25rem; text-align: center;">
@@ -246,6 +251,12 @@
         </div>
     </div>
 
+    <!-- Firebase SDK (โหลดเข้ามาก่อนเรียกใช้งาน app.js) -->
+    <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
+
+    <!-- ไฟล์สคริปต์หลักของระบบ -->
     <script src="app.js"></script>
 </body>
 
