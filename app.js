@@ -350,7 +350,140 @@
   };
 
   // ============================================================
-  // Forgot Password System (แก้ไขส่วนนี้ส่งอีเมลสำเร็จ)
+  // Register System (ระบบลงทะเบียนและแจ้งเตือนขออนุมัติ)
+  // ============================================================
+
+  function setupRegisterForm() {
+    const form = document.getElementById('registerForm');
+    if (!form || form.dataset.bound === 'true') return;
+    form.dataset.bound = 'true';
+
+    const roleSelect = document.getElementById('regRole');
+    const adminCodeGroup = document.getElementById('regAdminCodeGroup');
+    const adminCodeInput = document.getElementById('regAdminCode');
+    const passInput = document.getElementById('regPassword');
+
+    // ซ่อน/แสดงช่อง Admin Code ตามประเภทผู้สมัคร
+    if (roleSelect && adminCodeGroup) {
+      roleSelect.addEventListener('change', () => {
+        const isAdmin = roleSelect.value === 'admin';
+        adminCodeGroup.style.display = isAdmin ? 'block' : 'none';
+        if (adminCodeInput) adminCodeInput.required = isAdmin;
+      });
+    }
+
+    // ตรวจสอบเงื่อนไขรหัสผ่าน 4 ข้อแบบ Realtime
+    if (passInput) {
+      passInput.addEventListener('input', () => {
+        const val = passInput.value;
+        const updateRule = (id, isValid) => {
+          const el = document.getElementById(id);
+          if (el) {
+            el.className = isValid ? 'valid' : '';
+            const icon = el.querySelector('.rule-icon');
+            if (icon) icon.textContent = isValid ? '✅' : '❌';
+          }
+        };
+
+        updateRule('ruleLength', val.length >= 8);
+        updateRule('ruleUpper', /[A-Z]/.test(val));
+        updateRule('ruleLower', /[a-z]/.test(val));
+        updateRule('ruleNumber', /[0-9]/.test(val));
+      });
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById('regName')?.value?.trim();
+      const email = document.getElementById('regEmail')?.value?.trim();
+      const role = roleSelect?.value || 'user';
+      const adminCode = adminCodeInput?.value?.trim();
+      const password = passInput?.value;
+      const confirmPassword = document.getElementById('regConfirmPassword')?.value;
+      const submitBtn = document.getElementById('btnRegisterSubmit') || form.querySelector('button[type="submit"]');
+
+      if (!name || !email || !password) {
+        alert('❌ กรุณากรอกข้อมูลให้ครบถ้วน');
+        return;
+      }
+
+      if (role === 'admin' && adminCode !== '24236') {
+        alert('❌ รหัสยืนยันผู้ดูแลระบบ (Admin Code) ไม่ถูกต้อง');
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        alert('❌ รหัสผ่านทั้งสองช่องไม่ตรงกัน');
+        return;
+      }
+
+      const isValidPass = password.length >= 8 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /[0-9]/.test(password);
+      if (!isValidPass) {
+        alert('❌ รหัสผ่านไม่ผ่านเงื่อนไขความปลอดภัย (ต้องมีอย่างน้อย 8 ตัว, พิมพ์ใหญ่, พิมพ์เล็ก และตัวเลข)');
+        return;
+      }
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'กำลังลงทะเบียน...';
+      }
+
+      try {
+        await initFirebase();
+        if (!auth || !db) throw new Error('ไม่สามารถเชื่อมต่อระบบยืนยันตัวตนได้');
+
+        // 1. สร้างบัญชีผู้ใช้ใน Firebase Authentication
+        const cred = await auth.createUserWithEmailAndPassword(email, password);
+        const user = cred.user;
+
+        const initialStatus = role === 'admin' ? 'approved' : 'pending';
+
+        const userData = {
+          uid: user.uid,
+          name: name,
+          email: email,
+          role: role,
+          accountStatus: initialStatus,
+          createdAt: getCurrentDateTimeFormatted()
+        };
+
+        // 2. บันทึกข้อมูลโปรไฟล์ลงใน Firestore (คอลเลกชัน users)
+        await db.collection('users').doc(user.uid).set(userData);
+
+        // 3. บันทึกลง LocalStorage
+        let pendingList = JSON.parse(localStorage.getItem('pending_user_registrations')) || [];
+        pendingList.unshift(userData);
+        localStorage.setItem('pending_user_registrations', JSON.stringify(pendingList));
+
+        // 4. บันทึก ประวัติระบบ
+        window.addSystemLog('ลงทะเบียนสมาชิกใหม่', `ผู้ใช้: ${name} (${email}) สถานะ: ${initialStatus}`);
+
+        // 5. ออกจากระบบชั่วคราวเพื่อรออนุมัติ
+        await auth.signOut();
+
+        if (role === 'admin') {
+          alert('✅ สมัครสมาชิกผู้ดูแลระบบเรียบร้อยแล้ว! สามารถเข้าสู่ระบบได้ทันที');
+        } else {
+          alert('✅ ลงทะเบียนเรียบร้อยแล้ว!\n\n⏳ บัญชีของคุณอยู่ในสถานะ "รอผู้ดูแลระบบอนุมัติ" กรุณารอแอดมินอนุมัติก่อนเข้าใช้งานระบบ');
+        }
+
+        window.location.href = 'index.html';
+
+      } catch (err) {
+        console.error("Register error:", err);
+        alert('เกิดข้อผิดพลาดในการลงทะเบียน: ' + firebaseErrorMessage(err));
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'ยืนยันการสมัครสมาชิก';
+        }
+      }
+    });
+  }
+
+  // ============================================================
+  // Forgot Password System
   // ============================================================
 
   function setupForgotPasswordForm() {
@@ -386,7 +519,6 @@
           throw new Error('ไม่สามารถเชื่อมต่อระบบยืนยันตัวตนได้');
         }
 
-        // ส่งแบบมาตรฐานตรงๆ เพื่อป้องกันปัญหา URL บล็อก
         await auth.sendPasswordResetEmail(email);
 
         if (statusMsg) {
@@ -1023,6 +1155,7 @@
     try { setupRoleUI(); } catch (e) {}
     try { loadRememberedData(); } catch (e) {}
     try { setupLoginForm(); } catch (e) {}
+    try { setupRegisterForm(); } catch (e) {}     // เพิ่มตัวผูกระบบสมัครสมาชิก
     try { setupForgotPasswordForm(); } catch (e) {}
     try { initDashboardByRole(); } catch (e) {}
     try { initEquipmentPage(); } catch (e) {}
