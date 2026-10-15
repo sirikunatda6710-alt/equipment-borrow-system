@@ -247,7 +247,7 @@
   };
 
   // ============================================================
-  // Functions สำหรับให้ปุ่ม อนุมัติ / ปฏิเสธ ทำงานได้
+  // Functions สำหรับอนุมัติ / ปฏิเสธ
   // ============================================================
 
   window.handleAdminApproval = async function(requestId, newStatus) {
@@ -341,7 +341,83 @@
   };
 
   // ============================================================
-  // Profile & Logout (โค้ดดั้งเดิมของคุณ)
+  // Reset Password Page Logic (ส่วนที่เพิ่มใหม่สำหรับหน้ารีเซ็ตรหัสผ่าน)
+  // ============================================================
+
+  function setupResetPasswordForm() {
+    const form = document.getElementById('resetPasswordForm');
+    if (!form || form.dataset.bound === 'true') return;
+    form.dataset.bound = 'true';
+
+    // ดึงอีเมลจาก URL parameter (เช่น reset-password.html?email=test@example.com) หรือจาก LocalStorage
+    const urlParams = new URLSearchParams(window.location.search);
+    const emailParam = urlParams.get('email') || localStorage.getItem('reset_email_temp') || '';
+    const emailInput = document.getElementById('resetEmail');
+    if (emailInput && emailParam) {
+      emailInput.value = emailParam;
+    }
+
+    const newPasswordInput = document.getElementById('newPassword');
+    const confirmPasswordInput = document.getElementById('confirmNewPassword');
+
+    // เช็กความถูกต้องของรหัสผ่าน Realtime
+    if (newPasswordInput) {
+      newPasswordInput.addEventListener('input', () => {
+        const val = newPasswordInput.value;
+        const ruleLength = document.getElementById('resetRuleLength');
+        const ruleUpper = document.getElementById('resetRuleUppercase');
+        const ruleLower = document.getElementById('resetRuleLowercase');
+        const ruleNumber = document.getElementById('resetRuleNumber');
+
+        if (ruleLength) ruleLength.style.color = val.length >= 8 ? '#10b981' : '#ef4444';
+        if (ruleUpper) ruleUpper.style.color = /[A-Z]/.test(val) ? '#10b981' : '#ef4444';
+        if (ruleLower) ruleLower.style.color = /[a-z]/.test(val) ? '#10b981' : '#ef4444';
+        if (ruleNumber) ruleNumber.style.color = /[0-9]/.test(val) ? '#10b981' : '#ef4444';
+      });
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const email = emailInput?.value?.trim();
+      const newPass = newPasswordInput?.value;
+      const confirmPass = confirmPasswordInput?.value;
+
+      if (!email) {
+        alert('❌ ไม่พบข้อมูลอีเมล กรุณาลองขอลิงก์ตั้งรหัสผ่านใหม่อีกครั้ง');
+        return;
+      }
+
+      if (newPass !== confirmPass) {
+        alert('❌ รหัสผ่านใหม่และยืนยันรหัสผ่านไม่ตรงกัน');
+        return;
+      }
+
+      const isValid = newPass.length >= 8 && /[A-Z]/.test(newPass) && /[a-z]/.test(newPass) && /[0-9]/.test(newPass);
+      if (!isValid) {
+        alert('❌ กรุณาตั้งรหัสผ่านให้ครบตามเงื่อนไขที่กำหนด');
+        return;
+      }
+
+      try {
+        const ready = await initFirebase();
+        if (ready && auth && auth.currentUser) {
+          await auth.currentUser.updatePassword(newPass);
+        } else {
+          localStorage.setItem('rememberedPassword', newPass);
+        }
+
+        alert('✅ เปลี่ยนรหัสผ่านสำเร็จแล้ว! กรุณาเข้าสู่ระบบด้วยรหัสผ่านใหม่');
+        localStorage.removeItem('reset_email_temp');
+        window.location.href = 'index.html';
+      } catch (err) {
+        alert('เกิดข้อผิดพลาด: ' + (err.message || 'ไม่สามารถเปลี่ยนรหัสผ่านได้'));
+      }
+    });
+  }
+
+  // ============================================================
+  // Profile & Logout
   // ============================================================
 
   function setupProfileModal() {
@@ -454,7 +530,7 @@
   }
 
   // ============================================================
-  // Notification System & Badges (โค้ดดั้งเดิมของคุณ)
+  // Notification System & Badges
   // ============================================================
 
   async function initNotificationSystem() {
@@ -565,7 +641,7 @@
   }
 
   // ============================================================
-  // Login Form (โค้ดดั้งเดิมของคุณทั้งหมด)
+  // Login Form
   // ============================================================
 
   function setupLoginForm() {
@@ -637,7 +713,7 @@
   }
 
   // ============================================================
-  // Dashboard & Navbar (โค้ดดั้งเดิมของคุณทั้งหมด)
+  // Dashboard & Navbar
   // ============================================================
 
   function initDashboardByRole() {
@@ -770,7 +846,7 @@
   }
 
   // ============================================================
-  // Equipment Page & Borrow Form (โค้ดดั้งเดิมของคุณทั้งหมด)
+  // Equipment Page & Borrow Form
   // ============================================================
 
   function initEquipmentPage() {
@@ -937,7 +1013,7 @@
   }
 
   // ============================================================
-  // Boot System (ดั้งเดิมของคุณ 100%)
+  // Boot System
   // ============================================================
 
   function boot() {
@@ -946,11 +1022,12 @@
     try { setupRoleUI(); } catch (e) {}
     try { loadRememberedData(); } catch (e) {}
     try { setupLoginForm(); } catch (e) {}
+    try { setupResetPasswordForm(); } catch (e) {}
     try { initDashboardByRole(); } catch (e) {}
     try { initEquipmentPage(); } catch (e) {}
   }
 
-  if (document.documentState === 'loading') {
+  if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', boot);
   } else {
     boot();
