@@ -183,22 +183,28 @@
 
   async function initFirebase() {
     if (window.firebase?.apps?.length) {
-      db = window.firebase.firestore(); auth = window.firebase.auth(); return true;
+      db = window.firebase.firestore(); 
+      auth = window.firebase.auth(); 
+      return true;
     }
-    if (isFirebaseInitializing) return false;
-    isFirebaseInitializing = true;
     try {
       const base = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}`;
       await loadScript(`${base}/firebase-app-compat.js`);
       await loadScript(`${base}/firebase-auth-compat.js`);
       await loadScript(`${base}/firebase-firestore-compat.js`);
+      
       if (window.firebase) {
-        if (!window.firebase.apps.length) window.firebase.initializeApp(FIREBASE_CONFIG);
-        db = window.firebase.firestore(); auth = window.firebase.auth();
-        isFirebaseInitializing = false; return true;
+        if (!window.firebase.apps.length) {
+          window.firebase.initializeApp(FIREBASE_CONFIG);
+        }
+        db = window.firebase.firestore(); 
+        auth = window.firebase.auth();
+        return true;
       }
-    } catch (e) { console.warn('Firebase init warning:', e); }
-    isFirebaseInitializing = false; return false;
+    } catch (e) { 
+      console.warn('Firebase init warning:', e); 
+    }
+    return false;
   }
 
   window.getFirestoreUsers = async function() {
@@ -341,7 +347,7 @@
   };
 
   // ============================================================
-  // Forgot Password System (เพิ่มส่วนนี้เพื่อให้ส่งอีเมลได้)
+  // Forgot Password System
   // ============================================================
 
   function setupForgotPasswordForm() {
@@ -367,8 +373,17 @@
       }
 
       try {
+        // รอเริ่มการทำงานของ Firebase
         const ready = await initFirebase();
-        if (!ready || !auth) throw new Error('ไม่สามารถเชื่อมต่อระบบยืนยันตัวตนได้');
+        
+        // เช็กจนกว่า auth จะพร้อมทำงาน
+        if (!ready || !auth) {
+          if (window.firebase && window.firebase.auth) {
+            auth = window.firebase.auth();
+          } else {
+            throw new Error('ไม่สามารถเชื่อมต่อระบบยืนยันตัวตนได้');
+          }
+        }
 
         const redirectUrl = window.location.origin + window.location.pathname.replace('forgot-password.html', 'reset-password.html') + '?email=' + encodeURIComponent(email);
 
@@ -1000,21 +1015,23 @@
   }
 
   // ============================================================
-  // Boot System (เพิ่มผูกฟังก์ชันส่งอีเมล + แก้จุดสะกดผิด)
+  // Boot System
   // ============================================================
 
   function boot() {
+    // โหลด Firebase ไว้ล่วงหน้า
+    initFirebase();
+
     try { setupProfileModal(); } catch (e) {}
     try { setupPasswordToggle(); } catch (e) {}
     try { setupRoleUI(); } catch (e) {}
     try { loadRememberedData(); } catch (e) {}
     try { setupLoginForm(); } catch (e) {}
-    try { setupForgotPasswordForm(); } catch (e) {} // สคริปต์ส่งอีเมลรีเซ็ต
+    try { setupForgotPasswordForm(); } catch (e) {}
     try { initDashboardByRole(); } catch (e) {}
     try { initEquipmentPage(); } catch (e) {}
   }
 
-  // แก้ไขคำผิดจาก document.documentState เป็น document.readyState เพื่อให้เรียก boot() ทำงาน
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', boot);
   } else {
